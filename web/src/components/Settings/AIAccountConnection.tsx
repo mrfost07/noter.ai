@@ -203,6 +203,13 @@ function AntigravityConnection({ provider, onConnected }: Props) {
           {attempt.error}
         </p>
       )}
+      <details className="text-sm">
+        <summary className="cursor-pointer text-muted-foreground">Google blocked sign-in?</summary>
+        <p className="mt-2 max-w-prose leading-5 text-muted-foreground">
+          If Google says Noter.ai is being tested, the maintainer must approve your account as a test user. Public access requires the
+          publisher’s Google verification. Creating your own client or reinstalling the app will not fix that restriction.
+        </p>
+      </details>
     </div>
   );
 }

@@ -16,6 +16,12 @@ The advanced `NOTER_ANTIGRAVITY_CLIENT_ID` and `NOTER_ANTIGRAVITY_CLIENT_SECRET`
 
 Reference: [Google OAuth for installed apps](https://developers.google.com/identity/protocols/oauth2/native-app).
 
+### Google says “Access blocked” / error 403
+
+If the Google page says the app is being tested and only developer-approved testers can access it, the publisher's OAuth project is in **Testing**. The publisher must select the matching project in **Google Auth Platform → Audience → Test users**, add the account used for sign-in, and save. Cancel the pending Noter.ai attempt, then sign in again. Users do not configure their own OAuth clients. Reinstalling does not change Google's test-user list.
+
+Testing is limited to 100 listed users, and authorizations for this integration expire after seven days, including offline refresh tokens. It is unsuitable as a permanent public distribution setting. For a public launch, the publisher must configure the intended external audience, publish the OAuth application, and complete the Google verification applicable to the requested scopes and branding. Publishing status does not itself guarantee Antigravity service access. See [Google's audience and testing rules](https://support.google.com/cloud/answer/15549945?hl=en).
+
 ## ChatGPT account
 
 Choose **ChatGPT account**, select **Continue with ChatGPT**, and authorize Noter.ai in the system browser. Eligible accounts can grant ChatGPT plan usage. A successful identity sign-in without plan permission is shown separately and cannot run AI requests.

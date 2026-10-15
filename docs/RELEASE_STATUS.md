@@ -32,6 +32,7 @@ The first release preparation replaces the legacy process-killing development la
 - The folder picker and disk-space display are currently Windows-only. Other systems can retain the default library location.
 - Initial candidates have no publisher certificate or Apple notarization. macOS builds use ad-hoc signing; Windows builds are unsigned. No trusted automatic update channel is configured.
 - Official desktop builds now include the publisher’s Google Desktop app client for one-click Antigravity sign-in; source builds can supply their own setup. The publisher’s client must still be authorized for the integration, and live sign-in plus inference must pass before distributing an authentication fix. ChatGPT account sign-in uses its own open-source OAuth registration, separate from API keys. Real provider approval and inference must be verified per account. See [AI connections](AI_CONNECTIONS.md).
+- The October 16 live Google attempt reached NoterAI's consent flow but was blocked with `403 access_denied` because the publisher's project was in Testing and the account was not listed as a test user. Public Antigravity access is not verified; test-user setup, applicable Google verification, and successful provider inference remain release acceptance requirements.
 - Keep backups of the profile/database and library together before testing upgrades. Installing an older executable alone cannot reverse database schema migrations.
 
 ## Promotion criteria
