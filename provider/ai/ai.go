@@ -13,6 +13,8 @@ type ProviderType string
 const (
 	// ProviderOpenAI is OpenAI's hosted API.
 	ProviderOpenAI ProviderType = "OPENAI"
+	// ProviderChatGPT uses the account's authorized ChatGPT plan through the Responses API.
+	ProviderChatGPT ProviderType = "CHATGPT"
 	// ProviderGemini is Google's Gemini API.
 	ProviderGemini ProviderType = "GEMINI"
 	// ProviderGroq is Groq's OpenAI-compatible API.
@@ -64,7 +66,7 @@ func RequiresAPIKey(providerType ProviderType) bool {
 // DefaultEndpoint returns the default endpoint for a provider type.
 func DefaultEndpoint(providerType ProviderType) string {
 	switch providerType {
-	case ProviderOpenAI:
+	case ProviderOpenAI, ProviderChatGPT:
 		return "https://api.openai.com/v1"
 	case ProviderGemini:
 		return "https://generativelanguage.googleapis.com/v1beta"
@@ -97,6 +99,9 @@ func DefaultEndpoint(providerType ProviderType) string {
 // For AZURE_STT, a plain region identifier (e.g. "eastus") or an https:// URL is accepted.
 func ValidateEndpoint(providerType ProviderType, endpoint string) error {
 	endpoint = strings.TrimSpace(endpoint)
+	if providerType == ProviderChatGPT && endpoint != "" && endpoint != DefaultEndpoint(ProviderChatGPT) {
+		return errors.New("ChatGPT connections use the official OpenAI Responses API endpoint")
+	}
 	if endpoint == "" {
 		return nil
 	}

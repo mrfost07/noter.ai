@@ -18,7 +18,8 @@ describe("Noter.ai branding", () => {
     expect(screen.queryByText("Memos")).not.toBeInTheDocument();
   });
   it("names AI providers without speech model names", () => {
-    expect(getProviderTypeLabel(InstanceSetting_AIProviderType.OPENAI)).toBe("OpenAI");
+    expect(getProviderTypeLabel(InstanceSetting_AIProviderType.OPENAI)).toBe("OpenAI API");
+    expect(getProviderTypeLabel(InstanceSetting_AIProviderType.CHATGPT)).toBe("ChatGPT account");
     expect(getProviderTypeLabel(InstanceSetting_AIProviderType.GROQ)).toBe("Groq");
   });
 });

@@ -76,7 +76,11 @@ func (s *APIService) StartAntigravityOAuth(ctx context.Context, request *apipb.S
 	if user.Role != store.RoleAdmin {
 		return nil, status.Errorf(codes.PermissionDenied, "permission denied")
 	}
-	clientID, err := llm.AntigravityOAuthClientID()
+	if !s.aiOAuthSignInMu.TryLock() {
+		return nil, status.Error(codes.FailedPrecondition, "Another AI connection is in progress. Finish or cancel it first.")
+	}
+	defer s.aiOAuthSignInMu.Unlock()
+	clientID, clientSecret, err := s.antigravityClientConfig(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "%v", err)
 	}
@@ -118,12 +122,10 @@ func (s *APIService) StartAntigravityOAuth(ctx context.Context, request *apipb.S
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/oauth-callback", func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Query().Get("state") != state {
+		w.Header().Set("Cache-Control", "no-store")
+		w.Header().Set("Referrer-Policy", "no-referrer")
+		if r.Method != http.MethodGet || r.URL.Query().Get("state") != state {
 			http.Error(w, "Invalid OAuth state", http.StatusBadRequest)
-			select {
-			case resultCh <- callbackResult{err: errors.New("OAuth state mismatch")}:
-			default:
-			}
 			return
 		}
 		if oauthErr := r.URL.Query().Get("error"); oauthErr != "" {
@@ -135,7 +137,7 @@ func (s *APIService) StartAntigravityOAuth(ctx context.Context, request *apipb.S
 			return
 		}
 		code := strings.TrimSpace(r.URL.Query().Get("code"))
-		if code == "" {
+		if code == "" || len(code) > 8192 {
 			http.Error(w, "Missing authorization code", http.StatusBadRequest)
 			select {
 			case resultCh <- callbackResult{err: errors.New("missing authorization code")}:
@@ -165,7 +167,11 @@ func (s *APIService) StartAntigravityOAuth(ctx context.Context, request *apipb.S
 		_ = srv.Shutdown(shutdownCtx)
 	}()
 
-	openSystemBrowser(authURL)
+	if s.aiOAuthOpenBrowser != nil {
+		s.aiOAuthOpenBrowser(authURL)
+	} else {
+		openSystemBrowser(authURL)
+	}
 
 	waitCtx, cancel := context.WithTimeout(ctx, oauthCallbackTimeout)
 	defer cancel()
@@ -181,12 +187,14 @@ func (s *APIService) StartAntigravityOAuth(ctx context.Context, request *apipb.S
 		return nil, status.Errorf(codes.DeadlineExceeded, "timed out waiting for Google OAuth sign-in callback")
 	}
 
-	creds, err := llm.ExchangeAntigravityAuthCode(ctx, nil, code, verifier, llm.AntigravityRedirectURI)
+	creds, err := llm.ExchangeAntigravityAuthCodeWithClient(ctx, s.aiOAuthHTTPClient, code, verifier, llm.AntigravityRedirectURI, clientID, clientSecret)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to exchange Google OAuth code: %v", err)
 	}
 
+	s.aiOAuthMu.Lock()
 	providerID, err := s.saveAntigravityOAuthProvider(ctx, request.GetProviderId(), request.GetTitle(), creds)
+	s.aiOAuthMu.Unlock()
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to save Antigravity provider: %v", err)
 	}
@@ -308,7 +316,7 @@ func (s *APIService) RunAgentTask(ctx context.Context, request *apipb.RunAgentTa
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get AI setting: %v", err)
 	}
-	provider, err := s.resolveMeetingAnalystProvider(aiSetting, strings.TrimSpace(request.GetProviderId()))
+	provider, err := s.resolveMeetingAnalystProvider(ctx, aiSetting, strings.TrimSpace(request.GetProviderId()))
 	if err != nil {
 		return nil, err
 	}

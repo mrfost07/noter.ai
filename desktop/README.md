@@ -2,9 +2,9 @@
 
 This directory packages Noter.ai's React interface and embedded Go server in a Tauri desktop application. The server binds to loopback, and notes and recordings remain on the device. AI and transcription use the providers configured in the app; local providers must be installed separately.
 
-Antigravity OAuth requires locally supplied `NOTER_ANTIGRAVITY_CLIENT_ID` and `NOTER_ANTIGRAVITY_CLIENT_SECRET` for an authorized OAuth client. Shared OAuth application secrets are not embedded in this repository or in installers. Other provider keys remain configurable in the app.
+Official desktop installers supply the publisher’s Google Desktop app OAuth configuration so users only sign in with their own account. This installed-app configuration is public client metadata and extractable from the binary; confidential web secrets and personal provider tokens are never bundled. Release maintainers set `NOTER_DESKTOP_GOOGLE_OAUTH_JSON` in repository Actions secrets using the downloaded Desktop app (`installed`) JSON. CI rejects web clients and missing configuration. Source builds can supply their own application setup. ChatGPT account sign-in is separate from OpenAI API-key access. See [AI connections](../docs/AI_CONNECTIONS.md).
 
-The current version is **26.10.15-rc.1**, an experimental candidate with no trusted publisher signature. macOS bundles use ad-hoc signatures and are not notarized. No automatic updater is configured.
+The current version is **26.10.16-rc.1**, an experimental candidate with no trusted publisher signature. macOS bundles use ad-hoc signatures and are not notarized. No automatic updater is configured.
 
 ## Build locally
 
@@ -33,7 +33,7 @@ Verified artifacts and manifests are written to `build/noter-desktop/<version>/<
 
 ## GitHub candidate workflow
 
-The [Noter.ai Desktop Candidate workflow](../.github/workflows/noter-desktop.yml) runs only when manually dispatched on committed `main` in `mrfost07/noter.ai`. Its version input must match `desktop/package.json`, `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`, and the application entry in `src-tauri/Cargo.lock`. Update the macOS numeric `bundleVersion` and Windows `wix.version` at the same time. For `26.10.15-rc.1`, these are `26.10.15` and `26.10.15.1`, respectively. SemVer omits numeric leading zeroes; the Go server's calendar version pads months 1–9.
+The [Noter.ai Desktop Candidate workflow](../.github/workflows/noter-desktop.yml) runs only when manually dispatched on committed `main` in `mrfost07/noter.ai`. Its version input must match `desktop/package.json`, `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`, and the application entry in `src-tauri/Cargo.lock`. Update the macOS numeric `bundleVersion` and Windows `wix.version` at the same time. For `26.10.16-rc.1`, these are `26.10.16` and `26.10.16.1`, respectively. SemVer omits numeric leading zeroes; the Go server's calendar version pads months 1–9.
 
 Frontend type/lint/format checks, frontend tests, and backend/meeting/provider tests with the race detector run alongside the native build matrix. Both must succeed for a release draft to be staged. Formatting failures block the candidate; they are never ignored.
 

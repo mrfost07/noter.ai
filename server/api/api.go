@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
+	"sync"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -91,6 +92,10 @@ type APIService struct {
 	linkMetadataFetcher linkMetadataFetcher
 	attachmentUploads   attachmentUploads
 	memoImports         memoImports
+	aiOAuthMu           sync.Mutex
+	aiOAuthSignInMu     sync.Mutex
+	aiOAuthHTTPClient   *http.Client
+	aiOAuthOpenBrowser  func(string)
 }
 
 // NewAPIService creates an API v1 service with its shared dependencies.

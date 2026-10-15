@@ -198,6 +198,8 @@ message InstanceSetting {
     AZURE_STT = 13;
     // IBM Watson Speech-to-Text REST API.
     IBM_STT = 14;
+    // ChatGPT plan usage via the open-source OAuth flow and Responses API.
+    CHATGPT = 15;
   }
 
   // GeneralSetting is the general instance configuration.
@@ -461,6 +463,9 @@ message InstanceSetting {
 
     // Output only. A masked hint of the stored API key.
     string api_key_hint = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+    // Verified ChatGPT identity; tokens are never returned.
+    string oauth_account = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
+    bool oauth_plan_enabled = 9 [(google.api.field_behavior) = OUTPUT_ONLY];
   }
 
   // TranscriptionConfig is the speech-to-text feature configuration.

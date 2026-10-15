@@ -71,6 +71,18 @@ fn smoke_path_value(name: &str, value: Option<OsString>) -> Result<PathBuf, Stri
     Ok(path)
 }
 
+fn prepare_private_data_directory(path: &Path) -> Result<(), String> {
+    fs::create_dir_all(path)
+        .map_err(|error| format!("Could not create the application data folder: {error}"))?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(path, fs::Permissions::from_mode(0o700))
+            .map_err(|error| format!("Could not protect the application data folder: {error}"))?;
+    }
+    Ok(())
+}
+
 fn validate_smoke_sandbox(os: &str, disabled: Option<OsString>) -> Result<(), String> {
     if os == "linux" && disabled.is_some_and(|value| !value.is_empty()) {
         return Err("Smoke tests require the normal WebKit sandbox; remove WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS.".into());
@@ -828,7 +840,7 @@ fn main() {
             let started = (|| -> Result<(), String> {
                 let app_data_dir = smoke_paths.as_ref().map(|paths| paths.data.clone()).or_else(|| env::var_os("NOTER_DATA_DIR").map(PathBuf::from)).map(Ok).unwrap_or_else(|| app.path().app_data_dir())
                     .map_err(|error| format!("Could not locate the application data folder: {error}"))?;
-                fs::create_dir_all(&app_data_dir).map_err(|error| format!("Could not create the application data folder: {error}"))?;
+                prepare_private_data_directory(&app_data_dir)?;
                 let sidecar_bin = resolve_sidecar_path(app.handle())?;
                 let mut cmd = Command::new(sidecar_bin);
                 let home = env::var_os(if cfg!(target_os = "windows") { "USERPROFILE" } else { "HOME" }).map(PathBuf::from)
@@ -927,6 +939,29 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[cfg(unix)]
+    #[test]
+    fn private_profile_excludes_other_users_before_credentials_are_saved() {
+        use std::os::unix::fs::PermissionsExt;
+        let directory = env::temp_dir().join(format!(
+            "noter-private-profile-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        assert!(directory.starts_with(env::temp_dir()));
+        fs::create_dir(&directory).unwrap();
+        fs::set_permissions(&directory, fs::Permissions::from_mode(0o777)).unwrap();
+        prepare_private_data_directory(&directory).unwrap();
+        assert_eq!(
+            fs::metadata(&directory).unwrap().permissions().mode() & 0o777,
+            0o700
+        );
+        fs::remove_dir(&directory).unwrap();
+    }
 
     fn application_dir() -> PathBuf {
         env::temp_dir().join("noter-sidecar-selection-tests")

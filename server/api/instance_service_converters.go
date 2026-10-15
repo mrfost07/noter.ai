@@ -1,10 +1,12 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 
 	apipb "github.com/usememos/memos/proto/gen/api"
 	storepb "github.com/usememos/memos/proto/gen/store"
+	"github.com/usememos/memos/provider/ai/llm"
 )
 
 func convertInstanceSettingFromStore(setting *storepb.InstanceSetting) *apipb.InstanceSetting {
@@ -380,16 +382,28 @@ func convertInstanceAISettingFromStore(setting *storepb.InstanceAISetting) *apip
 		}
 		apiKey := provider.GetApiKey()
 		hint := maskAPIKey(apiKey)
+		account := ""
+		planEnabled := false
+		keySet := apiKey != ""
+		if provider.GetType() == storepb.AIProviderType_CHATGPT {
+			var credentials llm.ChatGPTCredentials
+			_ = json.Unmarshal([]byte(apiKey), &credentials)
+			keySet = credentials.AccessToken != "" && credentials.Subject != ""
+			account, planEnabled = credentials.Email, credentials.PlanEnabled()
+			hint = "ChatGPT account"
+		}
 		if provider.GetType() == storepb.AIProviderType_ANTIGRAVITY && apiKey != "" {
 			hint = "Google OAuth"
 		}
 		aiSetting.Providers = append(aiSetting.Providers, &apipb.InstanceSetting_AIProviderConfig{
-			Id:         provider.GetId(),
-			Title:      provider.GetTitle(),
-			Type:       apipb.InstanceSetting_AIProviderType(provider.GetType()),
-			Endpoint:   provider.GetEndpoint(),
-			ApiKeySet:  apiKey != "",
-			ApiKeyHint: hint,
+			Id:               provider.GetId(),
+			Title:            provider.GetTitle(),
+			Type:             apipb.InstanceSetting_AIProviderType(provider.GetType()),
+			Endpoint:         provider.GetEndpoint(),
+			ApiKeySet:        keySet,
+			ApiKeyHint:       hint,
+			OauthAccount:     account,
+			OauthPlanEnabled: planEnabled,
 		})
 	}
 	return aiSetting

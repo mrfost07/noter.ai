@@ -194,6 +194,10 @@ message InstanceAISetting {
 
   // Saved meeting and note assistant defaults.
   AssistantConfig assistant = 3;
+  // Installation identity and OAuth application setup; never returned through instance settings.
+  string chatgpt_host_id = 4;
+  string antigravity_client_id = 5;
+  string antigravity_client_secret = 6;
 }
 
 message AssistantConfig {
@@ -226,6 +230,7 @@ enum AIProviderType {
   LOCAL_WHISPER = 12;
   AZURE_STT = 13;
   IBM_STT = 14;
+  CHATGPT = 15;
 }
 
 // TranscriptionConfig configures the speech-to-text feature.

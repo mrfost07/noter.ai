@@ -173,6 +173,12 @@ func (s *APIService) getInstanceSettingByName(ctx context.Context, name string, 
 
 	result := convertInstanceSettingFromStore(instanceSetting)
 	if instanceSetting.Key == storepb.InstanceSettingKey_AI && !isAdminCaller {
+		for _, provider := range result.GetAiSetting().GetProviders() {
+			provider.OauthAccount = ""
+			if provider.Type == apipb.InstanceSetting_CHATGPT {
+				provider.Title = "ChatGPT"
+			}
+		}
 		// Non-admin callers only need transcription.provider_id to gate the
 		// editor's Transcribe button. Model / language / prompt are
 		// admin-entered defaults that may contain proprietary glossary terms,
@@ -206,6 +212,10 @@ func (s *APIService) UpdateInstanceSetting(ctx context.Context, request *apipb.U
 		return nil, status.Errorf(codes.InvalidArgument, "invalid instance setting name: %v", err)
 	}
 	settingKey := storepb.InstanceSettingKey(storepb.InstanceSettingKey_value[settingKeyString])
+	if settingKey == storepb.InstanceSettingKey_AI {
+		s.aiOAuthMu.Lock()
+		defer s.aiOAuthMu.Unlock()
+	}
 	if s.Store.IsInstanceSettingDeploymentConfigured(settingKey) {
 		return nil, status.Errorf(codes.FailedPrecondition, "instance setting %q is configured by the deployment", settingKeyString)
 	}

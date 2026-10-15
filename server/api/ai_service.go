@@ -147,7 +147,7 @@ func (s *APIService) Transcribe(ctx context.Context, request *apipb.TranscribeRe
 		return nil, status.Errorf(codes.FailedPrecondition, "transcription is not configured")
 	}
 
-	provider, err := s.resolveAIProvider(aiSetting, providerID)
+	provider, err := s.resolveAIProvider(ctx, aiSetting, providerID)
 	if err != nil {
 		return nil, err
 	}
@@ -256,7 +256,7 @@ func (s *APIService) AnalyzeMeetingTranscript(ctx context.Context, request *apip
 		return nil, status.Errorf(codes.Internal, "failed to get AI setting: %v", err)
 	}
 
-	provider, err := s.resolveMeetingAnalystProvider(aiSetting, reqProviderID)
+	provider, err := s.resolveMeetingAnalystProvider(ctx, aiSetting, reqProviderID)
 	if err != nil {
 		return nil, err
 	}
@@ -314,15 +314,15 @@ func (s *APIService) AnalyzeMeetingTranscript(ctx context.Context, request *apip
 	}, nil
 }
 
-func (s *APIService) resolveMeetingAnalystProvider(setting *storepb.InstanceAISetting, requestedProviderID string) (ai.ProviderConfig, error) {
+func (s *APIService) resolveMeetingAnalystProvider(ctx context.Context, setting *storepb.InstanceAISetting, requestedProviderID string) (ai.ProviderConfig, error) {
 	if requestedProviderID != "" {
-		return s.resolveAIProvider(setting, requestedProviderID)
+		return s.resolveAIProvider(ctx, setting, requestedProviderID)
 	}
 	if configuredID := strings.TrimSpace(setting.GetAssistant().GetProviderId()); configuredID != "" {
-		return s.resolveAIProvider(setting, configuredID)
+		return s.resolveAIProvider(ctx, setting, configuredID)
 	}
 	if persistedID := strings.TrimSpace(setting.GetTranscription().GetProviderId()); persistedID != "" {
-		if p, err := s.resolveAIProvider(setting, persistedID); err == nil {
+		if p, err := s.resolveAIProvider(ctx, setting, persistedID); err == nil {
 			if _, llmErr := ai.DefaultLLMModel(p.Type); llmErr == nil {
 				return p, nil
 			}
@@ -334,7 +334,7 @@ func (s *APIService) resolveMeetingAnalystProvider(setting *storepb.InstanceAISe
 		}
 		candidate := convertAIProviderConfigFromStore(raw)
 		if _, err := ai.DefaultLLMModel(candidate.Type); err == nil {
-			return candidate, nil
+			return s.refreshOAuthProvider(ctx, candidate)
 		}
 	}
 	return ai.ProviderConfig{}, status.Errorf(codes.FailedPrecondition, "no LLM-capable AI provider is configured")
@@ -606,7 +606,7 @@ func buildTranscriptionInstructions(prompt, language string) string {
 	return strings.Join(parts, "\n\n")
 }
 
-func (*APIService) resolveAIProvider(setting *storepb.InstanceAISetting, providerID string) (ai.ProviderConfig, error) {
+func (s *APIService) resolveAIProvider(ctx context.Context, setting *storepb.InstanceAISetting, providerID string) (ai.ProviderConfig, error) {
 	providers := make([]ai.ProviderConfig, 0, len(setting.GetProviders()))
 	for _, provider := range setting.GetProviders() {
 		if provider == nil {
@@ -619,7 +619,7 @@ func (*APIService) resolveAIProvider(setting *storepb.InstanceAISetting, provide
 	if err != nil {
 		return ai.ProviderConfig{}, status.Errorf(codes.FailedPrecondition, "transcription provider is not configured")
 	}
-	return *provider, nil
+	return s.refreshOAuthProvider(ctx, *provider)
 }
 
 func convertAIProviderConfigFromStore(provider *storepb.AIProviderConfig) ai.ProviderConfig {
@@ -634,6 +634,8 @@ func convertAIProviderConfigFromStore(provider *storepb.AIProviderConfig) ai.Pro
 
 func convertAIProviderTypeFromStore(providerType storepb.AIProviderType) ai.ProviderType {
 	switch providerType {
+	case storepb.AIProviderType_CHATGPT:
+		return ai.ProviderChatGPT
 	case storepb.AIProviderType_OPENAI:
 		return ai.ProviderOpenAI
 	case storepb.AIProviderType_GEMINI:
@@ -694,7 +696,7 @@ func (s *APIService) TestAIProvider(ctx context.Context, request *apipb.TestAIPr
 
 	var provider ai.ProviderConfig
 	if request.GetProviderId() != "" {
-		p, pErr := s.resolveAIProvider(aiSetting, request.GetProviderId())
+		p, pErr := s.resolveAIProvider(ctx, aiSetting, request.GetProviderId())
 		if pErr != nil {
 			//nolint:nilerr // A failed probe is response data, so settings can display its status without a transport failure.
 			return &apipb.TestAIProviderResponse{
@@ -815,8 +817,13 @@ func (s *APIService) FetchAvailableModels(ctx context.Context, request *apipb.Fe
 		return nil, status.Errorf(codes.Internal, "failed to get AI setting: %v", err)
 	}
 
-	provider, err := s.resolveAIProvider(aiSetting, request.GetProviderId())
+	provider, err := s.resolveAIProvider(ctx, aiSetting, request.GetProviderId())
 	if err != nil {
+		for _, saved := range aiSetting.GetProviders() {
+			if saved.Id == request.GetProviderId() {
+				return nil, err
+			}
+		}
 		// Fallback to default catalog based on provider type if provider ID matches type
 		//nolint:nilerr // Catalog lookup intentionally supports provider-type fallback without a configured provider ID.
 		return &apipb.FetchAvailableModelsResponse{
@@ -824,18 +831,27 @@ func (s *APIService) FetchAvailableModels(ctx context.Context, request *apipb.Fe
 		}, nil
 	}
 
+	if provider.Type == ai.ProviderChatGPT {
+		var credentials llm.ChatGPTCredentials
+		if json.Unmarshal([]byte(provider.APIKey), &credentials) != nil {
+			return nil, status.Error(codes.FailedPrecondition, "Connect ChatGPT first.")
+		}
+		models, err := llm.FetchChatGPTModels(ctx, s.aiOAuthHTTPClient, credentials)
+		if err != nil {
+			return nil, status.Error(codes.FailedPrecondition, err.Error())
+		}
+		result := make([]*apipb.ModelInfo, 0, len(models))
+		for _, model := range models {
+			result = append(result, &apipb.ModelInfo{Id: model.ID, Label: model.Label, Description: "Available to your ChatGPT account", RemainingQuota: -1})
+		}
+		return &apipb.FetchAvailableModelsResponse{Models: result}, nil
+	}
 	if provider.Type == ai.ProviderAntigravity {
 		var creds llm.AntigravityOAuthCredentials
 		if strings.HasPrefix(strings.TrimSpace(provider.APIKey), "{") {
 			_ = json.Unmarshal([]byte(provider.APIKey), &creds)
 		}
 		if creds.AccessToken != "" {
-			if creds.ExpiresAt > 0 && time.Now().UnixMilli() >= creds.ExpiresAt-60000 && creds.RefreshToken != "" {
-				if refreshed, refErr := llm.RefreshAntigravityToken(ctx, nil, creds.RefreshToken, creds.ProjectID); refErr == nil {
-					creds = *refreshed
-					_, _ = s.saveAntigravityOAuthProvider(ctx, provider.ID, provider.Title, &creds)
-				}
-			}
 			models, fErr := llm.FetchAntigravityModels(ctx, nil, creds.AccessToken, creds.ProjectID)
 			if fErr == nil && len(models) > 0 {
 				res := make([]*apipb.ModelInfo, 0, len(models))

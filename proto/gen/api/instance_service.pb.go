@@ -239,6 +239,8 @@ const (
 	InstanceSetting_AZURE_STT InstanceSetting_AIProviderType = 13
 	// IBM Watson Speech-to-Text REST API.
 	InstanceSetting_IBM_STT InstanceSetting_AIProviderType = 14
+	// ChatGPT plan usage via the open-source OAuth flow and Responses API.
+	InstanceSetting_CHATGPT InstanceSetting_AIProviderType = 15
 )
 
 // Enum value maps for InstanceSetting_AIProviderType.
@@ -259,6 +261,7 @@ var (
 		12: "LOCAL_WHISPER",
 		13: "AZURE_STT",
 		14: "IBM_STT",
+		15: "CHATGPT",
 	}
 	InstanceSetting_AIProviderType_value = map[string]int32{
 		"AI_PROVIDER_TYPE_UNSPECIFIED": 0,
@@ -276,6 +279,7 @@ var (
 		"LOCAL_WHISPER":                12,
 		"AZURE_STT":                    13,
 		"IBM_STT":                      14,
+		"CHATGPT":                      15,
 	}
 )
 
@@ -1698,9 +1702,12 @@ type InstanceSetting_AIProviderConfig struct {
 	// Output only. Whether an API key is stored for this provider.
 	ApiKeySet bool `protobuf:"varint,6,opt,name=api_key_set,json=apiKeySet,proto3" json:"api_key_set,omitempty"`
 	// Output only. A masked hint of the stored API key.
-	ApiKeyHint    string `protobuf:"bytes,7,opt,name=api_key_hint,json=apiKeyHint,proto3" json:"api_key_hint,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	ApiKeyHint string `protobuf:"bytes,7,opt,name=api_key_hint,json=apiKeyHint,proto3" json:"api_key_hint,omitempty"`
+	// Verified ChatGPT identity; tokens are never returned.
+	OauthAccount     string `protobuf:"bytes,8,opt,name=oauth_account,json=oauthAccount,proto3" json:"oauth_account,omitempty"`
+	OauthPlanEnabled bool   `protobuf:"varint,9,opt,name=oauth_plan_enabled,json=oauthPlanEnabled,proto3" json:"oauth_plan_enabled,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *InstanceSetting_AIProviderConfig) Reset() {
@@ -1780,6 +1787,20 @@ func (x *InstanceSetting_AIProviderConfig) GetApiKeyHint() string {
 		return x.ApiKeyHint
 	}
 	return ""
+}
+
+func (x *InstanceSetting_AIProviderConfig) GetOauthAccount() string {
+	if x != nil {
+		return x.OauthAccount
+	}
+	return ""
+}
+
+func (x *InstanceSetting_AIProviderConfig) GetOauthPlanEnabled() bool {
+	if x != nil {
+		return x.OauthPlanEnabled
+	}
+	return false
 }
 
 // TranscriptionConfig is the speech-to-text feature configuration.
@@ -2395,7 +2416,7 @@ const file_api_instance_service_proto_rawDesc = "" +
 	"\tChallenge\x12\x1a\n" +
 	"\bprovider\x18\x01 \x01(\tR\bprovider\x12\x19\n" +
 	"\bsite_key\x18\x02 \x01(\tR\asiteKey\"\x1b\n" +
-	"\x19GetInstanceProfileRequest\"\x88%\n" +
+	"\x19GetInstanceProfileRequest\"\xf2%\n" +
 	"\x0fInstanceSetting\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12T\n" +
 	"\x0fgeneral_setting\x18\x02 \x01(\v2).memos.api.InstanceSetting.GeneralSettingH\x00R\x0egeneralSetting\x12T\n" +
@@ -2487,7 +2508,7 @@ const file_api_instance_service_proto_rawDesc = "" +
 	"\x0fAssistantConfig\x12\x1f\n" +
 	"\vprovider_id\x18\x01 \x01(\tR\n" +
 	"providerId\x12\x14\n" +
-	"\x05model\x18\x02 \x01(\tR\x05model\x1a\xfd\x01\n" +
+	"\x05model\x18\x02 \x01(\tR\x05model\x1a\xda\x02\n" +
 	"\x10AIProviderConfig\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12=\n" +
@@ -2496,7 +2517,9 @@ const file_api_instance_service_proto_rawDesc = "" +
 	"\aapi_key\x18\x05 \x01(\tB\x03\xe0A\x04R\x06apiKey\x12#\n" +
 	"\vapi_key_set\x18\x06 \x01(\bB\x03\xe0A\x03R\tapiKeySet\x12%\n" +
 	"\fapi_key_hint\x18\a \x01(\tB\x03\xe0A\x03R\n" +
-	"apiKeyHint\x1a\xd5\x01\n" +
+	"apiKeyHint\x12(\n" +
+	"\roauth_account\x18\b \x01(\tB\x03\xe0A\x03R\foauthAccount\x121\n" +
+	"\x12oauth_plan_enabled\x18\t \x01(\bB\x03\xe0A\x03R\x10oauthPlanEnabled\x1a\xd5\x01\n" +
 	"\x13TranscriptionConfig\x12\x1f\n" +
 	"\vprovider_id\x18\x01 \x01(\tR\n" +
 	"providerId\x12\x14\n" +
@@ -2522,7 +2545,7 @@ const file_api_instance_service_proto_rawDesc = "" +
 	"\x18STORAGE_TYPE_UNSPECIFIED\x10\x00\x12\f\n" +
 	"\bDATABASE\x10\x01\x12\t\n" +
 	"\x05LOCAL\x10\x02\x12\x06\n" +
-	"\x02S3\x10\x03\"\xf7\x01\n" +
+	"\x02S3\x10\x03\"\x84\x02\n" +
 	"\x0eAIProviderType\x12 \n" +
 	"\x1cAI_PROVIDER_TYPE_UNSPECIFIED\x10\x00\x12\n" +
 	"\n" +
@@ -2545,7 +2568,8 @@ const file_api_instance_service_proto_rawDesc = "" +
 	"\x06OLLAMA\x10\v\x12\x11\n" +
 	"\rLOCAL_WHISPER\x10\f\x12\r\n" +
 	"\tAZURE_STT\x10\r\x12\v\n" +
-	"\aIBM_STT\x10\x0e:^\xeaA[\n" +
+	"\aIBM_STT\x10\x0e\x12\v\n" +
+	"\aCHATGPT\x10\x0f:^\xeaA[\n" +
 	"\x19memos.api/InstanceSetting\x12\x1binstance/settings/{setting}*\x10instanceSettings2\x0finstanceSettingB\a\n" +
 	"\x05value\"R\n" +
 	"\x19GetInstanceSettingRequest\x125\n" +

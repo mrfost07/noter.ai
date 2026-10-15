@@ -33,6 +33,18 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
+	// AIServiceGetAIConnectionStatusProcedure is the fully-qualified name of the AIService's
+	// GetAIConnectionStatus RPC.
+	AIServiceGetAIConnectionStatusProcedure = "/memos.api.AIService/GetAIConnectionStatus"
+	// AIServiceConfigureAntigravityOAuthProcedure is the fully-qualified name of the AIService's
+	// ConfigureAntigravityOAuth RPC.
+	AIServiceConfigureAntigravityOAuthProcedure = "/memos.api.AIService/ConfigureAntigravityOAuth"
+	// AIServiceStartChatGPTOAuthProcedure is the fully-qualified name of the AIService's
+	// StartChatGPTOAuth RPC.
+	AIServiceStartChatGPTOAuthProcedure = "/memos.api.AIService/StartChatGPTOAuth"
+	// AIServiceDisconnectChatGPTProcedure is the fully-qualified name of the AIService's
+	// DisconnectChatGPT RPC.
+	AIServiceDisconnectChatGPTProcedure = "/memos.api.AIService/DisconnectChatGPT"
 	// AIServiceTranscribeProcedure is the fully-qualified name of the AIService's Transcribe RPC.
 	AIServiceTranscribeProcedure = "/memos.api.AIService/Transcribe"
 	// AIServiceAnalyzeMeetingTranscriptProcedure is the fully-qualified name of the AIService's
@@ -53,6 +65,14 @@ const (
 
 // AIServiceClient is a client for the memos.api.AIService service.
 type AIServiceClient interface {
+	// GetAIConnectionStatus reports setup readiness without exposing credentials.
+	GetAIConnectionStatus(context.Context, *connect.Request[api.GetAIConnectionStatusRequest]) (*connect.Response[api.GetAIConnectionStatusResponse], error)
+	// ConfigureAntigravityOAuth saves this installation's authorized OAuth application configuration.
+	ConfigureAntigravityOAuth(context.Context, *connect.Request[api.ConfigureAntigravityOAuthRequest]) (*connect.Response[api.GetAIConnectionStatusResponse], error)
+	// StartChatGPTOAuth connects a separately registered ChatGPT account using PKCE.
+	StartChatGPTOAuth(context.Context, *connect.Request[api.StartChatGPTOAuthRequest]) (*connect.Response[api.StartChatGPTOAuthResponse], error)
+	// DisconnectChatGPT revokes the selected renewable session and clears local tokens.
+	DisconnectChatGPT(context.Context, *connect.Request[api.DisconnectChatGPTRequest]) (*connect.Response[api.DisconnectChatGPTResponse], error)
 	// Transcribe transcribes an audio file with the instance's configured
 	// transcription provider. The caller must be signed in, and requests are rate limited per user.
 	Transcribe(context.Context, *connect.Request[api.TranscribeRequest]) (*connect.Response[api.TranscribeResponse], error)
@@ -83,6 +103,30 @@ func NewAIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...c
 	baseURL = strings.TrimRight(baseURL, "/")
 	aIServiceMethods := api.File_api_ai_service_proto.Services().ByName("AIService").Methods()
 	return &aIServiceClient{
+		getAIConnectionStatus: connect.NewClient[api.GetAIConnectionStatusRequest, api.GetAIConnectionStatusResponse](
+			httpClient,
+			baseURL+AIServiceGetAIConnectionStatusProcedure,
+			connect.WithSchema(aIServiceMethods.ByName("GetAIConnectionStatus")),
+			connect.WithClientOptions(opts...),
+		),
+		configureAntigravityOAuth: connect.NewClient[api.ConfigureAntigravityOAuthRequest, api.GetAIConnectionStatusResponse](
+			httpClient,
+			baseURL+AIServiceConfigureAntigravityOAuthProcedure,
+			connect.WithSchema(aIServiceMethods.ByName("ConfigureAntigravityOAuth")),
+			connect.WithClientOptions(opts...),
+		),
+		startChatGPTOAuth: connect.NewClient[api.StartChatGPTOAuthRequest, api.StartChatGPTOAuthResponse](
+			httpClient,
+			baseURL+AIServiceStartChatGPTOAuthProcedure,
+			connect.WithSchema(aIServiceMethods.ByName("StartChatGPTOAuth")),
+			connect.WithClientOptions(opts...),
+		),
+		disconnectChatGPT: connect.NewClient[api.DisconnectChatGPTRequest, api.DisconnectChatGPTResponse](
+			httpClient,
+			baseURL+AIServiceDisconnectChatGPTProcedure,
+			connect.WithSchema(aIServiceMethods.ByName("DisconnectChatGPT")),
+			connect.WithClientOptions(opts...),
+		),
 		transcribe: connect.NewClient[api.TranscribeRequest, api.TranscribeResponse](
 			httpClient,
 			baseURL+AIServiceTranscribeProcedure,
@@ -124,12 +168,36 @@ func NewAIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...c
 
 // aIServiceClient implements AIServiceClient.
 type aIServiceClient struct {
-	transcribe               *connect.Client[api.TranscribeRequest, api.TranscribeResponse]
-	analyzeMeetingTranscript *connect.Client[api.AnalyzeMeetingTranscriptRequest, api.AnalyzeMeetingTranscriptResponse]
-	startAntigravityOAuth    *connect.Client[api.StartAntigravityOAuthRequest, api.StartAntigravityOAuthResponse]
-	runAgentTask             *connect.Client[api.RunAgentTaskRequest, api.RunAgentTaskResponse]
-	testAIProvider           *connect.Client[api.TestAIProviderRequest, api.TestAIProviderResponse]
-	fetchAvailableModels     *connect.Client[api.FetchAvailableModelsRequest, api.FetchAvailableModelsResponse]
+	getAIConnectionStatus     *connect.Client[api.GetAIConnectionStatusRequest, api.GetAIConnectionStatusResponse]
+	configureAntigravityOAuth *connect.Client[api.ConfigureAntigravityOAuthRequest, api.GetAIConnectionStatusResponse]
+	startChatGPTOAuth         *connect.Client[api.StartChatGPTOAuthRequest, api.StartChatGPTOAuthResponse]
+	disconnectChatGPT         *connect.Client[api.DisconnectChatGPTRequest, api.DisconnectChatGPTResponse]
+	transcribe                *connect.Client[api.TranscribeRequest, api.TranscribeResponse]
+	analyzeMeetingTranscript  *connect.Client[api.AnalyzeMeetingTranscriptRequest, api.AnalyzeMeetingTranscriptResponse]
+	startAntigravityOAuth     *connect.Client[api.StartAntigravityOAuthRequest, api.StartAntigravityOAuthResponse]
+	runAgentTask              *connect.Client[api.RunAgentTaskRequest, api.RunAgentTaskResponse]
+	testAIProvider            *connect.Client[api.TestAIProviderRequest, api.TestAIProviderResponse]
+	fetchAvailableModels      *connect.Client[api.FetchAvailableModelsRequest, api.FetchAvailableModelsResponse]
+}
+
+// GetAIConnectionStatus calls memos.api.AIService.GetAIConnectionStatus.
+func (c *aIServiceClient) GetAIConnectionStatus(ctx context.Context, req *connect.Request[api.GetAIConnectionStatusRequest]) (*connect.Response[api.GetAIConnectionStatusResponse], error) {
+	return c.getAIConnectionStatus.CallUnary(ctx, req)
+}
+
+// ConfigureAntigravityOAuth calls memos.api.AIService.ConfigureAntigravityOAuth.
+func (c *aIServiceClient) ConfigureAntigravityOAuth(ctx context.Context, req *connect.Request[api.ConfigureAntigravityOAuthRequest]) (*connect.Response[api.GetAIConnectionStatusResponse], error) {
+	return c.configureAntigravityOAuth.CallUnary(ctx, req)
+}
+
+// StartChatGPTOAuth calls memos.api.AIService.StartChatGPTOAuth.
+func (c *aIServiceClient) StartChatGPTOAuth(ctx context.Context, req *connect.Request[api.StartChatGPTOAuthRequest]) (*connect.Response[api.StartChatGPTOAuthResponse], error) {
+	return c.startChatGPTOAuth.CallUnary(ctx, req)
+}
+
+// DisconnectChatGPT calls memos.api.AIService.DisconnectChatGPT.
+func (c *aIServiceClient) DisconnectChatGPT(ctx context.Context, req *connect.Request[api.DisconnectChatGPTRequest]) (*connect.Response[api.DisconnectChatGPTResponse], error) {
+	return c.disconnectChatGPT.CallUnary(ctx, req)
 }
 
 // Transcribe calls memos.api.AIService.Transcribe.
@@ -164,6 +232,14 @@ func (c *aIServiceClient) FetchAvailableModels(ctx context.Context, req *connect
 
 // AIServiceHandler is an implementation of the memos.api.AIService service.
 type AIServiceHandler interface {
+	// GetAIConnectionStatus reports setup readiness without exposing credentials.
+	GetAIConnectionStatus(context.Context, *connect.Request[api.GetAIConnectionStatusRequest]) (*connect.Response[api.GetAIConnectionStatusResponse], error)
+	// ConfigureAntigravityOAuth saves this installation's authorized OAuth application configuration.
+	ConfigureAntigravityOAuth(context.Context, *connect.Request[api.ConfigureAntigravityOAuthRequest]) (*connect.Response[api.GetAIConnectionStatusResponse], error)
+	// StartChatGPTOAuth connects a separately registered ChatGPT account using PKCE.
+	StartChatGPTOAuth(context.Context, *connect.Request[api.StartChatGPTOAuthRequest]) (*connect.Response[api.StartChatGPTOAuthResponse], error)
+	// DisconnectChatGPT revokes the selected renewable session and clears local tokens.
+	DisconnectChatGPT(context.Context, *connect.Request[api.DisconnectChatGPTRequest]) (*connect.Response[api.DisconnectChatGPTResponse], error)
 	// Transcribe transcribes an audio file with the instance's configured
 	// transcription provider. The caller must be signed in, and requests are rate limited per user.
 	Transcribe(context.Context, *connect.Request[api.TranscribeRequest]) (*connect.Response[api.TranscribeResponse], error)
@@ -190,6 +266,30 @@ type AIServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewAIServiceHandler(svc AIServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	aIServiceMethods := api.File_api_ai_service_proto.Services().ByName("AIService").Methods()
+	aIServiceGetAIConnectionStatusHandler := connect.NewUnaryHandler(
+		AIServiceGetAIConnectionStatusProcedure,
+		svc.GetAIConnectionStatus,
+		connect.WithSchema(aIServiceMethods.ByName("GetAIConnectionStatus")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aIServiceConfigureAntigravityOAuthHandler := connect.NewUnaryHandler(
+		AIServiceConfigureAntigravityOAuthProcedure,
+		svc.ConfigureAntigravityOAuth,
+		connect.WithSchema(aIServiceMethods.ByName("ConfigureAntigravityOAuth")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aIServiceStartChatGPTOAuthHandler := connect.NewUnaryHandler(
+		AIServiceStartChatGPTOAuthProcedure,
+		svc.StartChatGPTOAuth,
+		connect.WithSchema(aIServiceMethods.ByName("StartChatGPTOAuth")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aIServiceDisconnectChatGPTHandler := connect.NewUnaryHandler(
+		AIServiceDisconnectChatGPTProcedure,
+		svc.DisconnectChatGPT,
+		connect.WithSchema(aIServiceMethods.ByName("DisconnectChatGPT")),
+		connect.WithHandlerOptions(opts...),
+	)
 	aIServiceTranscribeHandler := connect.NewUnaryHandler(
 		AIServiceTranscribeProcedure,
 		svc.Transcribe,
@@ -228,6 +328,14 @@ func NewAIServiceHandler(svc AIServiceHandler, opts ...connect.HandlerOption) (s
 	)
 	return "/memos.api.AIService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
+		case AIServiceGetAIConnectionStatusProcedure:
+			aIServiceGetAIConnectionStatusHandler.ServeHTTP(w, r)
+		case AIServiceConfigureAntigravityOAuthProcedure:
+			aIServiceConfigureAntigravityOAuthHandler.ServeHTTP(w, r)
+		case AIServiceStartChatGPTOAuthProcedure:
+			aIServiceStartChatGPTOAuthHandler.ServeHTTP(w, r)
+		case AIServiceDisconnectChatGPTProcedure:
+			aIServiceDisconnectChatGPTHandler.ServeHTTP(w, r)
 		case AIServiceTranscribeProcedure:
 			aIServiceTranscribeHandler.ServeHTTP(w, r)
 		case AIServiceAnalyzeMeetingTranscriptProcedure:
@@ -248,6 +356,22 @@ func NewAIServiceHandler(svc AIServiceHandler, opts ...connect.HandlerOption) (s
 
 // UnimplementedAIServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedAIServiceHandler struct{}
+
+func (UnimplementedAIServiceHandler) GetAIConnectionStatus(context.Context, *connect.Request[api.GetAIConnectionStatusRequest]) (*connect.Response[api.GetAIConnectionStatusResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.AIService.GetAIConnectionStatus is not implemented"))
+}
+
+func (UnimplementedAIServiceHandler) ConfigureAntigravityOAuth(context.Context, *connect.Request[api.ConfigureAntigravityOAuthRequest]) (*connect.Response[api.GetAIConnectionStatusResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.AIService.ConfigureAntigravityOAuth is not implemented"))
+}
+
+func (UnimplementedAIServiceHandler) StartChatGPTOAuth(context.Context, *connect.Request[api.StartChatGPTOAuthRequest]) (*connect.Response[api.StartChatGPTOAuthResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.AIService.StartChatGPTOAuth is not implemented"))
+}
+
+func (UnimplementedAIServiceHandler) DisconnectChatGPT(context.Context, *connect.Request[api.DisconnectChatGPTRequest]) (*connect.Response[api.DisconnectChatGPTResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.AIService.DisconnectChatGPT is not implemented"))
+}
 
 func (UnimplementedAIServiceHandler) Transcribe(context.Context, *connect.Request[api.TranscribeRequest]) (*connect.Response[api.TranscribeResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.AIService.Transcribe is not implemented"))

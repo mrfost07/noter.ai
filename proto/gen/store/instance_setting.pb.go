@@ -170,6 +170,7 @@ const (
 	AIProviderType_LOCAL_WHISPER                AIProviderType = 12
 	AIProviderType_AZURE_STT                    AIProviderType = 13
 	AIProviderType_IBM_STT                      AIProviderType = 14
+	AIProviderType_CHATGPT                      AIProviderType = 15
 )
 
 // Enum value maps for AIProviderType.
@@ -190,6 +191,7 @@ var (
 		12: "LOCAL_WHISPER",
 		13: "AZURE_STT",
 		14: "IBM_STT",
+		15: "CHATGPT",
 	}
 	AIProviderType_value = map[string]int32{
 		"AI_PROVIDER_TYPE_UNSPECIFIED": 0,
@@ -207,6 +209,7 @@ var (
 		"LOCAL_WHISPER":                12,
 		"AZURE_STT":                    13,
 		"IBM_STT":                      14,
+		"CHATGPT":                      15,
 	}
 )
 
@@ -1253,9 +1256,13 @@ type InstanceAISetting struct {
 	// When unset or transcription.provider_id is empty, transcription is disabled.
 	Transcription *TranscriptionConfig `protobuf:"bytes,2,opt,name=transcription,proto3" json:"transcription,omitempty"`
 	// Saved meeting and note assistant defaults.
-	Assistant     *AssistantConfig `protobuf:"bytes,3,opt,name=assistant,proto3" json:"assistant,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Assistant *AssistantConfig `protobuf:"bytes,3,opt,name=assistant,proto3" json:"assistant,omitempty"`
+	// Installation identity and OAuth application setup; never returned through instance settings.
+	ChatgptHostId           string `protobuf:"bytes,4,opt,name=chatgpt_host_id,json=chatgptHostId,proto3" json:"chatgpt_host_id,omitempty"`
+	AntigravityClientId     string `protobuf:"bytes,5,opt,name=antigravity_client_id,json=antigravityClientId,proto3" json:"antigravity_client_id,omitempty"`
+	AntigravityClientSecret string `protobuf:"bytes,6,opt,name=antigravity_client_secret,json=antigravityClientSecret,proto3" json:"antigravity_client_secret,omitempty"`
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
 }
 
 func (x *InstanceAISetting) Reset() {
@@ -1307,6 +1314,27 @@ func (x *InstanceAISetting) GetAssistant() *AssistantConfig {
 		return x.Assistant
 	}
 	return nil
+}
+
+func (x *InstanceAISetting) GetChatgptHostId() string {
+	if x != nil {
+		return x.ChatgptHostId
+	}
+	return ""
+}
+
+func (x *InstanceAISetting) GetAntigravityClientId() string {
+	if x != nil {
+		return x.AntigravityClientId
+	}
+	return ""
+}
+
+func (x *InstanceAISetting) GetAntigravityClientSecret() string {
+	if x != nil {
+		return x.AntigravityClientSecret
+	}
+	return ""
 }
 
 type AssistantConfig struct {
@@ -1788,11 +1816,14 @@ const file_store_instance_setting_proto_rawDesc = "" +
 	"\breply_to\x18\b \x01(\tR\areplyTo\x12\x17\n" +
 	"\ause_tls\x18\t \x01(\bR\x06useTls\x12\x17\n" +
 	"\ause_ssl\x18\n" +
-	" \x01(\bR\x06useSsl\"\xd4\x01\n" +
+	" \x01(\bR\x06useSsl\"\xec\x02\n" +
 	"\x11InstanceAISetting\x12;\n" +
 	"\tproviders\x18\x01 \x03(\v2\x1d.memos.store.AIProviderConfigR\tproviders\x12F\n" +
 	"\rtranscription\x18\x02 \x01(\v2 .memos.store.TranscriptionConfigR\rtranscription\x12:\n" +
-	"\tassistant\x18\x03 \x01(\v2\x1c.memos.store.AssistantConfigR\tassistant\"H\n" +
+	"\tassistant\x18\x03 \x01(\v2\x1c.memos.store.AssistantConfigR\tassistant\x12&\n" +
+	"\x0fchatgpt_host_id\x18\x04 \x01(\tR\rchatgptHostId\x122\n" +
+	"\x15antigravity_client_id\x18\x05 \x01(\tR\x13antigravityClientId\x12:\n" +
+	"\x19antigravity_client_secret\x18\x06 \x01(\tR\x17antigravityClientSecret\"H\n" +
 	"\x0fAssistantConfig\x12\x1f\n" +
 	"\vprovider_id\x18\x01 \x01(\tR\n" +
 	"providerId\x12\x14\n" +
@@ -1829,7 +1860,7 @@ const file_store_instance_setting_proto_rawDesc = "" +
 	"\x18STORAGE_TYPE_UNSPECIFIED\x10\x00\x12\x19\n" +
 	"\x15STORAGE_TYPE_DATABASE\x10\x01\x12\x16\n" +
 	"\x12STORAGE_TYPE_LOCAL\x10\x02\x12\x13\n" +
-	"\x0fSTORAGE_TYPE_S3\x10\x03*\xf7\x01\n" +
+	"\x0fSTORAGE_TYPE_S3\x10\x03*\x84\x02\n" +
 	"\x0eAIProviderType\x12 \n" +
 	"\x1cAI_PROVIDER_TYPE_UNSPECIFIED\x10\x00\x12\n" +
 	"\n" +
@@ -1852,7 +1883,8 @@ const file_store_instance_setting_proto_rawDesc = "" +
 	"\x06OLLAMA\x10\v\x12\x11\n" +
 	"\rLOCAL_WHISPER\x10\f\x12\r\n" +
 	"\tAZURE_STT\x10\r\x12\v\n" +
-	"\aIBM_STT\x10\x0e*}\n" +
+	"\aIBM_STT\x10\x0e\x12\v\n" +
+	"\aCHATGPT\x10\x0f*}\n" +
 	"\x12InstanceAccessMode\x12$\n" +
 	" INSTANCE_ACCESS_MODE_UNSPECIFIED\x10\x00\x12 \n" +
 	"\x1cINSTANCE_ACCESS_MODE_PRIVATE\x10\x01\x12\x1f\n" +

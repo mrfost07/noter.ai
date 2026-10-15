@@ -19,12 +19,16 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AIService_Transcribe_FullMethodName               = "/memos.api.AIService/Transcribe"
-	AIService_AnalyzeMeetingTranscript_FullMethodName = "/memos.api.AIService/AnalyzeMeetingTranscript"
-	AIService_StartAntigravityOAuth_FullMethodName    = "/memos.api.AIService/StartAntigravityOAuth"
-	AIService_RunAgentTask_FullMethodName             = "/memos.api.AIService/RunAgentTask"
-	AIService_TestAIProvider_FullMethodName           = "/memos.api.AIService/TestAIProvider"
-	AIService_FetchAvailableModels_FullMethodName     = "/memos.api.AIService/FetchAvailableModels"
+	AIService_GetAIConnectionStatus_FullMethodName     = "/memos.api.AIService/GetAIConnectionStatus"
+	AIService_ConfigureAntigravityOAuth_FullMethodName = "/memos.api.AIService/ConfigureAntigravityOAuth"
+	AIService_StartChatGPTOAuth_FullMethodName         = "/memos.api.AIService/StartChatGPTOAuth"
+	AIService_DisconnectChatGPT_FullMethodName         = "/memos.api.AIService/DisconnectChatGPT"
+	AIService_Transcribe_FullMethodName                = "/memos.api.AIService/Transcribe"
+	AIService_AnalyzeMeetingTranscript_FullMethodName  = "/memos.api.AIService/AnalyzeMeetingTranscript"
+	AIService_StartAntigravityOAuth_FullMethodName     = "/memos.api.AIService/StartAntigravityOAuth"
+	AIService_RunAgentTask_FullMethodName              = "/memos.api.AIService/RunAgentTask"
+	AIService_TestAIProvider_FullMethodName            = "/memos.api.AIService/TestAIProvider"
+	AIService_FetchAvailableModels_FullMethodName      = "/memos.api.AIService/FetchAvailableModels"
 )
 
 // AIServiceClient is the client API for AIService service.
@@ -33,6 +37,14 @@ const (
 //
 // AIService runs AI tasks through the AI providers configured on the instance.
 type AIServiceClient interface {
+	// GetAIConnectionStatus reports setup readiness without exposing credentials.
+	GetAIConnectionStatus(ctx context.Context, in *GetAIConnectionStatusRequest, opts ...grpc.CallOption) (*GetAIConnectionStatusResponse, error)
+	// ConfigureAntigravityOAuth saves this installation's authorized OAuth application configuration.
+	ConfigureAntigravityOAuth(ctx context.Context, in *ConfigureAntigravityOAuthRequest, opts ...grpc.CallOption) (*GetAIConnectionStatusResponse, error)
+	// StartChatGPTOAuth connects a separately registered ChatGPT account using PKCE.
+	StartChatGPTOAuth(ctx context.Context, in *StartChatGPTOAuthRequest, opts ...grpc.CallOption) (*StartChatGPTOAuthResponse, error)
+	// DisconnectChatGPT revokes the selected renewable session and clears local tokens.
+	DisconnectChatGPT(ctx context.Context, in *DisconnectChatGPTRequest, opts ...grpc.CallOption) (*DisconnectChatGPTResponse, error)
 	// Transcribe transcribes an audio file with the instance's configured
 	// transcription provider. The caller must be signed in, and requests are rate limited per user.
 	Transcribe(ctx context.Context, in *TranscribeRequest, opts ...grpc.CallOption) (*TranscribeResponse, error)
@@ -58,6 +70,46 @@ type aIServiceClient struct {
 
 func NewAIServiceClient(cc grpc.ClientConnInterface) AIServiceClient {
 	return &aIServiceClient{cc}
+}
+
+func (c *aIServiceClient) GetAIConnectionStatus(ctx context.Context, in *GetAIConnectionStatusRequest, opts ...grpc.CallOption) (*GetAIConnectionStatusResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetAIConnectionStatusResponse)
+	err := c.cc.Invoke(ctx, AIService_GetAIConnectionStatus_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aIServiceClient) ConfigureAntigravityOAuth(ctx context.Context, in *ConfigureAntigravityOAuthRequest, opts ...grpc.CallOption) (*GetAIConnectionStatusResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetAIConnectionStatusResponse)
+	err := c.cc.Invoke(ctx, AIService_ConfigureAntigravityOAuth_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aIServiceClient) StartChatGPTOAuth(ctx context.Context, in *StartChatGPTOAuthRequest, opts ...grpc.CallOption) (*StartChatGPTOAuthResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(StartChatGPTOAuthResponse)
+	err := c.cc.Invoke(ctx, AIService_StartChatGPTOAuth_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aIServiceClient) DisconnectChatGPT(ctx context.Context, in *DisconnectChatGPTRequest, opts ...grpc.CallOption) (*DisconnectChatGPTResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DisconnectChatGPTResponse)
+	err := c.cc.Invoke(ctx, AIService_DisconnectChatGPT_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *aIServiceClient) Transcribe(ctx context.Context, in *TranscribeRequest, opts ...grpc.CallOption) (*TranscribeResponse, error) {
@@ -126,6 +178,14 @@ func (c *aIServiceClient) FetchAvailableModels(ctx context.Context, in *FetchAva
 //
 // AIService runs AI tasks through the AI providers configured on the instance.
 type AIServiceServer interface {
+	// GetAIConnectionStatus reports setup readiness without exposing credentials.
+	GetAIConnectionStatus(context.Context, *GetAIConnectionStatusRequest) (*GetAIConnectionStatusResponse, error)
+	// ConfigureAntigravityOAuth saves this installation's authorized OAuth application configuration.
+	ConfigureAntigravityOAuth(context.Context, *ConfigureAntigravityOAuthRequest) (*GetAIConnectionStatusResponse, error)
+	// StartChatGPTOAuth connects a separately registered ChatGPT account using PKCE.
+	StartChatGPTOAuth(context.Context, *StartChatGPTOAuthRequest) (*StartChatGPTOAuthResponse, error)
+	// DisconnectChatGPT revokes the selected renewable session and clears local tokens.
+	DisconnectChatGPT(context.Context, *DisconnectChatGPTRequest) (*DisconnectChatGPTResponse, error)
 	// Transcribe transcribes an audio file with the instance's configured
 	// transcription provider. The caller must be signed in, and requests are rate limited per user.
 	Transcribe(context.Context, *TranscribeRequest) (*TranscribeResponse, error)
@@ -153,6 +213,18 @@ type AIServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedAIServiceServer struct{}
 
+func (UnimplementedAIServiceServer) GetAIConnectionStatus(context.Context, *GetAIConnectionStatusRequest) (*GetAIConnectionStatusResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetAIConnectionStatus not implemented")
+}
+func (UnimplementedAIServiceServer) ConfigureAntigravityOAuth(context.Context, *ConfigureAntigravityOAuthRequest) (*GetAIConnectionStatusResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ConfigureAntigravityOAuth not implemented")
+}
+func (UnimplementedAIServiceServer) StartChatGPTOAuth(context.Context, *StartChatGPTOAuthRequest) (*StartChatGPTOAuthResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method StartChatGPTOAuth not implemented")
+}
+func (UnimplementedAIServiceServer) DisconnectChatGPT(context.Context, *DisconnectChatGPTRequest) (*DisconnectChatGPTResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DisconnectChatGPT not implemented")
+}
 func (UnimplementedAIServiceServer) Transcribe(context.Context, *TranscribeRequest) (*TranscribeResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Transcribe not implemented")
 }
@@ -190,6 +262,78 @@ func RegisterAIServiceServer(s grpc.ServiceRegistrar, srv AIServiceServer) {
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&AIService_ServiceDesc, srv)
+}
+
+func _AIService_GetAIConnectionStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAIConnectionStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AIServiceServer).GetAIConnectionStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AIService_GetAIConnectionStatus_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AIServiceServer).GetAIConnectionStatus(ctx, req.(*GetAIConnectionStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AIService_ConfigureAntigravityOAuth_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ConfigureAntigravityOAuthRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AIServiceServer).ConfigureAntigravityOAuth(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AIService_ConfigureAntigravityOAuth_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AIServiceServer).ConfigureAntigravityOAuth(ctx, req.(*ConfigureAntigravityOAuthRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AIService_StartChatGPTOAuth_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StartChatGPTOAuthRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AIServiceServer).StartChatGPTOAuth(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AIService_StartChatGPTOAuth_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AIServiceServer).StartChatGPTOAuth(ctx, req.(*StartChatGPTOAuthRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AIService_DisconnectChatGPT_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DisconnectChatGPTRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AIServiceServer).DisconnectChatGPT(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AIService_DisconnectChatGPT_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AIServiceServer).DisconnectChatGPT(ctx, req.(*DisconnectChatGPTRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _AIService_Transcribe_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -307,6 +451,22 @@ var AIService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "memos.api.AIService",
 	HandlerType: (*AIServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetAIConnectionStatus",
+			Handler:    _AIService_GetAIConnectionStatus_Handler,
+		},
+		{
+			MethodName: "ConfigureAntigravityOAuth",
+			Handler:    _AIService_ConfigureAntigravityOAuth_Handler,
+		},
+		{
+			MethodName: "StartChatGPTOAuth",
+			Handler:    _AIService_StartChatGPTOAuth_Handler,
+		},
+		{
+			MethodName: "DisconnectChatGPT",
+			Handler:    _AIService_DisconnectChatGPT_Handler,
+		},
 		{
 			MethodName: "Transcribe",
 			Handler:    _AIService_Transcribe_Handler,

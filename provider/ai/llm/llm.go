@@ -114,6 +114,8 @@ type AntigravityOAuthCredentials struct {
 	RefreshToken string `json:"refresh_token"`
 	ExpiresAt    int64  `json:"expires_at"`
 	ProjectID    string `json:"project_id"`
+	ClientID     string `json:"client_id,omitempty"`
+	ClientSecret string `json:"client_secret,omitempty"`
 }
 
 // Request is the input to an LLM text/JSON generation call.
@@ -159,6 +161,8 @@ func (c *Client) Generate(ctx context.Context, req Request) (*Response, error) {
 		return nil, errors.New("user prompt or audio content is required")
 	}
 	switch c.cfg.Type {
+	case ai.ProviderChatGPT:
+		return c.generateChatGPT(ctx, req)
 	case ai.ProviderGemini:
 		return c.generateGemini(ctx, req)
 	case ai.ProviderAntigravity:
@@ -224,6 +228,9 @@ func (c *Client) generateOpenAICompatible(ctx context.Context, req Request) (*Re
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= http.StatusBadRequest {
+		if c.cfg.Type == ai.ProviderOpenAI {
+			return nil, openAIHTTPError(resp)
+		}
 		raw, _ := io.ReadAll(io.LimitReader(resp.Body, maxErrorBodyBytes))
 		return nil, errors.Errorf("LLM provider error (%d): %s", resp.StatusCode, string(raw))
 	}
@@ -391,7 +398,7 @@ func (c *Client) generateAntigravity(ctx context.Context, req Request) (*Respons
 		var creds AntigravityOAuthCredentials
 		if err := json.Unmarshal([]byte(accessToken), &creds); err == nil && creds.AccessToken != "" {
 			if creds.ExpiresAt > 0 && time.Now().UnixMilli() >= creds.ExpiresAt-60000 && creds.RefreshToken != "" {
-				if refreshed, refErr := RefreshAntigravityToken(ctx, c.httpClient, creds.RefreshToken, creds.ProjectID); refErr == nil {
+				if refreshed, refErr := RefreshAntigravityCredentials(ctx, c.httpClient, creds); refErr == nil {
 					creds = *refreshed
 				} else if errors.Is(refErr, errAntigravityOAuthNotConfigured) {
 					return nil, refErr
@@ -579,6 +586,14 @@ func ExchangeAntigravityAuthCode(ctx context.Context, httpClient *http.Client, c
 	if err != nil {
 		return nil, err
 	}
+	return ExchangeAntigravityAuthCodeWithClient(ctx, httpClient, code, codeVerifier, redirectURI, clientID, clientSecret)
+}
+
+// ExchangeAntigravityAuthCodeWithClient uses this installation's explicitly configured OAuth client.
+func ExchangeAntigravityAuthCodeWithClient(ctx context.Context, httpClient *http.Client, code, codeVerifier, redirectURI, clientID, clientSecret string) (*AntigravityOAuthCredentials, error) {
+	if strings.TrimSpace(clientID) == "" || strings.TrimSpace(clientSecret) == "" {
+		return nil, errAntigravityOAuthNotConfigured
+	}
 	if httpClient == nil {
 		httpClient = &http.Client{Timeout: defaultHTTPTimeout}
 	}
@@ -608,8 +623,7 @@ func ExchangeAntigravityAuthCode(ctx context.Context, httpClient *http.Client, c
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= http.StatusBadRequest {
-		raw, _ := io.ReadAll(io.LimitReader(resp.Body, maxErrorBodyBytes))
-		return nil, errors.Errorf("OAuth token exchange failed (%d): %s", resp.StatusCode, string(raw))
+		return nil, errors.Errorf("connection: Google rejected the OAuth connection (HTTP %d). Check the client ID, client secret, redirect URI and account access in Antigravity setup", resp.StatusCode)
 	}
 
 	var tokenResp struct {
@@ -626,6 +640,8 @@ func ExchangeAntigravityAuthCode(ctx context.Context, httpClient *http.Client, c
 
 	projectID := DiscoverAntigravityProjectID(ctx, httpClient, tokenResp.AccessToken)
 	return &AntigravityOAuthCredentials{
+		ClientID:     clientID,
+		ClientSecret: clientSecret,
 		AccessToken:  tokenResp.AccessToken,
 		RefreshToken: tokenResp.RefreshToken,
 		ExpiresAt:    time.Now().UnixMilli() + tokenResp.ExpiresIn*1000,
@@ -639,13 +655,26 @@ func RefreshAntigravityToken(ctx context.Context, httpClient *http.Client, refre
 	if err != nil {
 		return nil, err
 	}
+	return RefreshAntigravityCredentials(ctx, httpClient, AntigravityOAuthCredentials{RefreshToken: refreshToken, ProjectID: existingProjectID, ClientID: clientID, ClientSecret: clientSecret})
+}
+
+// RefreshAntigravityCredentials retains the client used to issue this connection's refresh token.
+func RefreshAntigravityCredentials(ctx context.Context, httpClient *http.Client, credentials AntigravityOAuthCredentials) (*AntigravityOAuthCredentials, error) {
+	clientID, clientSecret := credentials.ClientID, credentials.ClientSecret
+	if clientID == "" || clientSecret == "" {
+		var err error
+		clientID, clientSecret, err = antigravityOAuthClientConfig()
+		if err != nil {
+			return nil, err
+		}
+	}
 	if httpClient == nil {
 		httpClient = &http.Client{Timeout: defaultHTTPTimeout}
 	}
 	form := url.Values{
 		"client_id":     {clientID},
 		"client_secret": {clientSecret},
-		"refresh_token": {refreshToken},
+		"refresh_token": {credentials.RefreshToken},
 		"grant_type":    {"refresh_token"},
 	}
 
@@ -662,13 +691,13 @@ func RefreshAntigravityToken(ctx context.Context, httpClient *http.Client, refre
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= http.StatusBadRequest {
-		raw, _ := io.ReadAll(io.LimitReader(resp.Body, maxErrorBodyBytes))
-		return nil, errors.Errorf("OAuth token refresh failed (%d): %s", resp.StatusCode, string(raw))
+		return nil, errors.Errorf("connection: Google could not renew this OAuth connection (HTTP %d). Reconnect Google in AI & meetings", resp.StatusCode)
 	}
 
 	var tokenResp struct {
-		AccessToken string `json:"access_token"`
-		ExpiresIn   int64  `json:"expires_in"`
+		AccessToken  string `json:"access_token"`
+		RefreshToken string `json:"refresh_token"`
+		ExpiresIn    int64  `json:"expires_in"`
 	}
 	if err := json.NewDecoder(io.LimitReader(resp.Body, maxResponseBytes)).Decode(&tokenResp); err != nil {
 		return nil, errors.Wrap(err, "failed to decode token refresh response")
@@ -677,13 +706,18 @@ func RefreshAntigravityToken(ctx context.Context, httpClient *http.Client, refre
 		return nil, errors.New("refreshed OAuth token is empty")
 	}
 
-	projectID := strings.TrimSpace(existingProjectID)
+	projectID := strings.TrimSpace(credentials.ProjectID)
+	if tokenResp.RefreshToken != "" {
+		credentials.RefreshToken = tokenResp.RefreshToken
+	}
 	if projectID == "" {
 		projectID = DiscoverAntigravityProjectID(ctx, httpClient, tokenResp.AccessToken)
 	}
 	return &AntigravityOAuthCredentials{
+		ClientID:     clientID,
+		ClientSecret: clientSecret,
 		AccessToken:  tokenResp.AccessToken,
-		RefreshToken: refreshToken,
+		RefreshToken: credentials.RefreshToken,
 		ExpiresAt:    time.Now().UnixMilli() + tokenResp.ExpiresIn*1000,
 		ProjectID:    projectID,
 	}, nil

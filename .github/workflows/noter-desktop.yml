@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: Committed experimental RC version (for example 26.10.15-rc.1)
+        description: Committed experimental RC version (for example 26.10.16-rc.1)
         required: true
-        default: 26.10.15-rc.1
+        default: 26.10.16-rc.1
         type: string
       create_draft:
         description: Stage verified installers in an unpublished prerelease draft
@@ -151,6 +151,8 @@ jobs:
           pnpm --dir web install --frozen-lockfile
           pnpm --dir desktop install --frozen-lockfile
       - name: Build fresh SPA, target sidecar, and unsigned installers
+        env:
+          NOTER_DESKTOP_GOOGLE_OAUTH_JSON: ${{ secrets.NOTER_DESKTOP_GOOGLE_OAUTH_JSON }}
         run: node desktop/scripts/build-desktop.mjs build --version "$CANDIDATE_VERSION" --target "${{ matrix.target }}"
       - name: Native lifecycle and sidecar-location regression tests
         working-directory: desktop/src-tauri
@@ -215,8 +217,9 @@ jobs:
               'Each extracted desktop application also launched with an isolated temporary profile, loaded its selected loopback WebView page, served HTTP 200 with Noter.ai frontend HTML, initialized SQLite, and stopped its own sidecar. Linux startup was tested under Xvfb with the normal WebKit sandbox enabled. macOS microphone usage metadata was checked.',
               'This candidate has no trusted publisher signature and is not Apple-notarized. macOS bundles are ad-hoc signed. Windows SmartScreen and macOS Gatekeeper may require additional review. Automatic updates are not enabled.',
               'Linux live microphone/screen meeting capture is currently unavailable: the native WebKit permission path does not safely constrain every requesting frame, so requests are not automatically granted. Linux can review existing notes/recordings. Other platforms still require physical microphone/internal-audio, permission, playback and installation acceptance tests. Non-Windows folder selection and free-space reporting are not supported yet.',
-              'Provider credentials and notes are not included in installers. Configure AI and transcription inside the app; local AI services must be installed separately. Existing profiles and library locations remain on the device.',
-              'Antigravity sign-in requires locally supplied NOTER_ANTIGRAVITY_CLIENT_ID and NOTER_ANTIGRAVITY_CLIENT_SECRET for an authorized OAuth client; these are not embedded in public source or installers.',
+              'Personal provider credentials and notes are not included in installers. Configure AI and transcription inside the app; local AI services must be installed separately. Existing profiles and library locations remain on the device.',
+              'Antigravity uses the publisher’s Google Desktop app OAuth configuration in the installer. Users sign in with their own Google account; manual client configuration is not required. Installed-app client metadata is extractable by design and is not a confidential web application secret. Google consent and Antigravity service access still depend on provider authorization.',
+              'ChatGPT account sign-in is separate from OpenAI API-key billing. Account eligibility, plan permissions and real provider inference require a live acceptance check; automated OAuth fixtures do not establish provider access.',
               'This release remains an unpublished prerelease draft for review. It is not a production-readiness claim.',
             ].join('\n\n');
             if (release && (!release.draft || !release.prerelease || release.target_commitish !== commit)) throw new Error('An existing release is published or belongs to another candidate; refusing to modify it.');

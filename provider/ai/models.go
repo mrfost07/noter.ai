@@ -52,6 +52,8 @@ func DefaultTranscriptionModel(providerType ProviderType) (string, error) {
 // DefaultLLMModel returns the built-in LLM text/JSON generation model for a provider.
 func DefaultLLMModel(providerType ProviderType) (string, error) {
 	switch providerType {
+	case ProviderChatGPT:
+		return "gpt-6.1-sol", nil
 	case ProviderOpenAI:
 		return "gpt-4o-mini", nil
 	case ProviderGemini, ProviderAntigravity:

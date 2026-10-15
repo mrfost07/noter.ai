@@ -3,7 +3,7 @@ import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
-import { assertCommitIdentity, assertTemporaryExtraction, assertVersions, launchSmoke, run, serverVersion, sha256, smokeCommand, targetConfig, targets, validateVersion, verifyAll, verifySmokeProfile } from "./build-desktop.mjs";
+import { assertCommitIdentity, assertTemporaryExtraction, assertVersions, desktopOAuthPayload, launchSmoke, run, serverVersion, sha256, smokeCommand, targetConfig, targets, validateVersion, verifyAll, verifySmokeProfile } from "./build-desktop.mjs";
 
 const version = "26.10.15-rc.1";
 const commit = "a".repeat(40);
@@ -164,4 +164,14 @@ test("a package manifest without native startup evidence cannot be staged", asyn
   delete manifest.verification[0].smoke;
   await writeFile(file, JSON.stringify(manifest));
   await assert.rejects(verifyAll(root, version, commit), /Missing native startup smoke proof/);
+});
+
+
+test("desktop OAuth packaging accepts installed clients and rejects confidential web clients without exposing values", () => {
+  const installed = { installed: { client_id: "fixture.apps.googleusercontent.com", client_secret: "fixture-desktop-client", project_id: "not-shipped" } };
+  assert.deepEqual(JSON.parse(Buffer.from(desktopOAuthPayload(JSON.stringify(installed)), "base64").toString()), { installed: { client_id: installed.installed.client_id, client_secret: installed.installed.client_secret } });
+  assert.equal(desktopOAuthPayload(undefined), "");
+  for (const bad of ["invalid-json-private-value", JSON.stringify({ web: installed.installed }), JSON.stringify({ ...installed, web: {} }), JSON.stringify({ installed: { client_id: "invalid", client_secret: "private-value" } })]) {
+    assert.throws(() => desktopOAuthPayload(bad), (error) => !error.message.includes("private-value") && !error.message.includes("fixture-desktop-client"));
+  }
 });

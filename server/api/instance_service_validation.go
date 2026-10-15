@@ -72,6 +72,12 @@ func (s *APIService) prepareInstanceAISettingForUpdate(ctx context.Context, sett
 	if err != nil {
 		return errors.Wrap(err, "failed to get existing AI setting")
 	}
+	// These private fields are managed by the OAuth endpoints, never by browser settings payloads.
+	if existing != nil {
+		setting.ChatgptHostId = existing.ChatgptHostId
+		setting.AntigravityClientId = existing.AntigravityClientId
+		setting.AntigravityClientSecret = existing.AntigravityClientSecret
+	}
 	existingProviders := map[string]*storepb.AIProviderConfig{}
 	if existing != nil {
 		for _, provider := range existing.Providers {
@@ -114,8 +120,14 @@ func (s *APIService) prepareInstanceAISettingForUpdate(ctx context.Context, sett
 		}
 
 		if provider.ApiKey == "" {
-			if existingProvider, ok := existingProviders[provider.Id]; ok {
+			if existingProvider, ok := existingProviders[provider.Id]; ok && existingProvider.Type == provider.Type {
 				provider.ApiKey = existingProvider.ApiKey
+			}
+		}
+		if provider.Type == storepb.AIProviderType_CHATGPT {
+			existingProvider := existingProviders[provider.Id]
+			if existingProvider == nil || existingProvider.Type != provider.Type || provider.ApiKey != existingProvider.ApiKey {
+				return errors.New("ChatGPT connections must be created with Continue with ChatGPT")
 			}
 		}
 		if provider.ApiKey == "" && ai.RequiresAPIKey(providerType) {

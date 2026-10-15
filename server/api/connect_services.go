@@ -444,6 +444,38 @@ func (s *ConnectServiceHandler) FetchAvailableModels(ctx context.Context, req *c
 	return connect.NewResponse(resp), nil
 }
 
+func (s *ConnectServiceHandler) GetAIConnectionStatus(ctx context.Context, req *connect.Request[apipb.GetAIConnectionStatusRequest]) (*connect.Response[apipb.GetAIConnectionStatusResponse], error) {
+	resp, err := s.APIService.GetAIConnectionStatus(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) ConfigureAntigravityOAuth(ctx context.Context, req *connect.Request[apipb.ConfigureAntigravityOAuthRequest]) (*connect.Response[apipb.GetAIConnectionStatusResponse], error) {
+	resp, err := s.APIService.ConfigureAntigravityOAuth(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) StartChatGPTOAuth(ctx context.Context, req *connect.Request[apipb.StartChatGPTOAuthRequest]) (*connect.Response[apipb.StartChatGPTOAuthResponse], error) {
+	resp, err := s.APIService.StartChatGPTOAuth(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) DisconnectChatGPT(ctx context.Context, req *connect.Request[apipb.DisconnectChatGPTRequest]) (*connect.Response[apipb.DisconnectChatGPTResponse], error) {
+	resp, err := s.APIService.DisconnectChatGPT(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
 // IdentityProviderService
 
 func (s *ConnectServiceHandler) ListIdentityProviders(ctx context.Context, req *connect.Request[apipb.ListIdentityProvidersRequest]) (*connect.Response[apipb.ListIdentityProvidersResponse], error) {

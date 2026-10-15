@@ -36,8 +36,8 @@ import { aiServiceClient } from "@/connect";
 import { useInstance } from "@/contexts/InstanceContext";
 import { cn } from "@/lib/utils";
 import {
+  DisconnectChatGPTRequestSchema,
   FetchAvailableModelsRequestSchema,
-  StartAntigravityOAuthRequestSchema,
   TestAIProviderRequestSchema,
 } from "@/types/proto/api/ai_service_pb";
 import {
@@ -52,6 +52,7 @@ import {
   InstanceSettingSchema,
 } from "@/types/proto/api/instance_service_pb";
 import { useTranslate } from "@/utils/i18n";
+import AIAccountConnection from "./AIAccountConnection";
 import SettingGroup from "./SettingGroup";
 import { SettingPanel } from "./SettingList";
 import SettingSection from "./SettingSection";
@@ -87,6 +88,8 @@ export type LocalAIProvider = {
   apiKey: string;
   apiKeySet: boolean;
   apiKeyHint: string;
+  oauthAccount?: string;
+  oauthPlanEnabled?: boolean;
 };
 
 type LocalTranscription = {
@@ -181,6 +184,12 @@ export const STT_PROVIDER_PRESETS: PresetProviderInfo[] = [
 
 export const LLM_PROVIDER_PRESETS: PresetProviderInfo[] = [
   {
+    type: InstanceSetting_AIProviderType.CHATGPT,
+    label: "ChatGPT account",
+    subtitle: "Sign in and authorize ChatGPT plan usage",
+    defaultEndpoint: "https://api.openai.com/v1",
+  },
+  {
     type: InstanceSetting_AIProviderType.ANTIGRAVITY,
     label: "Google Antigravity",
     subtitle: "Google OAuth access to available models",
@@ -195,8 +204,8 @@ export const LLM_PROVIDER_PRESETS: PresetProviderInfo[] = [
   },
   {
     type: InstanceSetting_AIProviderType.OPENAI,
-    label: "OpenAI",
-    subtitle: "GPT-4o, GPT-4o Mini, and o3-mini reasoning models",
+    label: "OpenAI API",
+    subtitle: "API key · separate OpenAI Platform billing",
     defaultEndpoint: "https://api.openai.com/v1",
     keyPlaceholder: "sk-...",
   },
@@ -245,7 +254,8 @@ export const getProviderTypeLabel = (type: InstanceSetting_AIProviderType) => {
 export const providerRequiresApiKey = (type: InstanceSetting_AIProviderType) =>
   type !== InstanceSetting_AIProviderType.OLLAMA &&
   type !== InstanceSetting_AIProviderType.LOCAL_WHISPER &&
-  type !== InstanceSetting_AIProviderType.ANTIGRAVITY;
+  type !== InstanceSetting_AIProviderType.ANTIGRAVITY &&
+  type !== InstanceSetting_AIProviderType.CHATGPT;
 
 const byokNotes = ["setting.ai.byok-key-note", "setting.ai.byok-storage-note", "setting.ai.byok-model-note"] as const;
 
@@ -528,6 +538,7 @@ export const getCuratedLLMModels = (type: InstanceSetting_AIProviderType): Model
 };
 
 export const getDefaultModelForProvider = (type: InstanceSetting_AIProviderType, isSTT: boolean): string => {
+  if (type === InstanceSetting_AIProviderType.CHATGPT) return "";
   const list = isSTT ? getCuratedSTTModels(type) : getCuratedLLMModels(type);
   const def = list.find((m) => m.isDefault);
   if (def) return def.id;
@@ -543,6 +554,8 @@ const toLocalProvider = (provider: InstanceSetting_AIProviderConfig): LocalAIPro
   apiKey: "",
   apiKeySet: provider.apiKeySet,
   apiKeyHint: provider.apiKeyHint,
+  oauthAccount: provider.oauthAccount,
+  oauthPlanEnabled: provider.oauthPlanEnabled,
 });
 
 const toLocalTranscription = (config: InstanceSetting_TranscriptionConfig | undefined): LocalTranscription => ({
@@ -638,12 +651,18 @@ export const ConnectionTestButton = ({ provider, model, capability, className }:
   };
 
   return (
-    <div className={cn("inline-flex items-center gap-2", className)}>
+    <div className={cn("flex min-w-0 flex-col items-start gap-2", className)}>
       <Button
         type="button"
         variant={testState === "success" ? "outline" : testState === "error" ? "destructive" : "outline"}
         size="sm"
-        disabled={!provider || testState === "testing"}
+        disabled={
+          !provider ||
+          testState === "testing" ||
+          ([InstanceSetting_AIProviderType.ANTIGRAVITY, InstanceSetting_AIProviderType.CHATGPT].includes(provider.type) &&
+            !provider.apiKeySet) ||
+          (provider.type === InstanceSetting_AIProviderType.CHATGPT && (!provider.oauthPlanEnabled || !model))
+        }
         onClick={() => void handleTest()}
         className={cn(
           "h-8 px-3 text-xs transition-all",
@@ -673,7 +692,7 @@ export const ConnectionTestButton = ({ provider, model, capability, className }:
         )}
       </Button>
       {testState === "error" && errorMessage && (
-        <span className="text-[11px] text-destructive max-w-xs truncate" title={errorMessage}>
+        <span role="alert" className="max-w-prose text-sm leading-5 text-destructive">
           {errorMessage}
         </span>
       )}
@@ -787,6 +806,7 @@ export const ProviderModelSelector = ({ provider, selectedModel, onSelectModel, 
         </label>
         <div className="flex items-center gap-2">
           {(isAntigravity ||
+            provider.type === InstanceSetting_AIProviderType.CHATGPT ||
             provider.type === InstanceSetting_AIProviderType.OLLAMA ||
             provider.type === InstanceSetting_AIProviderType.GROQ) && (
             <Button
@@ -794,7 +814,10 @@ export const ProviderModelSelector = ({ provider, selectedModel, onSelectModel, 
               variant="ghost"
               size="sm"
               onClick={() => void handleDetectModels()}
-              disabled={isDetecting}
+              disabled={
+                isDetecting ||
+                (provider.type === InstanceSetting_AIProviderType.CHATGPT && (!provider.apiKeySet || !provider.oauthPlanEnabled))
+              }
               className="h-7 text-xs px-2 text-muted-foreground hover:text-foreground"
             >
               <RefreshCwIcon className={cn("size-3 mr-1", isDetecting && "animate-spin")} />
@@ -859,6 +882,14 @@ export const ProviderModelSelector = ({ provider, selectedModel, onSelectModel, 
             );
           })}
         </div>
+      )}
+
+      {provider.type === InstanceSetting_AIProviderType.CHATGPT && effectiveModels.length === 0 && (
+        <p className="text-sm leading-5 text-muted-foreground">
+          {provider.apiKeySet && provider.oauthPlanEnabled
+            ? "Refresh models to choose one available to this account."
+            : "Connect ChatGPT and enable plan usage to see your available models."}
+        </p>
       )}
 
       {showCustomInput && (
@@ -957,8 +988,11 @@ const AISection = () => {
       toast.error(t("setting.ai.provider-title-required"));
       return;
     }
-    if (provider.type === InstanceSetting_AIProviderType.ANTIGRAVITY && !provider.apiKeySet) {
-      toast.error("Sign in with Google before saving the Antigravity provider.");
+    if (
+      [InstanceSetting_AIProviderType.ANTIGRAVITY, InstanceSetting_AIProviderType.CHATGPT].includes(provider.type) &&
+      !provider.apiKeySet
+    ) {
+      toast.error("Connect the account before saving this provider.");
       return;
     }
     if (providerRequiresApiKey(provider.type) && !provider.apiKeySet && !provider.apiKey.trim()) {
@@ -985,13 +1019,13 @@ const AISection = () => {
     });
 
     if (!assistantConfig.providerId) {
-      const nextAssistant = { providerId: connected.id, model: "gemini-2.5-flash" };
+      const nextAssistant = { providerId: connected.id, model: getDefaultModelForProvider(connected.type, false) };
       setAssistantConfig(nextAssistant);
       setSavedAssistantConfig(nextAssistant);
       window.localStorage.setItem(AI_ASSISTANT_CONFIG_STORAGE_KEY, JSON.stringify(nextAssistant));
     }
 
-    if (!transcription.providerId) {
+    if (!transcription.providerId && connected.type === InstanceSetting_AIProviderType.ANTIGRAVITY) {
       setTranscription((prev) => ({
         ...prev,
         providerId: connected.id,
@@ -1009,6 +1043,16 @@ const AISection = () => {
   const handleDeleteProvider = async () => {
     if (!deleteTarget) return;
     const target = deleteTarget;
+    if (target.type === InstanceSetting_AIProviderType.CHATGPT) {
+      try {
+        const result = await aiServiceClient.disconnectChatGPT(create(DisconnectChatGPTRequestSchema, { providerId: target.id }));
+        if (!result.remoteRevocationConfirmed)
+          toast.error("Signed out locally. Remote revocation was not confirmed; disconnect Noter.ai in ChatGPT Settings too.");
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Could not disconnect ChatGPT.");
+        return;
+      }
+    }
     const nextProviders = providers.filter((provider) => provider.id !== target.id);
 
     const persistedTranscription = originalSetting.transcription;
@@ -1275,7 +1319,6 @@ const TranscriptionForm = ({ providers, transcription, onSave, onAntigravityConn
     setPrompt(transcription.prompt);
     setSpeakerProviderId(transcription.speakerProviderId ?? "");
   }, [transcription]);
-  const [isSigningIn, setIsSigningIn] = useState(false);
 
   const handleTypeChange = (typeVal: string) => {
     const nextType = Number(typeVal) as InstanceSetting_AIProviderType;
@@ -1296,34 +1339,6 @@ const TranscriptionForm = ({ providers, transcription, onSave, onAntigravityConn
         apiKeySet: false,
         apiKeyHint: "",
       });
-    }
-  };
-
-  const handleAntigravitySignIn = async () => {
-    setIsSigningIn(true);
-    try {
-      const resp = await aiServiceClient.startAntigravityOAuth(
-        create(StartAntigravityOAuthRequestSchema, {
-          providerId: providerDraft.id,
-          title: "Google Antigravity",
-        }),
-      );
-      if (resp.connected) {
-        const connectedProvider: LocalAIProvider = {
-          ...providerDraft,
-          id: resp.providerId || providerDraft.id,
-          title: "Google Antigravity",
-          apiKeySet: true,
-          apiKeyHint: "Google OAuth",
-        };
-        setProviderDraft(connectedProvider);
-        toast.success("Connected to Google Antigravity!");
-        await onAntigravityConnected(connectedProvider);
-      }
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to sign in with Google");
-    } finally {
-      setIsSigningIn(false);
     }
   };
 
@@ -1366,33 +1381,28 @@ const TranscriptionForm = ({ providers, transcription, onSave, onAntigravityConn
       </div>
 
       {/* Credentials Banner / Input */}
-      {isAntigravity ? (
-        <div className="rounded-lg border border-border bg-muted/30 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold">Google Account (Zero API Key)</span>
-              {providerDraft.apiKeySet && (
-                <span className="inline-flex items-center rounded-full bg-emerald-500/15 px-2 py-0.5 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
-                  Connected ✓
-                </span>
-              )}
-            </div>
-            <p className="text-[11px] text-muted-foreground mt-0.5">
-              Sign in with your Google account to utilize native speech and audio understanding models.
-            </p>
-          </div>
-          <Button
-            type="button"
-            variant={providerDraft.apiKeySet ? "outline" : "default"}
-            size="sm"
-            onClick={() => void handleAntigravitySignIn()}
-            disabled={isSigningIn}
-            className="shrink-0"
-          >
-            {isSigningIn && <LoaderCircleIcon className="size-3 mr-1.5 animate-spin" />}
-            {providerDraft.apiKeySet ? "Re-authenticate" : "Sign in with Google"}
-          </Button>
-        </div>
+      {isAntigravity || selectedType === InstanceSetting_AIProviderType.CHATGPT ? (
+        <AIAccountConnection
+          key={providerDraft.id}
+          provider={providerDraft}
+          accounts={
+            selectedType === InstanceSetting_AIProviderType.CHATGPT
+              ? providers.filter((item) => item.type === InstanceSetting_AIProviderType.CHATGPT)
+              : undefined
+          }
+          onSelectAccount={
+            selectedType === InstanceSetting_AIProviderType.CHATGPT
+              ? (account) => {
+                  setProviderDraft(account);
+                  setModel("");
+                }
+              : undefined
+          }
+          onConnected={async (connected) => {
+            setProviderDraft(connected);
+            await onAntigravityConnected(connected);
+          }}
+        />
       ) : isKeyRequired ? (
         <div className="space-y-1.5 rounded-lg border border-border bg-muted/20 p-3.5">
           <div className="flex items-center justify-between">
@@ -1478,7 +1488,7 @@ const TranscriptionForm = ({ providers, transcription, onSave, onAntigravityConn
       {/* Action Row */}
       <div className="flex items-center justify-between pt-2 border-t border-border">
         <ConnectionTestButton provider={providerDraft} model={model} capability="STT" />
-        <Button onClick={() => void handleSave()} size="sm">
+        <Button onClick={() => void handleSave()} size="sm" disabled={isAntigravity && !providerDraft.apiKeySet}>
           Save audio settings
         </Button>
       </div>
@@ -1539,8 +1549,6 @@ const AIAssistantForm = ({ providers, config, onSave, onAntigravityConnected }: 
     setModel(config.model || getDefaultModelForProvider(currentProvider?.type ?? InstanceSetting_AIProviderType.ANTIGRAVITY, false));
   }, [config.providerId, config.model]);
 
-  const [isSigningIn, setIsSigningIn] = useState(false);
-
   const handleTypeChange = (typeVal: string) => {
     const nextType = Number(typeVal) as InstanceSetting_AIProviderType;
     setSelectedType(nextType);
@@ -1560,34 +1568,6 @@ const AIAssistantForm = ({ providers, config, onSave, onAntigravityConnected }: 
         apiKeySet: false,
         apiKeyHint: "",
       });
-    }
-  };
-
-  const handleAntigravitySignIn = async () => {
-    setIsSigningIn(true);
-    try {
-      const resp = await aiServiceClient.startAntigravityOAuth(
-        create(StartAntigravityOAuthRequestSchema, {
-          providerId: providerDraft.id,
-          title: "Google Antigravity",
-        }),
-      );
-      if (resp.connected) {
-        const connectedProvider: LocalAIProvider = {
-          ...providerDraft,
-          id: resp.providerId || providerDraft.id,
-          title: "Google Antigravity",
-          apiKeySet: true,
-          apiKeyHint: "Google OAuth",
-        };
-        setProviderDraft(connectedProvider);
-        toast.success("Connected to Google Antigravity!");
-        await onAntigravityConnected(connectedProvider);
-      }
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to sign in with Google");
-    } finally {
-      setIsSigningIn(false);
     }
   };
 
@@ -1626,33 +1606,28 @@ const AIAssistantForm = ({ providers, config, onSave, onAntigravityConnected }: 
       </div>
 
       {/* Credentials Banner / Input */}
-      {isAntigravity ? (
-        <div className="rounded-lg border border-border bg-muted/30 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold">Connect Noter.ai to Antigravity</span>
-              {providerDraft.apiKeySet && (
-                <span className="inline-flex items-center rounded-full bg-emerald-500/15 px-2 py-0.5 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
-                  Connected ✓
-                </span>
-              )}
-            </div>
-            <p className="text-[11px] text-muted-foreground mt-0.5">
-              Connect your Google account once. Save your chosen model; refresh only to browse other models.
-            </p>
-          </div>
-          <Button
-            type="button"
-            variant={providerDraft.apiKeySet ? "outline" : "default"}
-            size="sm"
-            onClick={() => void handleAntigravitySignIn()}
-            disabled={isSigningIn}
-            className="shrink-0"
-          >
-            {isSigningIn && <LoaderCircleIcon className="size-3 mr-1.5 animate-spin" />}
-            {providerDraft.apiKeySet ? "Re-authenticate" : "Sign in with Google"}
-          </Button>
-        </div>
+      {isAntigravity || selectedType === InstanceSetting_AIProviderType.CHATGPT ? (
+        <AIAccountConnection
+          key={providerDraft.id}
+          provider={providerDraft}
+          accounts={
+            selectedType === InstanceSetting_AIProviderType.CHATGPT
+              ? providers.filter((item) => item.type === InstanceSetting_AIProviderType.CHATGPT)
+              : undefined
+          }
+          onSelectAccount={
+            selectedType === InstanceSetting_AIProviderType.CHATGPT
+              ? (account) => {
+                  setProviderDraft(account);
+                  setModel("");
+                }
+              : undefined
+          }
+          onConnected={async (connected) => {
+            setProviderDraft(connected);
+            await onAntigravityConnected(connected);
+          }}
+        />
       ) : isKeyRequired ? (
         <div className="space-y-1.5 rounded-lg border border-border bg-muted/20 p-3.5">
           <div className="flex items-center justify-between">
@@ -1690,7 +1665,15 @@ const AIAssistantForm = ({ providers, config, onSave, onAntigravityConnected }: 
       {/* Action Row */}
       <div className="flex items-center justify-between pt-2 border-t border-border">
         <ConnectionTestButton provider={providerDraft} model={model} capability="LLM" />
-        <Button onClick={() => void handleSave()} size="sm">
+        <Button
+          onClick={() => void handleSave()}
+          size="sm"
+          disabled={
+            (isAntigravity && !providerDraft.apiKeySet) ||
+            (selectedType === InstanceSetting_AIProviderType.CHATGPT &&
+              (!providerDraft.apiKeySet || !providerDraft.oauthPlanEnabled || !model.trim()))
+          }
+        >
           Save meeting AI
         </Button>
       </div>
@@ -1711,7 +1694,6 @@ interface AIProviderDialogProps {
 const AIProviderDialog = ({ provider, onOpenChange, onSave, onAntigravityConnected }: AIProviderDialogProps) => {
   const t = useTranslate();
   const [draft, setDraft] = useState<LocalAIProvider>(() => provider ?? newProvider());
-  const [isSigningInAntigravity, setIsSigningInAntigravity] = useState(false);
 
   useEffect(() => {
     const next = provider ?? newProvider();
@@ -1724,35 +1706,6 @@ const AIProviderDialog = ({ provider, onOpenChange, onSave, onAntigravityConnect
 
   const handleSave = () => {
     onSave(draft);
-  };
-
-  const handleAntigravitySignIn = async () => {
-    setIsSigningInAntigravity(true);
-    try {
-      const title = draft.title.trim() || "Google Antigravity";
-      const resp = await aiServiceClient.startAntigravityOAuth(
-        create(StartAntigravityOAuthRequestSchema, {
-          providerId: draft.id,
-          title,
-        }),
-      );
-      if (resp.connected) {
-        const connectedProvider: LocalAIProvider = {
-          ...draft,
-          id: resp.providerId || draft.id,
-          title,
-          apiKeySet: true,
-          apiKeyHint: "Google OAuth",
-        };
-        updateDraft(connectedProvider);
-        toast.success("Successfully connected to Google Antigravity!");
-        await onAntigravityConnected(connectedProvider);
-      }
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to complete Google OAuth sign-in");
-    } finally {
-      setIsSigningInAntigravity(false);
-    }
   };
 
   const isAntigravity = draft.type === InstanceSetting_AIProviderType.ANTIGRAVITY;
@@ -1783,6 +1736,12 @@ const AIProviderDialog = ({ provider, onOpenChange, onSave, onAntigravityConnect
                 const nextType = Number(value) as InstanceSetting_AIProviderType;
                 updateDraft({
                   type: nextType,
+                  id: nextType === draft.type ? draft.id : uuidv4(),
+                  apiKey: "",
+                  apiKeySet: nextType === draft.type && draft.apiKeySet,
+                  oauthAccount: "",
+                  oauthPlanEnabled: false,
+                  endpoint: LLM_PROVIDER_PRESETS.find((preset) => preset.type === nextType)?.defaultEndpoint ?? "",
                   title:
                     nextType === InstanceSetting_AIProviderType.ANTIGRAVITY && !draft.title.trim()
                       ? "Google Antigravity"
@@ -1815,38 +1774,16 @@ const AIProviderDialog = ({ provider, onOpenChange, onSave, onAntigravityConnect
             </Select>
           </div>
 
-          {isAntigravity ? (
-            <div className="flex flex-col gap-2 sm:col-span-2 rounded-lg border border-border bg-muted/30 p-3.5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-sm font-medium">Google Account Authentication</Label>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {draft.apiKeySet
-                      ? "Connected via Google OAuth (Cloud Code internal streaming API ready)"
-                      : "Sign in with your Google account to use Antigravity models with zero API keys."}
-                  </p>
-                </div>
-                {draft.apiKeySet && (
-                  <span className="inline-flex items-center rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                    Connected ✓
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center gap-2 pt-1">
-                <Button
-                  type="button"
-                  variant={draft.apiKeySet ? "outline" : "default"}
-                  size="sm"
-                  onClick={() => void handleAntigravitySignIn()}
-                  disabled={isSigningInAntigravity}
-                >
-                  {isSigningInAntigravity && (
-                    <LoaderCircleIcon className="mr-1.5 size-3.5 animate-spin text-muted-foreground" aria-hidden />
-                  )}
-                  {draft.apiKeySet ? "Re-authenticate with Google" : "Sign in with Google"}
-                </Button>
-                {draft.apiKeySet && <ConnectionTestButton provider={draft} model="gemini-2.5-flash" capability="LLM" />}
-              </div>
+          {isAntigravity || draft.type === InstanceSetting_AIProviderType.CHATGPT ? (
+            <div className="sm:col-span-2">
+              <AIAccountConnection
+                key={draft.id}
+                provider={draft}
+                onConnected={async (connected) => {
+                  updateDraft(connected);
+                  await onAntigravityConnected(connected);
+                }}
+              />
             </div>
           ) : (
             <>

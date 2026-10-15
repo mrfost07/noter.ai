@@ -40,7 +40,7 @@ pnpm --dir desktop install --frozen-lockfile
 
 Follow [desktop/README.md](desktop/README.md) to build your platform's installer. CI builds fresh frontend assets, embeds them into the Go sidecar and packages the native desktop app from the same committed revision.
 
-Provider API keys are configured in the app and are not included in this repository or its release installers. Antigravity OAuth additionally requires local `NOTER_ANTIGRAVITY_CLIENT_ID` and `NOTER_ANTIGRAVITY_CLIENT_SECRET` configuration; see [release status](docs/RELEASE_STATUS.md). See [AGENTS.md](AGENTS.md) for repository commands and contribution conventions.
+Provider API keys are configured in the app and are not included in this repository or its release installers. Official desktop builds supply the publisher’s Google Desktop app OAuth configuration for account sign-in. Source builds can supply their own client. ChatGPT account sign-in and OpenAI API-key access are separate; see [AI connections](docs/AI_CONNECTIONS.md) and [release status](docs/RELEASE_STATUS.md). See [AGENTS.md](AGENTS.md) for repository commands and contribution conventions.
 
 ## Contribute
 

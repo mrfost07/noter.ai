@@ -13,7 +13,151 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file api/ai_service.proto.
  */
 export const file_api_ai_service: GenFile = /*@__PURE__*/
-  fileDesc("ChRhcGkvYWlfc2VydmljZS5wcm90bxIJbWVtb3MuYXBpIooBChFUcmFuc2NyaWJlUmVxdWVzdBIxCgVhdWRpbxgBIAEoCzIdLm1lbW9zLmFwaS5UcmFuc2NyaXB0aW9uQXVkaW9CA+BBAhIYCgtwcm92aWRlcl9pZBgCIAEoCUID4EEBEhIKBW1vZGVsGAMgASgJQgPgQQESFAoHZGlhcml6ZRgEIAEoCEID4EEBIlUKElRyYW5zY3JpYmVSZXNwb25zZRIMCgR0ZXh0GAEgASgJEjEKCHNlZ21lbnRzGAIgAygLMh8ubWVtb3MuYXBpLlRyYW5zY3JpcHRpb25TZWdtZW50IlEKFFRyYW5zY3JpcHRpb25TZWdtZW50EgwKBHRleHQYASABKAkSDQoFc3RhcnQYAiABKAESCwoDZW5kGAMgASgBEg8KB3NwZWFrZXIYBCABKAkidwoSVHJhbnNjcmlwdGlvbkF1ZGlvEhYKB2NvbnRlbnQYASABKAxCA+BBBEgAEg0KA3VyaRgCIAEoCUgAEhUKCGZpbGVuYW1lGAMgASgJQgPgQQESGQoMY29udGVudF90eXBlGAQgASgJQgPgQQFCCAoGc291cmNlIrsBCh9BbmFseXplTWVldGluZ1RyYW5zY3JpcHRSZXF1ZXN0EhcKCnRyYW5zY3JpcHQYASABKAlCA+BBAhI5Cg5wcmV2aW91c19zdGF0ZRgCIAEoCzIcLm1lbW9zLmFwaS5NZWV0aW5nTm90ZXNTdGF0ZUID4EEBEhgKC3Byb3ZpZGVyX2lkGAMgASgJQgPgQQESEgoFbW9kZWwYBCABKAlCA+BBARIWCgltZW1vX25hbWUYBSABKAlCA+BBASKUAQoRTWVldGluZ05vdGVzU3RhdGUSFQoNdGFza3NfZm9yX3lvdRgBIAMoCRIYChBjbGllbnRfZGVjaXNpb25zGAIgAygJEhQKDGNydWNpYWxfaW5mbxgDIAMoCRIbChNmb2xsb3dfdXBfcXVlc3Rpb25zGAQgAygJEhsKE21pZF9tZWV0aW5nX2NoYW5nZXMYBSADKAkilQEKIEFuYWx5emVNZWV0aW5nVHJhbnNjcmlwdFJlc3BvbnNlEisKBW5vdGVzGAEgASgLMhwubWVtb3MuYXBpLk1lZXRpbmdOb3Rlc1N0YXRlEhAKCG1hcmtkb3duGAIgASgJEhoKEnJlbGF0ZWRfbWVtb19uYW1lcxgDIAMoCRIWCg5zdGF0dXNfc3VtbWFyeRgEIAEoCSJMChxTdGFydEFudGlncmF2aXR5T0F1dGhSZXF1ZXN0EhgKC3Byb3ZpZGVyX2lkGAEgASgJQgPgQQESEgoFdGl0bGUYAiABKAlCA+BBASJtCh1TdGFydEFudGlncmF2aXR5T0F1dGhSZXNwb25zZRITCgtwcm92aWRlcl9pZBgBIAEoCRISCgpwcm9qZWN0X2lkGAIgASgJEhAKCGF1dGhfdXJsGAMgASgJEhEKCWNvbm5lY3RlZBgEIAEoCCJdChNSdW5BZ2VudFRhc2tSZXF1ZXN0EhgKC2luc3RydWN0aW9uGAEgASgJQgPgQQISGAoLcHJvdmlkZXJfaWQYAiABKAlCA+BBARISCgVtb2RlbBgDIAEoCUID4EEBIlcKD0FnZW50VG9vbEFjdGlvbhIMCgR0b29sGAEgASgJEg8KB3N1bW1hcnkYAiABKAkSEQoJbWVtb19uYW1lGAMgASgJEhIKCnNwYWNlX25hbWUYBCABKAkiUgoUUnVuQWdlbnRUYXNrUmVzcG9uc2USDQoFcmVwbHkYASABKAkSKwoHYWN0aW9ucxgCIAMoCzIaLm1lbW9zLmFwaS5BZ2VudFRvb2xBY3Rpb24ipwEKFVRlc3RBSVByb3ZpZGVyUmVxdWVzdBIYCgtwcm92aWRlcl9pZBgBIAEoCUID4EEBEhIKBW1vZGVsGAIgASgJQgPgQQESFwoKY2FwYWJpbGl0eRgDIAEoCUID4EEBEhoKDXByb3ZpZGVyX3R5cGUYBCABKAlCA+BBARIVCghlbmRwb2ludBgFIAEoCUID4EEBEhQKB2FwaV9rZXkYBiABKAlCA+BBASJOChZUZXN0QUlQcm92aWRlclJlc3BvbnNlEg8KB3N1Y2Nlc3MYASABKAgSDwoHbWVzc2FnZRgCIAEoCRISCgpsYXRlbmN5X21zGAMgASgDIjcKG0ZldGNoQXZhaWxhYmxlTW9kZWxzUmVxdWVzdBIYCgtwcm92aWRlcl9pZBgBIAEoCUID4EECImgKCU1vZGVsSW5mbxIKCgJpZBgBIAEoCRINCgVsYWJlbBgCIAEoCRITCgtkZXNjcmlwdGlvbhgDIAEoCRIXCg9yZW1haW5pbmdfcXVvdGEYBCABKAESEgoKaXNfZGVmYXVsdBgFIAEoCCJEChxGZXRjaEF2YWlsYWJsZU1vZGVsc1Jlc3BvbnNlEiQKBm1vZGVscxgBIAMoCzIULm1lbW9zLmFwaS5Nb2RlbEluZm8ytAYKCUFJU2VydmljZRJwCgpUcmFuc2NyaWJlEhwubWVtb3MuYXBpLlRyYW5zY3JpYmVSZXF1ZXN0Gh0ubWVtb3MuYXBpLlRyYW5zY3JpYmVSZXNwb25zZSIl2kEFYXVkaW+C0+STAhc6ASoiEi9hcGkvYWk6dHJhbnNjcmliZRKgAQoYQW5hbHl6ZU1lZXRpbmdUcmFuc2NyaXB0EioubWVtb3MuYXBpLkFuYWx5emVNZWV0aW5nVHJhbnNjcmlwdFJlcXVlc3QaKy5tZW1vcy5hcGkuQW5hbHl6ZU1lZXRpbmdUcmFuc2NyaXB0UmVzcG9uc2UiK4LT5JMCJToBKiIgL2FwaS9haTphbmFseXplTWVldGluZ1RyYW5zY3JpcHQSlAEKFVN0YXJ0QW50aWdyYXZpdHlPQXV0aBInLm1lbW9zLmFwaS5TdGFydEFudGlncmF2aXR5T0F1dGhSZXF1ZXN0GigubWVtb3MuYXBpLlN0YXJ0QW50aWdyYXZpdHlPQXV0aFJlc3BvbnNlIiiC0+STAiI6ASoiHS9hcGkvYWk6c3RhcnRBbnRpZ3Jhdml0eU9BdXRoEnAKDFJ1bkFnZW50VGFzaxIeLm1lbW9zLmFwaS5SdW5BZ2VudFRhc2tSZXF1ZXN0Gh8ubWVtb3MuYXBpLlJ1bkFnZW50VGFza1Jlc3BvbnNlIh+C0+STAhk6ASoiFC9hcGkvYWk6cnVuQWdlbnRUYXNrEnYKDlRlc3RBSVByb3ZpZGVyEiAubWVtb3MuYXBpLlRlc3RBSVByb3ZpZGVyUmVxdWVzdBohLm1lbW9zLmFwaS5UZXN0QUlQcm92aWRlclJlc3BvbnNlIh+C0+STAhk6ASoiFC9hcGkvYWk6dGVzdFByb3ZpZGVyEpABChRGZXRjaEF2YWlsYWJsZU1vZGVscxImLm1lbW9zLmFwaS5GZXRjaEF2YWlsYWJsZU1vZGVsc1JlcXVlc3QaJy5tZW1vcy5hcGkuRmV0Y2hBdmFpbGFibGVNb2RlbHNSZXNwb25zZSIngtPkkwIhOgEqIhwvYXBpL2FpOmZldGNoQXZhaWxhYmxlTW9kZWxzQo0BCg1jb20ubWVtb3MuYXBpQg5BaVNlcnZpY2VQcm90b1ABWidnaXRodWIuY29tL3VzZW1lbW9zL21lbW9zL3Byb3RvL2dlbi9hcGmiAgNNQViqAglNZW1vcy5BcGnKAglNZW1vc1xBcGniAhVNZW1vc1xBcGlcR1BCTWV0YWRhdGHqAgpNZW1vczo6QXBpYgZwcm90bzM", [file_google_api_annotations, file_google_api_client, file_google_api_field_behavior]);
+  fileDesc("ChRhcGkvYWlfc2VydmljZS5wcm90bxIJbWVtb3MuYXBpIh4KHEdldEFJQ29ubmVjdGlvblN0YXR1c1JlcXVlc3QiXgodR2V0QUlDb25uZWN0aW9uU3RhdHVzUmVzcG9uc2USHgoWYW50aWdyYXZpdHlfY29uZmlndXJlZBgBIAEoCBIdChVhbnRpZ3Jhdml0eV9jbGllbnRfaWQYAiABKAkiVgogQ29uZmlndXJlQW50aWdyYXZpdHlPQXV0aFJlcXVlc3QSFgoJY2xpZW50X2lkGAEgASgJQgPgQQISGgoNY2xpZW50X3NlY3JldBgCIAEoCUID4EEEIi8KGFN0YXJ0Q2hhdEdQVE9BdXRoUmVxdWVzdBITCgtwcm92aWRlcl9pZBgBIAEoCSJuChlTdGFydENoYXRHUFRPQXV0aFJlc3BvbnNlEhMKC3Byb3ZpZGVyX2lkGAEgASgJEhEKCWNvbm5lY3RlZBgCIAEoCBINCgVlbWFpbBgDIAEoCRIaChJwbGFuX3VzYWdlX2VuYWJsZWQYBCABKAgiLwoYRGlzY29ubmVjdENoYXRHUFRSZXF1ZXN0EhMKC3Byb3ZpZGVyX2lkGAEgASgJIkAKGURpc2Nvbm5lY3RDaGF0R1BUUmVzcG9uc2USIwobcmVtb3RlX3Jldm9jYXRpb25fY29uZmlybWVkGAEgASgIIooBChFUcmFuc2NyaWJlUmVxdWVzdBIxCgVhdWRpbxgBIAEoCzIdLm1lbW9zLmFwaS5UcmFuc2NyaXB0aW9uQXVkaW9CA+BBAhIYCgtwcm92aWRlcl9pZBgCIAEoCUID4EEBEhIKBW1vZGVsGAMgASgJQgPgQQESFAoHZGlhcml6ZRgEIAEoCEID4EEBIlUKElRyYW5zY3JpYmVSZXNwb25zZRIMCgR0ZXh0GAEgASgJEjEKCHNlZ21lbnRzGAIgAygLMh8ubWVtb3MuYXBpLlRyYW5zY3JpcHRpb25TZWdtZW50IlEKFFRyYW5zY3JpcHRpb25TZWdtZW50EgwKBHRleHQYASABKAkSDQoFc3RhcnQYAiABKAESCwoDZW5kGAMgASgBEg8KB3NwZWFrZXIYBCABKAkidwoSVHJhbnNjcmlwdGlvbkF1ZGlvEhYKB2NvbnRlbnQYASABKAxCA+BBBEgAEg0KA3VyaRgCIAEoCUgAEhUKCGZpbGVuYW1lGAMgASgJQgPgQQESGQoMY29udGVudF90eXBlGAQgASgJQgPgQQFCCAoGc291cmNlIrsBCh9BbmFseXplTWVldGluZ1RyYW5zY3JpcHRSZXF1ZXN0EhcKCnRyYW5zY3JpcHQYASABKAlCA+BBAhI5Cg5wcmV2aW91c19zdGF0ZRgCIAEoCzIcLm1lbW9zLmFwaS5NZWV0aW5nTm90ZXNTdGF0ZUID4EEBEhgKC3Byb3ZpZGVyX2lkGAMgASgJQgPgQQESEgoFbW9kZWwYBCABKAlCA+BBARIWCgltZW1vX25hbWUYBSABKAlCA+BBASKUAQoRTWVldGluZ05vdGVzU3RhdGUSFQoNdGFza3NfZm9yX3lvdRgBIAMoCRIYChBjbGllbnRfZGVjaXNpb25zGAIgAygJEhQKDGNydWNpYWxfaW5mbxgDIAMoCRIbChNmb2xsb3dfdXBfcXVlc3Rpb25zGAQgAygJEhsKE21pZF9tZWV0aW5nX2NoYW5nZXMYBSADKAkilQEKIEFuYWx5emVNZWV0aW5nVHJhbnNjcmlwdFJlc3BvbnNlEisKBW5vdGVzGAEgASgLMhwubWVtb3MuYXBpLk1lZXRpbmdOb3Rlc1N0YXRlEhAKCG1hcmtkb3duGAIgASgJEhoKEnJlbGF0ZWRfbWVtb19uYW1lcxgDIAMoCRIWCg5zdGF0dXNfc3VtbWFyeRgEIAEoCSJMChxTdGFydEFudGlncmF2aXR5T0F1dGhSZXF1ZXN0EhgKC3Byb3ZpZGVyX2lkGAEgASgJQgPgQQESEgoFdGl0bGUYAiABKAlCA+BBASJtCh1TdGFydEFudGlncmF2aXR5T0F1dGhSZXNwb25zZRITCgtwcm92aWRlcl9pZBgBIAEoCRISCgpwcm9qZWN0X2lkGAIgASgJEhAKCGF1dGhfdXJsGAMgASgJEhEKCWNvbm5lY3RlZBgEIAEoCCJdChNSdW5BZ2VudFRhc2tSZXF1ZXN0EhgKC2luc3RydWN0aW9uGAEgASgJQgPgQQISGAoLcHJvdmlkZXJfaWQYAiABKAlCA+BBARISCgVtb2RlbBgDIAEoCUID4EEBIlcKD0FnZW50VG9vbEFjdGlvbhIMCgR0b29sGAEgASgJEg8KB3N1bW1hcnkYAiABKAkSEQoJbWVtb19uYW1lGAMgASgJEhIKCnNwYWNlX25hbWUYBCABKAkiUgoUUnVuQWdlbnRUYXNrUmVzcG9uc2USDQoFcmVwbHkYASABKAkSKwoHYWN0aW9ucxgCIAMoCzIaLm1lbW9zLmFwaS5BZ2VudFRvb2xBY3Rpb24ipwEKFVRlc3RBSVByb3ZpZGVyUmVxdWVzdBIYCgtwcm92aWRlcl9pZBgBIAEoCUID4EEBEhIKBW1vZGVsGAIgASgJQgPgQQESFwoKY2FwYWJpbGl0eRgDIAEoCUID4EEBEhoKDXByb3ZpZGVyX3R5cGUYBCABKAlCA+BBARIVCghlbmRwb2ludBgFIAEoCUID4EEBEhQKB2FwaV9rZXkYBiABKAlCA+BBASJOChZUZXN0QUlQcm92aWRlclJlc3BvbnNlEg8KB3N1Y2Nlc3MYASABKAgSDwoHbWVzc2FnZRgCIAEoCRISCgpsYXRlbmN5X21zGAMgASgDIjcKG0ZldGNoQXZhaWxhYmxlTW9kZWxzUmVxdWVzdBIYCgtwcm92aWRlcl9pZBgBIAEoCUID4EECImgKCU1vZGVsSW5mbxIKCgJpZBgBIAEoCRINCgVsYWJlbBgCIAEoCRITCgtkZXNjcmlwdGlvbhgDIAEoCRIXCg9yZW1haW5pbmdfcXVvdGEYBCABKAESEgoKaXNfZGVmYXVsdBgFIAEoCCJEChxGZXRjaEF2YWlsYWJsZU1vZGVsc1Jlc3BvbnNlEiQKBm1vZGVscxgBIAMoCzIULm1lbW9zLmFwaS5Nb2RlbEluZm8y9AoKCUFJU2VydmljZRKMAQoVR2V0QUlDb25uZWN0aW9uU3RhdHVzEicubWVtb3MuYXBpLkdldEFJQ29ubmVjdGlvblN0YXR1c1JlcXVlc3QaKC5tZW1vcy5hcGkuR2V0QUlDb25uZWN0aW9uU3RhdHVzUmVzcG9uc2UiIILT5JMCGhIYL2FwaS9haS9jb25uZWN0aW9uU3RhdHVzEqABChlDb25maWd1cmVBbnRpZ3Jhdml0eU9BdXRoEisubWVtb3MuYXBpLkNvbmZpZ3VyZUFudGlncmF2aXR5T0F1dGhSZXF1ZXN0GigubWVtb3MuYXBpLkdldEFJQ29ubmVjdGlvblN0YXR1c1Jlc3BvbnNlIiyC0+STAiY6ASoiIS9hcGkvYWk6Y29uZmlndXJlQW50aWdyYXZpdHlPQXV0aBKEAQoRU3RhcnRDaGF0R1BUT0F1dGgSIy5tZW1vcy5hcGkuU3RhcnRDaGF0R1BUT0F1dGhSZXF1ZXN0GiQubWVtb3MuYXBpLlN0YXJ0Q2hhdEdQVE9BdXRoUmVzcG9uc2UiJILT5JMCHjoBKiIZL2FwaS9haTpzdGFydENoYXRHUFRPQXV0aBKEAQoRRGlzY29ubmVjdENoYXRHUFQSIy5tZW1vcy5hcGkuRGlzY29ubmVjdENoYXRHUFRSZXF1ZXN0GiQubWVtb3MuYXBpLkRpc2Nvbm5lY3RDaGF0R1BUUmVzcG9uc2UiJILT5JMCHjoBKiIZL2FwaS9haTpkaXNjb25uZWN0Q2hhdEdQVBJwCgpUcmFuc2NyaWJlEhwubWVtb3MuYXBpLlRyYW5zY3JpYmVSZXF1ZXN0Gh0ubWVtb3MuYXBpLlRyYW5zY3JpYmVSZXNwb25zZSIl2kEFYXVkaW+C0+STAhc6ASoiEi9hcGkvYWk6dHJhbnNjcmliZRKgAQoYQW5hbHl6ZU1lZXRpbmdUcmFuc2NyaXB0EioubWVtb3MuYXBpLkFuYWx5emVNZWV0aW5nVHJhbnNjcmlwdFJlcXVlc3QaKy5tZW1vcy5hcGkuQW5hbHl6ZU1lZXRpbmdUcmFuc2NyaXB0UmVzcG9uc2UiK4LT5JMCJToBKiIgL2FwaS9haTphbmFseXplTWVldGluZ1RyYW5zY3JpcHQSlAEKFVN0YXJ0QW50aWdyYXZpdHlPQXV0aBInLm1lbW9zLmFwaS5TdGFydEFudGlncmF2aXR5T0F1dGhSZXF1ZXN0GigubWVtb3MuYXBpLlN0YXJ0QW50aWdyYXZpdHlPQXV0aFJlc3BvbnNlIiiC0+STAiI6ASoiHS9hcGkvYWk6c3RhcnRBbnRpZ3Jhdml0eU9BdXRoEnAKDFJ1bkFnZW50VGFzaxIeLm1lbW9zLmFwaS5SdW5BZ2VudFRhc2tSZXF1ZXN0Gh8ubWVtb3MuYXBpLlJ1bkFnZW50VGFza1Jlc3BvbnNlIh+C0+STAhk6ASoiFC9hcGkvYWk6cnVuQWdlbnRUYXNrEnYKDlRlc3RBSVByb3ZpZGVyEiAubWVtb3MuYXBpLlRlc3RBSVByb3ZpZGVyUmVxdWVzdBohLm1lbW9zLmFwaS5UZXN0QUlQcm92aWRlclJlc3BvbnNlIh+C0+STAhk6ASoiFC9hcGkvYWk6dGVzdFByb3ZpZGVyEpABChRGZXRjaEF2YWlsYWJsZU1vZGVscxImLm1lbW9zLmFwaS5GZXRjaEF2YWlsYWJsZU1vZGVsc1JlcXVlc3QaJy5tZW1vcy5hcGkuRmV0Y2hBdmFpbGFibGVNb2RlbHNSZXNwb25zZSIngtPkkwIhOgEqIhwvYXBpL2FpOmZldGNoQXZhaWxhYmxlTW9kZWxzQo0BCg1jb20ubWVtb3MuYXBpQg5BaVNlcnZpY2VQcm90b1ABWidnaXRodWIuY29tL3VzZW1lbW9zL21lbW9zL3Byb3RvL2dlbi9hcGmiAgNNQViqAglNZW1vcy5BcGnKAglNZW1vc1xBcGniAhVNZW1vc1xBcGlcR1BCTWV0YWRhdGHqAgpNZW1vczo6QXBpYgZwcm90bzM", [file_google_api_annotations, file_google_api_client, file_google_api_field_behavior]);
+
+/**
+ * @generated from message memos.api.GetAIConnectionStatusRequest
+ */
+export type GetAIConnectionStatusRequest = Message<"memos.api.GetAIConnectionStatusRequest"> & {
+};
+
+/**
+ * Describes the message memos.api.GetAIConnectionStatusRequest.
+ * Use `create(GetAIConnectionStatusRequestSchema)` to create a new message.
+ */
+export const GetAIConnectionStatusRequestSchema: GenMessage<GetAIConnectionStatusRequest> = /*@__PURE__*/
+  messageDesc(file_api_ai_service, 0);
+
+/**
+ * @generated from message memos.api.GetAIConnectionStatusResponse
+ */
+export type GetAIConnectionStatusResponse = Message<"memos.api.GetAIConnectionStatusResponse"> & {
+  /**
+   * @generated from field: bool antigravity_configured = 1;
+   */
+  antigravityConfigured: boolean;
+
+  /**
+   * @generated from field: string antigravity_client_id = 2;
+   */
+  antigravityClientId: string;
+};
+
+/**
+ * Describes the message memos.api.GetAIConnectionStatusResponse.
+ * Use `create(GetAIConnectionStatusResponseSchema)` to create a new message.
+ */
+export const GetAIConnectionStatusResponseSchema: GenMessage<GetAIConnectionStatusResponse> = /*@__PURE__*/
+  messageDesc(file_api_ai_service, 1);
+
+/**
+ * @generated from message memos.api.ConfigureAntigravityOAuthRequest
+ */
+export type ConfigureAntigravityOAuthRequest = Message<"memos.api.ConfigureAntigravityOAuthRequest"> & {
+  /**
+   * @generated from field: string client_id = 1;
+   */
+  clientId: string;
+
+  /**
+   * Write-only. An empty value retains the saved secret for the same client ID.
+   *
+   * @generated from field: string client_secret = 2;
+   */
+  clientSecret: string;
+};
+
+/**
+ * Describes the message memos.api.ConfigureAntigravityOAuthRequest.
+ * Use `create(ConfigureAntigravityOAuthRequestSchema)` to create a new message.
+ */
+export const ConfigureAntigravityOAuthRequestSchema: GenMessage<ConfigureAntigravityOAuthRequest> = /*@__PURE__*/
+  messageDesc(file_api_ai_service, 2);
+
+/**
+ * @generated from message memos.api.StartChatGPTOAuthRequest
+ */
+export type StartChatGPTOAuthRequest = Message<"memos.api.StartChatGPTOAuthRequest"> & {
+  /**
+   * An existing ChatGPT connection to reauthorize, or a new ID to add an account.
+   *
+   * @generated from field: string provider_id = 1;
+   */
+  providerId: string;
+};
+
+/**
+ * Describes the message memos.api.StartChatGPTOAuthRequest.
+ * Use `create(StartChatGPTOAuthRequestSchema)` to create a new message.
+ */
+export const StartChatGPTOAuthRequestSchema: GenMessage<StartChatGPTOAuthRequest> = /*@__PURE__*/
+  messageDesc(file_api_ai_service, 3);
+
+/**
+ * @generated from message memos.api.StartChatGPTOAuthResponse
+ */
+export type StartChatGPTOAuthResponse = Message<"memos.api.StartChatGPTOAuthResponse"> & {
+  /**
+   * @generated from field: string provider_id = 1;
+   */
+  providerId: string;
+
+  /**
+   * @generated from field: bool connected = 2;
+   */
+  connected: boolean;
+
+  /**
+   * @generated from field: string email = 3;
+   */
+  email: string;
+
+  /**
+   * @generated from field: bool plan_usage_enabled = 4;
+   */
+  planUsageEnabled: boolean;
+};
+
+/**
+ * Describes the message memos.api.StartChatGPTOAuthResponse.
+ * Use `create(StartChatGPTOAuthResponseSchema)` to create a new message.
+ */
+export const StartChatGPTOAuthResponseSchema: GenMessage<StartChatGPTOAuthResponse> = /*@__PURE__*/
+  messageDesc(file_api_ai_service, 4);
+
+/**
+ * @generated from message memos.api.DisconnectChatGPTRequest
+ */
+export type DisconnectChatGPTRequest = Message<"memos.api.DisconnectChatGPTRequest"> & {
+  /**
+   * @generated from field: string provider_id = 1;
+   */
+  providerId: string;
+};
+
+/**
+ * Describes the message memos.api.DisconnectChatGPTRequest.
+ * Use `create(DisconnectChatGPTRequestSchema)` to create a new message.
+ */
+export const DisconnectChatGPTRequestSchema: GenMessage<DisconnectChatGPTRequest> = /*@__PURE__*/
+  messageDesc(file_api_ai_service, 5);
+
+/**
+ * @generated from message memos.api.DisconnectChatGPTResponse
+ */
+export type DisconnectChatGPTResponse = Message<"memos.api.DisconnectChatGPTResponse"> & {
+  /**
+   * @generated from field: bool remote_revocation_confirmed = 1;
+   */
+  remoteRevocationConfirmed: boolean;
+};
+
+/**
+ * Describes the message memos.api.DisconnectChatGPTResponse.
+ * Use `create(DisconnectChatGPTResponseSchema)` to create a new message.
+ */
+export const DisconnectChatGPTResponseSchema: GenMessage<DisconnectChatGPTResponse> = /*@__PURE__*/
+  messageDesc(file_api_ai_service, 6);
 
 /**
  * Request message for AIService.Transcribe.
@@ -55,7 +199,7 @@ export type TranscribeRequest = Message<"memos.api.TranscribeRequest"> & {
  * Use `create(TranscribeRequestSchema)` to create a new message.
  */
 export const TranscribeRequestSchema: GenMessage<TranscribeRequest> = /*@__PURE__*/
-  messageDesc(file_api_ai_service, 0);
+  messageDesc(file_api_ai_service, 7);
 
 /**
  * Response message for AIService.Transcribe.
@@ -83,7 +227,7 @@ export type TranscribeResponse = Message<"memos.api.TranscribeResponse"> & {
  * Use `create(TranscribeResponseSchema)` to create a new message.
  */
 export const TranscribeResponseSchema: GenMessage<TranscribeResponse> = /*@__PURE__*/
-  messageDesc(file_api_ai_service, 1);
+  messageDesc(file_api_ai_service, 8);
 
 /**
  * TranscriptionSegment is a provider-identified speaker turn.
@@ -117,7 +261,7 @@ export type TranscriptionSegment = Message<"memos.api.TranscriptionSegment"> & {
  * Use `create(TranscriptionSegmentSchema)` to create a new message.
  */
 export const TranscriptionSegmentSchema: GenMessage<TranscriptionSegment> = /*@__PURE__*/
-  messageDesc(file_api_ai_service, 2);
+  messageDesc(file_api_ai_service, 9);
 
 /**
  * TranscriptionAudio is the audio input for a transcription.
@@ -168,7 +312,7 @@ export type TranscriptionAudio = Message<"memos.api.TranscriptionAudio"> & {
  * Use `create(TranscriptionAudioSchema)` to create a new message.
  */
 export const TranscriptionAudioSchema: GenMessage<TranscriptionAudio> = /*@__PURE__*/
-  messageDesc(file_api_ai_service, 3);
+  messageDesc(file_api_ai_service, 10);
 
 /**
  * Request message for AIService.AnalyzeMeetingTranscript.
@@ -217,7 +361,7 @@ export type AnalyzeMeetingTranscriptRequest = Message<"memos.api.AnalyzeMeetingT
  * Use `create(AnalyzeMeetingTranscriptRequestSchema)` to create a new message.
  */
 export const AnalyzeMeetingTranscriptRequestSchema: GenMessage<AnalyzeMeetingTranscriptRequest> = /*@__PURE__*/
-  messageDesc(file_api_ai_service, 4);
+  messageDesc(file_api_ai_service, 11);
 
 /**
  * MeetingNotesState holds the 4 structured lists extracted from a live meeting transcript.
@@ -266,7 +410,7 @@ export type MeetingNotesState = Message<"memos.api.MeetingNotesState"> & {
  * Use `create(MeetingNotesStateSchema)` to create a new message.
  */
 export const MeetingNotesStateSchema: GenMessage<MeetingNotesState> = /*@__PURE__*/
-  messageDesc(file_api_ai_service, 5);
+  messageDesc(file_api_ai_service, 12);
 
 /**
  * Response message for AIService.AnalyzeMeetingTranscript.
@@ -308,7 +452,7 @@ export type AnalyzeMeetingTranscriptResponse = Message<"memos.api.AnalyzeMeeting
  * Use `create(AnalyzeMeetingTranscriptResponseSchema)` to create a new message.
  */
 export const AnalyzeMeetingTranscriptResponseSchema: GenMessage<AnalyzeMeetingTranscriptResponse> = /*@__PURE__*/
-  messageDesc(file_api_ai_service, 6);
+  messageDesc(file_api_ai_service, 13);
 
 /**
  * Request message for AIService.StartAntigravityOAuth.
@@ -336,7 +480,7 @@ export type StartAntigravityOAuthRequest = Message<"memos.api.StartAntigravityOA
  * Use `create(StartAntigravityOAuthRequestSchema)` to create a new message.
  */
 export const StartAntigravityOAuthRequestSchema: GenMessage<StartAntigravityOAuthRequest> = /*@__PURE__*/
-  messageDesc(file_api_ai_service, 7);
+  messageDesc(file_api_ai_service, 14);
 
 /**
  * Response message for AIService.StartAntigravityOAuth.
@@ -378,7 +522,7 @@ export type StartAntigravityOAuthResponse = Message<"memos.api.StartAntigravityO
  * Use `create(StartAntigravityOAuthResponseSchema)` to create a new message.
  */
 export const StartAntigravityOAuthResponseSchema: GenMessage<StartAntigravityOAuthResponse> = /*@__PURE__*/
-  messageDesc(file_api_ai_service, 8);
+  messageDesc(file_api_ai_service, 15);
 
 /**
  * Request message for AIService.RunAgentTask.
@@ -413,7 +557,7 @@ export type RunAgentTaskRequest = Message<"memos.api.RunAgentTaskRequest"> & {
  * Use `create(RunAgentTaskRequestSchema)` to create a new message.
  */
 export const RunAgentTaskRequestSchema: GenMessage<RunAgentTaskRequest> = /*@__PURE__*/
-  messageDesc(file_api_ai_service, 9);
+  messageDesc(file_api_ai_service, 16);
 
 /**
  * AgentToolAction records a single tool invocation executed by the autonomous AI Agent.
@@ -455,7 +599,7 @@ export type AgentToolAction = Message<"memos.api.AgentToolAction"> & {
  * Use `create(AgentToolActionSchema)` to create a new message.
  */
 export const AgentToolActionSchema: GenMessage<AgentToolAction> = /*@__PURE__*/
-  messageDesc(file_api_ai_service, 10);
+  messageDesc(file_api_ai_service, 17);
 
 /**
  * Response message for AIService.RunAgentTask.
@@ -483,7 +627,7 @@ export type RunAgentTaskResponse = Message<"memos.api.RunAgentTaskResponse"> & {
  * Use `create(RunAgentTaskResponseSchema)` to create a new message.
  */
 export const RunAgentTaskResponseSchema: GenMessage<RunAgentTaskResponse> = /*@__PURE__*/
-  messageDesc(file_api_ai_service, 11);
+  messageDesc(file_api_ai_service, 18);
 
 /**
  * Request message for AIService.TestAIProvider.
@@ -539,7 +683,7 @@ export type TestAIProviderRequest = Message<"memos.api.TestAIProviderRequest"> &
  * Use `create(TestAIProviderRequestSchema)` to create a new message.
  */
 export const TestAIProviderRequestSchema: GenMessage<TestAIProviderRequest> = /*@__PURE__*/
-  messageDesc(file_api_ai_service, 12);
+  messageDesc(file_api_ai_service, 19);
 
 /**
  * Response message for AIService.TestAIProvider.
@@ -574,7 +718,7 @@ export type TestAIProviderResponse = Message<"memos.api.TestAIProviderResponse">
  * Use `create(TestAIProviderResponseSchema)` to create a new message.
  */
 export const TestAIProviderResponseSchema: GenMessage<TestAIProviderResponse> = /*@__PURE__*/
-  messageDesc(file_api_ai_service, 13);
+  messageDesc(file_api_ai_service, 20);
 
 /**
  * Request message for AIService.FetchAvailableModels.
@@ -595,7 +739,7 @@ export type FetchAvailableModelsRequest = Message<"memos.api.FetchAvailableModel
  * Use `create(FetchAvailableModelsRequestSchema)` to create a new message.
  */
 export const FetchAvailableModelsRequestSchema: GenMessage<FetchAvailableModelsRequest> = /*@__PURE__*/
-  messageDesc(file_api_ai_service, 14);
+  messageDesc(file_api_ai_service, 21);
 
 /**
  * ModelInfo describes a single model supported by an AI provider.
@@ -644,7 +788,7 @@ export type ModelInfo = Message<"memos.api.ModelInfo"> & {
  * Use `create(ModelInfoSchema)` to create a new message.
  */
 export const ModelInfoSchema: GenMessage<ModelInfo> = /*@__PURE__*/
-  messageDesc(file_api_ai_service, 15);
+  messageDesc(file_api_ai_service, 22);
 
 /**
  * Response message for AIService.FetchAvailableModels.
@@ -665,7 +809,7 @@ export type FetchAvailableModelsResponse = Message<"memos.api.FetchAvailableMode
  * Use `create(FetchAvailableModelsResponseSchema)` to create a new message.
  */
 export const FetchAvailableModelsResponseSchema: GenMessage<FetchAvailableModelsResponse> = /*@__PURE__*/
-  messageDesc(file_api_ai_service, 16);
+  messageDesc(file_api_ai_service, 23);
 
 /**
  * AIService runs AI tasks through the AI providers configured on the instance.
@@ -673,6 +817,46 @@ export const FetchAvailableModelsResponseSchema: GenMessage<FetchAvailableModels
  * @generated from service memos.api.AIService
  */
 export const AIService: GenService<{
+  /**
+   * GetAIConnectionStatus reports setup readiness without exposing credentials.
+   *
+   * @generated from rpc memos.api.AIService.GetAIConnectionStatus
+   */
+  getAIConnectionStatus: {
+    methodKind: "unary";
+    input: typeof GetAIConnectionStatusRequestSchema;
+    output: typeof GetAIConnectionStatusResponseSchema;
+  },
+  /**
+   * ConfigureAntigravityOAuth saves this installation's authorized OAuth application configuration.
+   *
+   * @generated from rpc memos.api.AIService.ConfigureAntigravityOAuth
+   */
+  configureAntigravityOAuth: {
+    methodKind: "unary";
+    input: typeof ConfigureAntigravityOAuthRequestSchema;
+    output: typeof GetAIConnectionStatusResponseSchema;
+  },
+  /**
+   * StartChatGPTOAuth connects a separately registered ChatGPT account using PKCE.
+   *
+   * @generated from rpc memos.api.AIService.StartChatGPTOAuth
+   */
+  startChatGPTOAuth: {
+    methodKind: "unary";
+    input: typeof StartChatGPTOAuthRequestSchema;
+    output: typeof StartChatGPTOAuthResponseSchema;
+  },
+  /**
+   * DisconnectChatGPT revokes the selected renewable session and clears local tokens.
+   *
+   * @generated from rpc memos.api.AIService.DisconnectChatGPT
+   */
+  disconnectChatGPT: {
+    methodKind: "unary";
+    input: typeof DisconnectChatGPTRequestSchema;
+    output: typeof DisconnectChatGPTResponseSchema;
+  },
   /**
    * Transcribe transcribes an audio file with the instance's configured
    * transcription provider. The caller must be signed in, and requests are rate limited per user.

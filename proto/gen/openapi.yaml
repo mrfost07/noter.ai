@@ -6,6 +6,25 @@ info:
     title: ""
     version: 0.0.1
 paths:
+    /api/ai/connectionStatus:
+        get:
+            tags:
+                - AIService
+            description: GetAIConnectionStatus reports setup readiness without exposing credentials.
+            operationId: AIService_GetAIConnectionStatus
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/GetAIConnectionStatusResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /api/ai:analyzeMeetingTranscript:
         post:
             tags:
@@ -28,6 +47,56 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/AnalyzeMeetingTranscriptResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/ai:configureAntigravityOAuth:
+        post:
+            tags:
+                - AIService
+            description: ConfigureAntigravityOAuth saves this installation's authorized OAuth application configuration.
+            operationId: AIService_ConfigureAntigravityOAuth
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/ConfigureAntigravityOAuthRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/GetAIConnectionStatusResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/ai:disconnectChatGPT:
+        post:
+            tags:
+                - AIService
+            description: DisconnectChatGPT revokes the selected renewable session and clears local tokens.
+            operationId: AIService_DisconnectChatGPT
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/DisconnectChatGPTRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/DisconnectChatGPTResponse'
                 default:
                     description: Default error response
                     content:
@@ -107,6 +176,31 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/StartAntigravityOAuthResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/ai:startChatGPTOAuth:
+        post:
+            tags:
+                - AIService
+            description: StartChatGPTOAuth connects a separately registered ChatGPT account using PKCE.
+            operationId: AIService_StartChatGPTOAuth
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/StartChatGPTOAuthRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/StartChatGPTOAuthResponse'
                 default:
                     description: Default error response
                     content:
@@ -2063,6 +2157,17 @@ components:
                      };
 
                      // ...
+        ConfigureAntigravityOAuthRequest:
+            required:
+                - clientId
+            type: object
+            properties:
+                clientId:
+                    type: string
+                clientSecret:
+                    writeOnly: true
+                    type: string
+                    description: Write-only. An empty value retains the saved secret for the same client ID.
         CreateLinkedIdentityRequest:
             required:
                 - parent
@@ -2114,6 +2219,16 @@ components:
                     type: string
                     description: The token value. This is the only time it is returned.
             description: Response message for UserService.CreatePersonalAccessToken.
+        DisconnectChatGPTRequest:
+            type: object
+            properties:
+                providerId:
+                    type: string
+        DisconnectChatGPTResponse:
+            type: object
+            properties:
+                remoteRevocationConfirmed:
+                    type: boolean
         FetchAvailableModelsRequest:
             required:
                 - providerId
@@ -2161,6 +2276,13 @@ components:
                     type: string
                     description: The URL of the instance logo.
             description: CustomProfile is the instance branding.
+        GetAIConnectionStatusResponse:
+            type: object
+            properties:
+                antigravityConfigured:
+                    type: boolean
+                antigravityClientId:
+                    type: string
         GetCurrentUserResponse:
             type: object
             properties:
@@ -2466,6 +2588,7 @@ components:
                         - LOCAL_WHISPER
                         - AZURE_STT
                         - IBM_STT
+                        - CHATGPT
                     type: string
                     description: The provider implementation type.
                     format: enum
@@ -2484,6 +2607,13 @@ components:
                     readOnly: true
                     type: string
                     description: Output only. A masked hint of the stored API key.
+                oauthAccount:
+                    readOnly: true
+                    type: string
+                    description: Verified ChatGPT identity; tokens are never returned.
+                oauthPlanEnabled:
+                    readOnly: true
+                    type: boolean
             description: AIProviderConfig is one callable AI provider connection.
         InstanceSetting_AISetting:
             type: object
@@ -3393,6 +3523,23 @@ components:
                     type: boolean
                     description: Whether the OAuth flow completed and stored credentials.
             description: Response message for AIService.StartAntigravityOAuth.
+        StartChatGPTOAuthRequest:
+            type: object
+            properties:
+                providerId:
+                    type: string
+                    description: An existing ChatGPT connection to reauthorize, or a new ID to add an account.
+        StartChatGPTOAuthResponse:
+            type: object
+            properties:
+                providerId:
+                    type: string
+                connected:
+                    type: boolean
+                email:
+                    type: string
+                planUsageEnabled:
+                    type: boolean
         Status:
             type: object
             properties:

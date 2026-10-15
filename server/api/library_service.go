@@ -278,7 +278,7 @@ func (s *APIService) registerMeetingLibrary(e *echo.Echo) {
 			if err != nil {
 				return err
 			}
-			provider, err := s.resolveMeetingAnalystProvider(setting, "")
+			provider, err := s.resolveMeetingAnalystProvider(c.Request().Context(), setting, "")
 			if err != nil {
 				return err
 			}

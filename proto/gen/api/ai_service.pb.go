@@ -22,6 +22,348 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type GetAIConnectionStatusRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetAIConnectionStatusRequest) Reset() {
+	*x = GetAIConnectionStatusRequest{}
+	mi := &file_api_ai_service_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetAIConnectionStatusRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetAIConnectionStatusRequest) ProtoMessage() {}
+
+func (x *GetAIConnectionStatusRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_ai_service_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetAIConnectionStatusRequest.ProtoReflect.Descriptor instead.
+func (*GetAIConnectionStatusRequest) Descriptor() ([]byte, []int) {
+	return file_api_ai_service_proto_rawDescGZIP(), []int{0}
+}
+
+type GetAIConnectionStatusResponse struct {
+	state                 protoimpl.MessageState `protogen:"open.v1"`
+	AntigravityConfigured bool                   `protobuf:"varint,1,opt,name=antigravity_configured,json=antigravityConfigured,proto3" json:"antigravity_configured,omitempty"`
+	AntigravityClientId   string                 `protobuf:"bytes,2,opt,name=antigravity_client_id,json=antigravityClientId,proto3" json:"antigravity_client_id,omitempty"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
+}
+
+func (x *GetAIConnectionStatusResponse) Reset() {
+	*x = GetAIConnectionStatusResponse{}
+	mi := &file_api_ai_service_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetAIConnectionStatusResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetAIConnectionStatusResponse) ProtoMessage() {}
+
+func (x *GetAIConnectionStatusResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_ai_service_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetAIConnectionStatusResponse.ProtoReflect.Descriptor instead.
+func (*GetAIConnectionStatusResponse) Descriptor() ([]byte, []int) {
+	return file_api_ai_service_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *GetAIConnectionStatusResponse) GetAntigravityConfigured() bool {
+	if x != nil {
+		return x.AntigravityConfigured
+	}
+	return false
+}
+
+func (x *GetAIConnectionStatusResponse) GetAntigravityClientId() string {
+	if x != nil {
+		return x.AntigravityClientId
+	}
+	return ""
+}
+
+type ConfigureAntigravityOAuthRequest struct {
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	ClientId string                 `protobuf:"bytes,1,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	// Write-only. An empty value retains the saved secret for the same client ID.
+	ClientSecret  string `protobuf:"bytes,2,opt,name=client_secret,json=clientSecret,proto3" json:"client_secret,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ConfigureAntigravityOAuthRequest) Reset() {
+	*x = ConfigureAntigravityOAuthRequest{}
+	mi := &file_api_ai_service_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ConfigureAntigravityOAuthRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ConfigureAntigravityOAuthRequest) ProtoMessage() {}
+
+func (x *ConfigureAntigravityOAuthRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_ai_service_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ConfigureAntigravityOAuthRequest.ProtoReflect.Descriptor instead.
+func (*ConfigureAntigravityOAuthRequest) Descriptor() ([]byte, []int) {
+	return file_api_ai_service_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *ConfigureAntigravityOAuthRequest) GetClientId() string {
+	if x != nil {
+		return x.ClientId
+	}
+	return ""
+}
+
+func (x *ConfigureAntigravityOAuthRequest) GetClientSecret() string {
+	if x != nil {
+		return x.ClientSecret
+	}
+	return ""
+}
+
+type StartChatGPTOAuthRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// An existing ChatGPT connection to reauthorize, or a new ID to add an account.
+	ProviderId    string `protobuf:"bytes,1,opt,name=provider_id,json=providerId,proto3" json:"provider_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *StartChatGPTOAuthRequest) Reset() {
+	*x = StartChatGPTOAuthRequest{}
+	mi := &file_api_ai_service_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StartChatGPTOAuthRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StartChatGPTOAuthRequest) ProtoMessage() {}
+
+func (x *StartChatGPTOAuthRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_ai_service_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StartChatGPTOAuthRequest.ProtoReflect.Descriptor instead.
+func (*StartChatGPTOAuthRequest) Descriptor() ([]byte, []int) {
+	return file_api_ai_service_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *StartChatGPTOAuthRequest) GetProviderId() string {
+	if x != nil {
+		return x.ProviderId
+	}
+	return ""
+}
+
+type StartChatGPTOAuthResponse struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	ProviderId       string                 `protobuf:"bytes,1,opt,name=provider_id,json=providerId,proto3" json:"provider_id,omitempty"`
+	Connected        bool                   `protobuf:"varint,2,opt,name=connected,proto3" json:"connected,omitempty"`
+	Email            string                 `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
+	PlanUsageEnabled bool                   `protobuf:"varint,4,opt,name=plan_usage_enabled,json=planUsageEnabled,proto3" json:"plan_usage_enabled,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *StartChatGPTOAuthResponse) Reset() {
+	*x = StartChatGPTOAuthResponse{}
+	mi := &file_api_ai_service_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StartChatGPTOAuthResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StartChatGPTOAuthResponse) ProtoMessage() {}
+
+func (x *StartChatGPTOAuthResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_ai_service_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StartChatGPTOAuthResponse.ProtoReflect.Descriptor instead.
+func (*StartChatGPTOAuthResponse) Descriptor() ([]byte, []int) {
+	return file_api_ai_service_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *StartChatGPTOAuthResponse) GetProviderId() string {
+	if x != nil {
+		return x.ProviderId
+	}
+	return ""
+}
+
+func (x *StartChatGPTOAuthResponse) GetConnected() bool {
+	if x != nil {
+		return x.Connected
+	}
+	return false
+}
+
+func (x *StartChatGPTOAuthResponse) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
+}
+
+func (x *StartChatGPTOAuthResponse) GetPlanUsageEnabled() bool {
+	if x != nil {
+		return x.PlanUsageEnabled
+	}
+	return false
+}
+
+type DisconnectChatGPTRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ProviderId    string                 `protobuf:"bytes,1,opt,name=provider_id,json=providerId,proto3" json:"provider_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DisconnectChatGPTRequest) Reset() {
+	*x = DisconnectChatGPTRequest{}
+	mi := &file_api_ai_service_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DisconnectChatGPTRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DisconnectChatGPTRequest) ProtoMessage() {}
+
+func (x *DisconnectChatGPTRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_ai_service_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DisconnectChatGPTRequest.ProtoReflect.Descriptor instead.
+func (*DisconnectChatGPTRequest) Descriptor() ([]byte, []int) {
+	return file_api_ai_service_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *DisconnectChatGPTRequest) GetProviderId() string {
+	if x != nil {
+		return x.ProviderId
+	}
+	return ""
+}
+
+type DisconnectChatGPTResponse struct {
+	state                     protoimpl.MessageState `protogen:"open.v1"`
+	RemoteRevocationConfirmed bool                   `protobuf:"varint,1,opt,name=remote_revocation_confirmed,json=remoteRevocationConfirmed,proto3" json:"remote_revocation_confirmed,omitempty"`
+	unknownFields             protoimpl.UnknownFields
+	sizeCache                 protoimpl.SizeCache
+}
+
+func (x *DisconnectChatGPTResponse) Reset() {
+	*x = DisconnectChatGPTResponse{}
+	mi := &file_api_ai_service_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DisconnectChatGPTResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DisconnectChatGPTResponse) ProtoMessage() {}
+
+func (x *DisconnectChatGPTResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_ai_service_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DisconnectChatGPTResponse.ProtoReflect.Descriptor instead.
+func (*DisconnectChatGPTResponse) Descriptor() ([]byte, []int) {
+	return file_api_ai_service_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *DisconnectChatGPTResponse) GetRemoteRevocationConfirmed() bool {
+	if x != nil {
+		return x.RemoteRevocationConfirmed
+	}
+	return false
+}
+
 // Request message for AIService.Transcribe.
 type TranscribeRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -39,7 +381,7 @@ type TranscribeRequest struct {
 
 func (x *TranscribeRequest) Reset() {
 	*x = TranscribeRequest{}
-	mi := &file_api_ai_service_proto_msgTypes[0]
+	mi := &file_api_ai_service_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -51,7 +393,7 @@ func (x *TranscribeRequest) String() string {
 func (*TranscribeRequest) ProtoMessage() {}
 
 func (x *TranscribeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_ai_service_proto_msgTypes[0]
+	mi := &file_api_ai_service_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -64,7 +406,7 @@ func (x *TranscribeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TranscribeRequest.ProtoReflect.Descriptor instead.
 func (*TranscribeRequest) Descriptor() ([]byte, []int) {
-	return file_api_ai_service_proto_rawDescGZIP(), []int{0}
+	return file_api_ai_service_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *TranscribeRequest) GetAudio() *TranscriptionAudio {
@@ -108,7 +450,7 @@ type TranscribeResponse struct {
 
 func (x *TranscribeResponse) Reset() {
 	*x = TranscribeResponse{}
-	mi := &file_api_ai_service_proto_msgTypes[1]
+	mi := &file_api_ai_service_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -120,7 +462,7 @@ func (x *TranscribeResponse) String() string {
 func (*TranscribeResponse) ProtoMessage() {}
 
 func (x *TranscribeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_ai_service_proto_msgTypes[1]
+	mi := &file_api_ai_service_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -133,7 +475,7 @@ func (x *TranscribeResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TranscribeResponse.ProtoReflect.Descriptor instead.
 func (*TranscribeResponse) Descriptor() ([]byte, []int) {
-	return file_api_ai_service_proto_rawDescGZIP(), []int{1}
+	return file_api_ai_service_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *TranscribeResponse) GetText() string {
@@ -163,7 +505,7 @@ type TranscriptionSegment struct {
 
 func (x *TranscriptionSegment) Reset() {
 	*x = TranscriptionSegment{}
-	mi := &file_api_ai_service_proto_msgTypes[2]
+	mi := &file_api_ai_service_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -175,7 +517,7 @@ func (x *TranscriptionSegment) String() string {
 func (*TranscriptionSegment) ProtoMessage() {}
 
 func (x *TranscriptionSegment) ProtoReflect() protoreflect.Message {
-	mi := &file_api_ai_service_proto_msgTypes[2]
+	mi := &file_api_ai_service_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -188,7 +530,7 @@ func (x *TranscriptionSegment) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TranscriptionSegment.ProtoReflect.Descriptor instead.
 func (*TranscriptionSegment) Descriptor() ([]byte, []int) {
-	return file_api_ai_service_proto_rawDescGZIP(), []int{2}
+	return file_api_ai_service_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *TranscriptionSegment) GetText() string {
@@ -239,7 +581,7 @@ type TranscriptionAudio struct {
 
 func (x *TranscriptionAudio) Reset() {
 	*x = TranscriptionAudio{}
-	mi := &file_api_ai_service_proto_msgTypes[3]
+	mi := &file_api_ai_service_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -251,7 +593,7 @@ func (x *TranscriptionAudio) String() string {
 func (*TranscriptionAudio) ProtoMessage() {}
 
 func (x *TranscriptionAudio) ProtoReflect() protoreflect.Message {
-	mi := &file_api_ai_service_proto_msgTypes[3]
+	mi := &file_api_ai_service_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -264,7 +606,7 @@ func (x *TranscriptionAudio) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TranscriptionAudio.ProtoReflect.Descriptor instead.
 func (*TranscriptionAudio) Descriptor() ([]byte, []int) {
-	return file_api_ai_service_proto_rawDescGZIP(), []int{3}
+	return file_api_ai_service_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *TranscriptionAudio) GetSource() isTranscriptionAudio_Source {
@@ -343,7 +685,7 @@ type AnalyzeMeetingTranscriptRequest struct {
 
 func (x *AnalyzeMeetingTranscriptRequest) Reset() {
 	*x = AnalyzeMeetingTranscriptRequest{}
-	mi := &file_api_ai_service_proto_msgTypes[4]
+	mi := &file_api_ai_service_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -355,7 +697,7 @@ func (x *AnalyzeMeetingTranscriptRequest) String() string {
 func (*AnalyzeMeetingTranscriptRequest) ProtoMessage() {}
 
 func (x *AnalyzeMeetingTranscriptRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_ai_service_proto_msgTypes[4]
+	mi := &file_api_ai_service_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -368,7 +710,7 @@ func (x *AnalyzeMeetingTranscriptRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AnalyzeMeetingTranscriptRequest.ProtoReflect.Descriptor instead.
 func (*AnalyzeMeetingTranscriptRequest) Descriptor() ([]byte, []int) {
-	return file_api_ai_service_proto_rawDescGZIP(), []int{4}
+	return file_api_ai_service_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *AnalyzeMeetingTranscriptRequest) GetTranscript() string {
@@ -425,7 +767,7 @@ type MeetingNotesState struct {
 
 func (x *MeetingNotesState) Reset() {
 	*x = MeetingNotesState{}
-	mi := &file_api_ai_service_proto_msgTypes[5]
+	mi := &file_api_ai_service_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -437,7 +779,7 @@ func (x *MeetingNotesState) String() string {
 func (*MeetingNotesState) ProtoMessage() {}
 
 func (x *MeetingNotesState) ProtoReflect() protoreflect.Message {
-	mi := &file_api_ai_service_proto_msgTypes[5]
+	mi := &file_api_ai_service_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -450,7 +792,7 @@ func (x *MeetingNotesState) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MeetingNotesState.ProtoReflect.Descriptor instead.
 func (*MeetingNotesState) Descriptor() ([]byte, []int) {
-	return file_api_ai_service_proto_rawDescGZIP(), []int{5}
+	return file_api_ai_service_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *MeetingNotesState) GetTasksForYou() []string {
@@ -505,7 +847,7 @@ type AnalyzeMeetingTranscriptResponse struct {
 
 func (x *AnalyzeMeetingTranscriptResponse) Reset() {
 	*x = AnalyzeMeetingTranscriptResponse{}
-	mi := &file_api_ai_service_proto_msgTypes[6]
+	mi := &file_api_ai_service_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -517,7 +859,7 @@ func (x *AnalyzeMeetingTranscriptResponse) String() string {
 func (*AnalyzeMeetingTranscriptResponse) ProtoMessage() {}
 
 func (x *AnalyzeMeetingTranscriptResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_ai_service_proto_msgTypes[6]
+	mi := &file_api_ai_service_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -530,7 +872,7 @@ func (x *AnalyzeMeetingTranscriptResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AnalyzeMeetingTranscriptResponse.ProtoReflect.Descriptor instead.
 func (*AnalyzeMeetingTranscriptResponse) Descriptor() ([]byte, []int) {
-	return file_api_ai_service_proto_rawDescGZIP(), []int{6}
+	return file_api_ai_service_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *AnalyzeMeetingTranscriptResponse) GetNotes() *MeetingNotesState {
@@ -574,7 +916,7 @@ type StartAntigravityOAuthRequest struct {
 
 func (x *StartAntigravityOAuthRequest) Reset() {
 	*x = StartAntigravityOAuthRequest{}
-	mi := &file_api_ai_service_proto_msgTypes[7]
+	mi := &file_api_ai_service_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -586,7 +928,7 @@ func (x *StartAntigravityOAuthRequest) String() string {
 func (*StartAntigravityOAuthRequest) ProtoMessage() {}
 
 func (x *StartAntigravityOAuthRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_ai_service_proto_msgTypes[7]
+	mi := &file_api_ai_service_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -599,7 +941,7 @@ func (x *StartAntigravityOAuthRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartAntigravityOAuthRequest.ProtoReflect.Descriptor instead.
 func (*StartAntigravityOAuthRequest) Descriptor() ([]byte, []int) {
-	return file_api_ai_service_proto_rawDescGZIP(), []int{7}
+	return file_api_ai_service_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *StartAntigravityOAuthRequest) GetProviderId() string {
@@ -633,7 +975,7 @@ type StartAntigravityOAuthResponse struct {
 
 func (x *StartAntigravityOAuthResponse) Reset() {
 	*x = StartAntigravityOAuthResponse{}
-	mi := &file_api_ai_service_proto_msgTypes[8]
+	mi := &file_api_ai_service_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -645,7 +987,7 @@ func (x *StartAntigravityOAuthResponse) String() string {
 func (*StartAntigravityOAuthResponse) ProtoMessage() {}
 
 func (x *StartAntigravityOAuthResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_ai_service_proto_msgTypes[8]
+	mi := &file_api_ai_service_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -658,7 +1000,7 @@ func (x *StartAntigravityOAuthResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartAntigravityOAuthResponse.ProtoReflect.Descriptor instead.
 func (*StartAntigravityOAuthResponse) Descriptor() ([]byte, []int) {
-	return file_api_ai_service_proto_rawDescGZIP(), []int{8}
+	return file_api_ai_service_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *StartAntigravityOAuthResponse) GetProviderId() string {
@@ -704,7 +1046,7 @@ type RunAgentTaskRequest struct {
 
 func (x *RunAgentTaskRequest) Reset() {
 	*x = RunAgentTaskRequest{}
-	mi := &file_api_ai_service_proto_msgTypes[9]
+	mi := &file_api_ai_service_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -716,7 +1058,7 @@ func (x *RunAgentTaskRequest) String() string {
 func (*RunAgentTaskRequest) ProtoMessage() {}
 
 func (x *RunAgentTaskRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_ai_service_proto_msgTypes[9]
+	mi := &file_api_ai_service_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -729,7 +1071,7 @@ func (x *RunAgentTaskRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RunAgentTaskRequest.ProtoReflect.Descriptor instead.
 func (*RunAgentTaskRequest) Descriptor() ([]byte, []int) {
-	return file_api_ai_service_proto_rawDescGZIP(), []int{9}
+	return file_api_ai_service_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *RunAgentTaskRequest) GetInstruction() string {
@@ -770,7 +1112,7 @@ type AgentToolAction struct {
 
 func (x *AgentToolAction) Reset() {
 	*x = AgentToolAction{}
-	mi := &file_api_ai_service_proto_msgTypes[10]
+	mi := &file_api_ai_service_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -782,7 +1124,7 @@ func (x *AgentToolAction) String() string {
 func (*AgentToolAction) ProtoMessage() {}
 
 func (x *AgentToolAction) ProtoReflect() protoreflect.Message {
-	mi := &file_api_ai_service_proto_msgTypes[10]
+	mi := &file_api_ai_service_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -795,7 +1137,7 @@ func (x *AgentToolAction) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AgentToolAction.ProtoReflect.Descriptor instead.
 func (*AgentToolAction) Descriptor() ([]byte, []int) {
-	return file_api_ai_service_proto_rawDescGZIP(), []int{10}
+	return file_api_ai_service_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *AgentToolAction) GetTool() string {
@@ -839,7 +1181,7 @@ type RunAgentTaskResponse struct {
 
 func (x *RunAgentTaskResponse) Reset() {
 	*x = RunAgentTaskResponse{}
-	mi := &file_api_ai_service_proto_msgTypes[11]
+	mi := &file_api_ai_service_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -851,7 +1193,7 @@ func (x *RunAgentTaskResponse) String() string {
 func (*RunAgentTaskResponse) ProtoMessage() {}
 
 func (x *RunAgentTaskResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_ai_service_proto_msgTypes[11]
+	mi := &file_api_ai_service_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -864,7 +1206,7 @@ func (x *RunAgentTaskResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RunAgentTaskResponse.ProtoReflect.Descriptor instead.
 func (*RunAgentTaskResponse) Descriptor() ([]byte, []int) {
-	return file_api_ai_service_proto_rawDescGZIP(), []int{11}
+	return file_api_ai_service_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *RunAgentTaskResponse) GetReply() string {
@@ -902,7 +1244,7 @@ type TestAIProviderRequest struct {
 
 func (x *TestAIProviderRequest) Reset() {
 	*x = TestAIProviderRequest{}
-	mi := &file_api_ai_service_proto_msgTypes[12]
+	mi := &file_api_ai_service_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -914,7 +1256,7 @@ func (x *TestAIProviderRequest) String() string {
 func (*TestAIProviderRequest) ProtoMessage() {}
 
 func (x *TestAIProviderRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_ai_service_proto_msgTypes[12]
+	mi := &file_api_ai_service_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -927,7 +1269,7 @@ func (x *TestAIProviderRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TestAIProviderRequest.ProtoReflect.Descriptor instead.
 func (*TestAIProviderRequest) Descriptor() ([]byte, []int) {
-	return file_api_ai_service_proto_rawDescGZIP(), []int{12}
+	return file_api_ai_service_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *TestAIProviderRequest) GetProviderId() string {
@@ -987,7 +1329,7 @@ type TestAIProviderResponse struct {
 
 func (x *TestAIProviderResponse) Reset() {
 	*x = TestAIProviderResponse{}
-	mi := &file_api_ai_service_proto_msgTypes[13]
+	mi := &file_api_ai_service_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -999,7 +1341,7 @@ func (x *TestAIProviderResponse) String() string {
 func (*TestAIProviderResponse) ProtoMessage() {}
 
 func (x *TestAIProviderResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_ai_service_proto_msgTypes[13]
+	mi := &file_api_ai_service_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1012,7 +1354,7 @@ func (x *TestAIProviderResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TestAIProviderResponse.ProtoReflect.Descriptor instead.
 func (*TestAIProviderResponse) Descriptor() ([]byte, []int) {
-	return file_api_ai_service_proto_rawDescGZIP(), []int{13}
+	return file_api_ai_service_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *TestAIProviderResponse) GetSuccess() bool {
@@ -1047,7 +1389,7 @@ type FetchAvailableModelsRequest struct {
 
 func (x *FetchAvailableModelsRequest) Reset() {
 	*x = FetchAvailableModelsRequest{}
-	mi := &file_api_ai_service_proto_msgTypes[14]
+	mi := &file_api_ai_service_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1059,7 +1401,7 @@ func (x *FetchAvailableModelsRequest) String() string {
 func (*FetchAvailableModelsRequest) ProtoMessage() {}
 
 func (x *FetchAvailableModelsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_ai_service_proto_msgTypes[14]
+	mi := &file_api_ai_service_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1072,7 +1414,7 @@ func (x *FetchAvailableModelsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FetchAvailableModelsRequest.ProtoReflect.Descriptor instead.
 func (*FetchAvailableModelsRequest) Descriptor() ([]byte, []int) {
-	return file_api_ai_service_proto_rawDescGZIP(), []int{14}
+	return file_api_ai_service_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *FetchAvailableModelsRequest) GetProviderId() string {
@@ -1101,7 +1443,7 @@ type ModelInfo struct {
 
 func (x *ModelInfo) Reset() {
 	*x = ModelInfo{}
-	mi := &file_api_ai_service_proto_msgTypes[15]
+	mi := &file_api_ai_service_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1113,7 +1455,7 @@ func (x *ModelInfo) String() string {
 func (*ModelInfo) ProtoMessage() {}
 
 func (x *ModelInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_api_ai_service_proto_msgTypes[15]
+	mi := &file_api_ai_service_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1126,7 +1468,7 @@ func (x *ModelInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ModelInfo.ProtoReflect.Descriptor instead.
 func (*ModelInfo) Descriptor() ([]byte, []int) {
-	return file_api_ai_service_proto_rawDescGZIP(), []int{15}
+	return file_api_ai_service_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *ModelInfo) GetId() string {
@@ -1175,7 +1517,7 @@ type FetchAvailableModelsResponse struct {
 
 func (x *FetchAvailableModelsResponse) Reset() {
 	*x = FetchAvailableModelsResponse{}
-	mi := &file_api_ai_service_proto_msgTypes[16]
+	mi := &file_api_ai_service_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1187,7 +1529,7 @@ func (x *FetchAvailableModelsResponse) String() string {
 func (*FetchAvailableModelsResponse) ProtoMessage() {}
 
 func (x *FetchAvailableModelsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_ai_service_proto_msgTypes[16]
+	mi := &file_api_ai_service_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1200,7 +1542,7 @@ func (x *FetchAvailableModelsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FetchAvailableModelsResponse.ProtoReflect.Descriptor instead.
 func (*FetchAvailableModelsResponse) Descriptor() ([]byte, []int) {
-	return file_api_ai_service_proto_rawDescGZIP(), []int{16}
+	return file_api_ai_service_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *FetchAvailableModelsResponse) GetModels() []*ModelInfo {
@@ -1214,7 +1556,28 @@ var File_api_ai_service_proto protoreflect.FileDescriptor
 
 const file_api_ai_service_proto_rawDesc = "" +
 	"\n" +
-	"\x14api/ai_service.proto\x12\tmemos.api\x1a\x1cgoogle/api/annotations.proto\x1a\x17google/api/client.proto\x1a\x1fgoogle/api/field_behavior.proto\"\xad\x01\n" +
+	"\x14api/ai_service.proto\x12\tmemos.api\x1a\x1cgoogle/api/annotations.proto\x1a\x17google/api/client.proto\x1a\x1fgoogle/api/field_behavior.proto\"\x1e\n" +
+	"\x1cGetAIConnectionStatusRequest\"\x8a\x01\n" +
+	"\x1dGetAIConnectionStatusResponse\x125\n" +
+	"\x16antigravity_configured\x18\x01 \x01(\bR\x15antigravityConfigured\x122\n" +
+	"\x15antigravity_client_id\x18\x02 \x01(\tR\x13antigravityClientId\"n\n" +
+	" ConfigureAntigravityOAuthRequest\x12 \n" +
+	"\tclient_id\x18\x01 \x01(\tB\x03\xe0A\x02R\bclientId\x12(\n" +
+	"\rclient_secret\x18\x02 \x01(\tB\x03\xe0A\x04R\fclientSecret\";\n" +
+	"\x18StartChatGPTOAuthRequest\x12\x1f\n" +
+	"\vprovider_id\x18\x01 \x01(\tR\n" +
+	"providerId\"\x9e\x01\n" +
+	"\x19StartChatGPTOAuthResponse\x12\x1f\n" +
+	"\vprovider_id\x18\x01 \x01(\tR\n" +
+	"providerId\x12\x1c\n" +
+	"\tconnected\x18\x02 \x01(\bR\tconnected\x12\x14\n" +
+	"\x05email\x18\x03 \x01(\tR\x05email\x12,\n" +
+	"\x12plan_usage_enabled\x18\x04 \x01(\bR\x10planUsageEnabled\";\n" +
+	"\x18DisconnectChatGPTRequest\x12\x1f\n" +
+	"\vprovider_id\x18\x01 \x01(\tR\n" +
+	"providerId\"[\n" +
+	"\x19DisconnectChatGPTResponse\x12>\n" +
+	"\x1bremote_revocation_confirmed\x18\x01 \x01(\bR\x19remoteRevocationConfirmed\"\xad\x01\n" +
 	"\x11TranscribeRequest\x128\n" +
 	"\x05audio\x18\x01 \x01(\v2\x1d.memos.api.TranscriptionAudioB\x03\xe0A\x02R\x05audio\x12$\n" +
 	"\vprovider_id\x18\x02 \x01(\tB\x03\xe0A\x01R\n" +
@@ -1306,8 +1669,13 @@ const file_api_ai_service_proto_rawDesc = "" +
 	"\n" +
 	"is_default\x18\x05 \x01(\bR\tisDefault\"L\n" +
 	"\x1cFetchAvailableModelsResponse\x12,\n" +
-	"\x06models\x18\x01 \x03(\v2\x14.memos.api.ModelInfoR\x06models2\xb4\x06\n" +
-	"\tAIService\x12p\n" +
+	"\x06models\x18\x01 \x03(\v2\x14.memos.api.ModelInfoR\x06models2\xf4\n" +
+	"\n" +
+	"\tAIService\x12\x8c\x01\n" +
+	"\x15GetAIConnectionStatus\x12'.memos.api.GetAIConnectionStatusRequest\x1a(.memos.api.GetAIConnectionStatusResponse\" \x82\xd3\xe4\x93\x02\x1a\x12\x18/api/ai/connectionStatus\x12\xa0\x01\n" +
+	"\x19ConfigureAntigravityOAuth\x12+.memos.api.ConfigureAntigravityOAuthRequest\x1a(.memos.api.GetAIConnectionStatusResponse\",\x82\xd3\xe4\x93\x02&:\x01*\"!/api/ai:configureAntigravityOAuth\x12\x84\x01\n" +
+	"\x11StartChatGPTOAuth\x12#.memos.api.StartChatGPTOAuthRequest\x1a$.memos.api.StartChatGPTOAuthResponse\"$\x82\xd3\xe4\x93\x02\x1e:\x01*\"\x19/api/ai:startChatGPTOAuth\x12\x84\x01\n" +
+	"\x11DisconnectChatGPT\x12#.memos.api.DisconnectChatGPTRequest\x1a$.memos.api.DisconnectChatGPTResponse\"$\x82\xd3\xe4\x93\x02\x1e:\x01*\"\x19/api/ai:disconnectChatGPT\x12p\n" +
 	"\n" +
 	"Transcribe\x12\x1c.memos.api.TranscribeRequest\x1a\x1d.memos.api.TranscribeResponse\"%\xdaA\x05audio\x82\xd3\xe4\x93\x02\x17:\x01*\"\x12/api/ai:transcribe\x12\xa0\x01\n" +
 	"\x18AnalyzeMeetingTranscript\x12*.memos.api.AnalyzeMeetingTranscriptRequest\x1a+.memos.api.AnalyzeMeetingTranscriptResponse\"+\x82\xd3\xe4\x93\x02%:\x01*\" /api/ai:analyzeMeetingTranscript\x12\x94\x01\n" +
@@ -1330,47 +1698,62 @@ func file_api_ai_service_proto_rawDescGZIP() []byte {
 	return file_api_ai_service_proto_rawDescData
 }
 
-var file_api_ai_service_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
+var file_api_ai_service_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
 var file_api_ai_service_proto_goTypes = []any{
-	(*TranscribeRequest)(nil),                // 0: memos.api.TranscribeRequest
-	(*TranscribeResponse)(nil),               // 1: memos.api.TranscribeResponse
-	(*TranscriptionSegment)(nil),             // 2: memos.api.TranscriptionSegment
-	(*TranscriptionAudio)(nil),               // 3: memos.api.TranscriptionAudio
-	(*AnalyzeMeetingTranscriptRequest)(nil),  // 4: memos.api.AnalyzeMeetingTranscriptRequest
-	(*MeetingNotesState)(nil),                // 5: memos.api.MeetingNotesState
-	(*AnalyzeMeetingTranscriptResponse)(nil), // 6: memos.api.AnalyzeMeetingTranscriptResponse
-	(*StartAntigravityOAuthRequest)(nil),     // 7: memos.api.StartAntigravityOAuthRequest
-	(*StartAntigravityOAuthResponse)(nil),    // 8: memos.api.StartAntigravityOAuthResponse
-	(*RunAgentTaskRequest)(nil),              // 9: memos.api.RunAgentTaskRequest
-	(*AgentToolAction)(nil),                  // 10: memos.api.AgentToolAction
-	(*RunAgentTaskResponse)(nil),             // 11: memos.api.RunAgentTaskResponse
-	(*TestAIProviderRequest)(nil),            // 12: memos.api.TestAIProviderRequest
-	(*TestAIProviderResponse)(nil),           // 13: memos.api.TestAIProviderResponse
-	(*FetchAvailableModelsRequest)(nil),      // 14: memos.api.FetchAvailableModelsRequest
-	(*ModelInfo)(nil),                        // 15: memos.api.ModelInfo
-	(*FetchAvailableModelsResponse)(nil),     // 16: memos.api.FetchAvailableModelsResponse
+	(*GetAIConnectionStatusRequest)(nil),     // 0: memos.api.GetAIConnectionStatusRequest
+	(*GetAIConnectionStatusResponse)(nil),    // 1: memos.api.GetAIConnectionStatusResponse
+	(*ConfigureAntigravityOAuthRequest)(nil), // 2: memos.api.ConfigureAntigravityOAuthRequest
+	(*StartChatGPTOAuthRequest)(nil),         // 3: memos.api.StartChatGPTOAuthRequest
+	(*StartChatGPTOAuthResponse)(nil),        // 4: memos.api.StartChatGPTOAuthResponse
+	(*DisconnectChatGPTRequest)(nil),         // 5: memos.api.DisconnectChatGPTRequest
+	(*DisconnectChatGPTResponse)(nil),        // 6: memos.api.DisconnectChatGPTResponse
+	(*TranscribeRequest)(nil),                // 7: memos.api.TranscribeRequest
+	(*TranscribeResponse)(nil),               // 8: memos.api.TranscribeResponse
+	(*TranscriptionSegment)(nil),             // 9: memos.api.TranscriptionSegment
+	(*TranscriptionAudio)(nil),               // 10: memos.api.TranscriptionAudio
+	(*AnalyzeMeetingTranscriptRequest)(nil),  // 11: memos.api.AnalyzeMeetingTranscriptRequest
+	(*MeetingNotesState)(nil),                // 12: memos.api.MeetingNotesState
+	(*AnalyzeMeetingTranscriptResponse)(nil), // 13: memos.api.AnalyzeMeetingTranscriptResponse
+	(*StartAntigravityOAuthRequest)(nil),     // 14: memos.api.StartAntigravityOAuthRequest
+	(*StartAntigravityOAuthResponse)(nil),    // 15: memos.api.StartAntigravityOAuthResponse
+	(*RunAgentTaskRequest)(nil),              // 16: memos.api.RunAgentTaskRequest
+	(*AgentToolAction)(nil),                  // 17: memos.api.AgentToolAction
+	(*RunAgentTaskResponse)(nil),             // 18: memos.api.RunAgentTaskResponse
+	(*TestAIProviderRequest)(nil),            // 19: memos.api.TestAIProviderRequest
+	(*TestAIProviderResponse)(nil),           // 20: memos.api.TestAIProviderResponse
+	(*FetchAvailableModelsRequest)(nil),      // 21: memos.api.FetchAvailableModelsRequest
+	(*ModelInfo)(nil),                        // 22: memos.api.ModelInfo
+	(*FetchAvailableModelsResponse)(nil),     // 23: memos.api.FetchAvailableModelsResponse
 }
 var file_api_ai_service_proto_depIdxs = []int32{
-	3,  // 0: memos.api.TranscribeRequest.audio:type_name -> memos.api.TranscriptionAudio
-	2,  // 1: memos.api.TranscribeResponse.segments:type_name -> memos.api.TranscriptionSegment
-	5,  // 2: memos.api.AnalyzeMeetingTranscriptRequest.previous_state:type_name -> memos.api.MeetingNotesState
-	5,  // 3: memos.api.AnalyzeMeetingTranscriptResponse.notes:type_name -> memos.api.MeetingNotesState
-	10, // 4: memos.api.RunAgentTaskResponse.actions:type_name -> memos.api.AgentToolAction
-	15, // 5: memos.api.FetchAvailableModelsResponse.models:type_name -> memos.api.ModelInfo
-	0,  // 6: memos.api.AIService.Transcribe:input_type -> memos.api.TranscribeRequest
-	4,  // 7: memos.api.AIService.AnalyzeMeetingTranscript:input_type -> memos.api.AnalyzeMeetingTranscriptRequest
-	7,  // 8: memos.api.AIService.StartAntigravityOAuth:input_type -> memos.api.StartAntigravityOAuthRequest
-	9,  // 9: memos.api.AIService.RunAgentTask:input_type -> memos.api.RunAgentTaskRequest
-	12, // 10: memos.api.AIService.TestAIProvider:input_type -> memos.api.TestAIProviderRequest
-	14, // 11: memos.api.AIService.FetchAvailableModels:input_type -> memos.api.FetchAvailableModelsRequest
-	1,  // 12: memos.api.AIService.Transcribe:output_type -> memos.api.TranscribeResponse
-	6,  // 13: memos.api.AIService.AnalyzeMeetingTranscript:output_type -> memos.api.AnalyzeMeetingTranscriptResponse
-	8,  // 14: memos.api.AIService.StartAntigravityOAuth:output_type -> memos.api.StartAntigravityOAuthResponse
-	11, // 15: memos.api.AIService.RunAgentTask:output_type -> memos.api.RunAgentTaskResponse
-	13, // 16: memos.api.AIService.TestAIProvider:output_type -> memos.api.TestAIProviderResponse
-	16, // 17: memos.api.AIService.FetchAvailableModels:output_type -> memos.api.FetchAvailableModelsResponse
-	12, // [12:18] is the sub-list for method output_type
-	6,  // [6:12] is the sub-list for method input_type
+	10, // 0: memos.api.TranscribeRequest.audio:type_name -> memos.api.TranscriptionAudio
+	9,  // 1: memos.api.TranscribeResponse.segments:type_name -> memos.api.TranscriptionSegment
+	12, // 2: memos.api.AnalyzeMeetingTranscriptRequest.previous_state:type_name -> memos.api.MeetingNotesState
+	12, // 3: memos.api.AnalyzeMeetingTranscriptResponse.notes:type_name -> memos.api.MeetingNotesState
+	17, // 4: memos.api.RunAgentTaskResponse.actions:type_name -> memos.api.AgentToolAction
+	22, // 5: memos.api.FetchAvailableModelsResponse.models:type_name -> memos.api.ModelInfo
+	0,  // 6: memos.api.AIService.GetAIConnectionStatus:input_type -> memos.api.GetAIConnectionStatusRequest
+	2,  // 7: memos.api.AIService.ConfigureAntigravityOAuth:input_type -> memos.api.ConfigureAntigravityOAuthRequest
+	3,  // 8: memos.api.AIService.StartChatGPTOAuth:input_type -> memos.api.StartChatGPTOAuthRequest
+	5,  // 9: memos.api.AIService.DisconnectChatGPT:input_type -> memos.api.DisconnectChatGPTRequest
+	7,  // 10: memos.api.AIService.Transcribe:input_type -> memos.api.TranscribeRequest
+	11, // 11: memos.api.AIService.AnalyzeMeetingTranscript:input_type -> memos.api.AnalyzeMeetingTranscriptRequest
+	14, // 12: memos.api.AIService.StartAntigravityOAuth:input_type -> memos.api.StartAntigravityOAuthRequest
+	16, // 13: memos.api.AIService.RunAgentTask:input_type -> memos.api.RunAgentTaskRequest
+	19, // 14: memos.api.AIService.TestAIProvider:input_type -> memos.api.TestAIProviderRequest
+	21, // 15: memos.api.AIService.FetchAvailableModels:input_type -> memos.api.FetchAvailableModelsRequest
+	1,  // 16: memos.api.AIService.GetAIConnectionStatus:output_type -> memos.api.GetAIConnectionStatusResponse
+	1,  // 17: memos.api.AIService.ConfigureAntigravityOAuth:output_type -> memos.api.GetAIConnectionStatusResponse
+	4,  // 18: memos.api.AIService.StartChatGPTOAuth:output_type -> memos.api.StartChatGPTOAuthResponse
+	6,  // 19: memos.api.AIService.DisconnectChatGPT:output_type -> memos.api.DisconnectChatGPTResponse
+	8,  // 20: memos.api.AIService.Transcribe:output_type -> memos.api.TranscribeResponse
+	13, // 21: memos.api.AIService.AnalyzeMeetingTranscript:output_type -> memos.api.AnalyzeMeetingTranscriptResponse
+	15, // 22: memos.api.AIService.StartAntigravityOAuth:output_type -> memos.api.StartAntigravityOAuthResponse
+	18, // 23: memos.api.AIService.RunAgentTask:output_type -> memos.api.RunAgentTaskResponse
+	20, // 24: memos.api.AIService.TestAIProvider:output_type -> memos.api.TestAIProviderResponse
+	23, // 25: memos.api.AIService.FetchAvailableModels:output_type -> memos.api.FetchAvailableModelsResponse
+	16, // [16:26] is the sub-list for method output_type
+	6,  // [6:16] is the sub-list for method input_type
 	6,  // [6:6] is the sub-list for extension type_name
 	6,  // [6:6] is the sub-list for extension extendee
 	0,  // [0:6] is the sub-list for field type_name
@@ -1381,7 +1764,7 @@ func file_api_ai_service_proto_init() {
 	if File_api_ai_service_proto != nil {
 		return
 	}
-	file_api_ai_service_proto_msgTypes[3].OneofWrappers = []any{
+	file_api_ai_service_proto_msgTypes[10].OneofWrappers = []any{
 		(*TranscriptionAudio_Content)(nil),
 		(*TranscriptionAudio_Uri)(nil),
 	}
@@ -1391,7 +1774,7 @@ func file_api_ai_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_ai_service_proto_rawDesc), len(file_api_ai_service_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   17,
+			NumMessages:   24,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

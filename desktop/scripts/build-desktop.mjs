@@ -32,6 +32,19 @@ export function serverVersion(value) {
   return `${year}.${month.padStart(2, "0")}.${rest.join(".")}`;
 }
 
+export function desktopOAuthPayload(value) {
+  if (!value) return "";
+  let parsed;
+  try { parsed = JSON.parse(value); } catch { throw new Error("Desktop Google OAuth configuration must be valid JSON."); }
+  const client = parsed?.installed;
+  const id = client?.client_id;
+  const secret = client?.client_secret;
+  if (parsed.web || typeof id !== "string" || !id.endsWith(".apps.googleusercontent.com") || /\s/.test(id) || id.length > 512 || typeof secret !== "string" || !secret || secret.length > 2048) {
+    throw new Error("Only a Google Desktop app OAuth JSON (installed client) can be distributed. Never supply a Web application secret.");
+  }
+  return Buffer.from(JSON.stringify({ installed: { client_id: id, client_secret: secret } })).toString("base64");
+}
+
 export function targetConfig(target, platform = process.platform, arch = process.arch) {
   const config = targets[target];
   if (!config) throw new Error(`Unsupported desktop target: ${target}`);
@@ -200,6 +213,8 @@ async function smokePackage(extraction, kind, packageFile, allFiles) {
 async function prepare(version, target, skipFrontend = false) {
   const config = targetConfig(target);
   await assertVersions(version);
+  const oauth = desktopOAuthPayload(process.env.NOTER_DESKTOP_GOOGLE_OAUTH_JSON);
+  if (process.env.CI === "true" && !oauth) throw new Error("Configure the repository's NOTER_DESKTOP_GOOGLE_OAUTH_JSON secret with the publisher's Desktop app client before distributing installers.");
   if (skipFrontend && process.env.CI === "true") throw new Error("CI must rebuild the embedded frontend.");
   if (!skipFrontend) {
     run(process.execPath, [path.join(repo, "web/node_modules/vite/bin/vite.js"), "build", "--mode", "release", "--outDir", "../server/frontend/dist", "--emptyOutDir"], { cwd: path.join(repo, "web") });
@@ -210,7 +225,8 @@ async function prepare(version, target, skipFrontend = false) {
   const suffix = config.platform === "win32" ? ".exe" : "";
   const sidecar = path.join(tauri, "binaries", `memos-server-${target}${suffix}`);
   await mkdir(path.dirname(sidecar), { recursive: true });
-  run("go", ["build", "-p", "2", "-trimpath", "-buildvcs=true", "-ldflags", `-s -w -X github.com/usememos/memos/internal/version.Version=${serverVersion(version)} -X github.com/usememos/memos/internal/version.Commit=${commit}`, "-o", sidecar, "./cmd/memos"], {
+  const oauthFlag = oauth ? ` -X github.com/usememos/memos/provider/ai/llm.DesktopAntigravityClient=${oauth}` : "";
+  run("go", ["build", "-p", "2", "-trimpath", "-buildvcs=true", "-ldflags", `-s -w -X github.com/usememos/memos/internal/version.Version=${serverVersion(version)} -X github.com/usememos/memos/internal/version.Commit=${commit}${oauthFlag}`, "-o", sidecar, "./cmd/memos"], {
     env: { CGO_ENABLED: "0", GOOS: config.goos, GOARCH: config.goarch },
   });
   verifySidecar(sidecar, version);
