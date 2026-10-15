@@ -1,0 +1,210 @@
+package server
+
+import (
+	"context"
+	"fmt"
+	"log/slog"
+	"net"
+	"net/http"
+	"os"
+	"time"
+	"uuid"
+
+	"github.com/labstack/echo/v5"
+	"github.com/labstack/echo/v5/middleware"
+	"github.com/pkg/errors"
+
+	"github.com/usememos/memos/internal/clientip"
+	"github.com/usememos/memos/internal/profile"
+	storepb "github.com/usememos/memos/proto/gen/store"
+	"github.com/usememos/memos/server/api"
+	"github.com/usememos/memos/server/fileserver"
+	"github.com/usememos/memos/server/frontend"
+	"github.com/usememos/memos/server/mcp"
+	"github.com/usememos/memos/store"
+)
+
+const (
+	shutdownTimeout = 10 * time.Second
+
+	// readHeaderTimeout bounds how long a client may take to send request
+	// headers, so idle or slow connections cannot pin a worker forever. Bodies
+	// and responses are not bounded here: uploads and SSE streams are
+	// legitimately long, and the request context still ends on disconnect.
+	readHeaderTimeout = 15 * time.Second
+	// idleTimeout closes keep-alive connections that send nothing.
+	idleTimeout = 2 * time.Minute
+)
+
+// healthzDatabaseTimeout bounds the database ping behind /healthz.
+const healthzDatabaseTimeout = 2 * time.Second
+
+type Server struct {
+	Secret  string
+	Profile *profile.Profile
+	Store   *store.Store
+
+	echoServer *echo.Echo
+	httpServer *http.Server
+	apiService *api.APIService
+}
+
+func NewServer(ctx context.Context, profile *profile.Profile, store *store.Store) (*Server, error) {
+	s := &Server{
+		Store:   store,
+		Profile: profile,
+	}
+
+	echoServer := echo.New()
+	echoServer.Use(middleware.Recover())
+	echoServer.Use(newCORSMiddleware(profile))
+	// Resolve the client address once per request, before anything that keys
+	// on it: rate limits, session records, and the file server.
+	clientIPResolver, err := clientip.ParseTrustedProxies(profile.TrustedProxies)
+	if err != nil {
+		return nil, errors.Wrap(err, "invalid trusted proxies")
+	}
+	echoServer.Use(clientip.Middleware(clientIPResolver))
+	s.echoServer = echoServer
+
+	instanceBasicSetting, err := s.getOrUpsertInstanceBasicSetting(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get instance basic setting")
+	}
+
+	secret := "usememos"
+	if !profile.Demo {
+		secret = instanceBasicSetting.SecretKey
+	}
+	s.Secret = secret
+
+	// Register healthz endpoint. It reports ready only while the database
+	// answers, so a load balancer stops routing to an instance that lost it.
+	echoServer.GET("/healthz", func(c *echo.Context) error {
+		pingCtx, cancel := context.WithTimeout(c.Request().Context(), healthzDatabaseTimeout)
+		defer cancel()
+		if err := s.Store.GetDriver().GetDB().PingContext(pingCtx); err != nil {
+			slog.Warn("health check failed to reach the database", slog.String("error", err.Error()))
+			return c.String(http.StatusServiceUnavailable, "Database unavailable.")
+		}
+		return c.String(http.StatusOK, "Service ready.")
+	})
+
+	// Serve frontend static files.
+	frontend.NewFrontendService(profile, store).Serve(ctx, echoServer)
+
+	apiService := api.NewAPIService(s.Secret, profile, store)
+	s.apiService = apiService
+
+	// Register HTTP file server routes BEFORE gRPC-Gateway to ensure proper range request handling for Safari.
+	// This uses native HTTP serving (http.ServeContent) instead of gRPC for video/audio files.
+	fileServerService := fileserver.NewFileServerService(s.Profile, s.Store, s.Secret)
+	fileServerService.RegisterRoutes(echoServer)
+
+	// Register gRPC gateway as api v1 (includes SSE endpoint on CORS-enabled group).
+	if err := apiService.RegisterGateway(ctx, echoServer); err != nil {
+		return nil, errors.Wrap(err, "failed to register gRPC gateway")
+	}
+
+	mcpService, err := mcp.NewMCPService(profile, echoServer)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create MCP service")
+	}
+	mcpService.RegisterRoutes(echoServer)
+
+	return s, nil
+}
+
+func (s *Server) Start() error {
+	var address, network string
+	if len(s.Profile.UNIXSock) == 0 {
+		address = fmt.Sprintf("%s:%d", s.Profile.Addr, s.Profile.Port)
+		network = "tcp"
+	} else {
+		address = s.Profile.UNIXSock
+		network = "unix"
+	}
+	listener, err := net.Listen(network, address)
+	if err != nil {
+		return errors.Wrap(err, "failed to listen")
+	}
+
+	if network == "unix" {
+		if err := os.Chmod(address, 0660); err != nil {
+			_ = listener.Close()
+			return errors.Wrap(err, "failed to chmod socket")
+		}
+	}
+
+	// Start Echo server directly (no cmux needed - all traffic is HTTP).
+	s.httpServer = &http.Server{
+		Handler:           s.echoServer,
+		ReadHeaderTimeout: readHeaderTimeout,
+		IdleTimeout:       idleTimeout,
+	}
+	go func() {
+		if err := s.httpServer.Serve(listener); err != nil && err != http.ErrServerClosed {
+			slog.Error("failed to start echo server", "error", err)
+		}
+	}()
+
+	return nil
+}
+
+func (s *Server) Shutdown(ctx context.Context) {
+	ctx, cancel := context.WithTimeout(ctx, shutdownTimeout)
+	defer cancel()
+
+	slog.Info("server shutting down")
+
+	s.closeLongLivedConnections()
+	s.shutdownHTTPServer(ctx)
+	s.apiService.CloseUploads()
+
+	// Close database connection.
+	if err := s.Store.Close(); err != nil {
+		slog.Error("failed to close database", slog.String("error", err.Error()))
+	}
+
+	slog.Info("memos stopped properly")
+}
+
+func (s *Server) closeLongLivedConnections() {
+	// Long-lived SSE requests do not finish on their own during http.Server.Shutdown.
+	s.apiService.SSEHub.Close()
+}
+
+func (s *Server) shutdownHTTPServer(ctx context.Context) {
+	if s.httpServer == nil {
+		return
+	}
+	if err := s.httpServer.Shutdown(ctx); err != nil {
+		slog.Error("failed to shutdown server", slog.String("error", err.Error()))
+		if closeErr := s.httpServer.Close(); closeErr != nil && closeErr != http.ErrServerClosed {
+			slog.Error("failed to close server", slog.String("error", closeErr.Error()))
+		}
+	}
+}
+
+func (s *Server) getOrUpsertInstanceBasicSetting(ctx context.Context) (*storepb.InstanceBasicSetting, error) {
+	instanceBasicSetting, err := s.Store.GetInstanceBasicSetting(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get instance basic setting")
+	}
+	modified := false
+	if instanceBasicSetting.SecretKey == "" {
+		instanceBasicSetting.SecretKey = uuid.NewV4().String()
+		modified = true
+	}
+	if modified {
+		instanceSetting, err := s.Store.UpsertInstanceSetting(ctx, &storepb.InstanceSetting{
+			Key:   storepb.InstanceSettingKey_BASIC,
+			Value: &storepb.InstanceSetting_BasicSetting{BasicSetting: instanceBasicSetting},
+		})
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to upsert instance setting")
+		}
+		instanceBasicSetting = instanceSetting.GetBasicSetting()
+	}
+	return instanceBasicSetting, nil
+}

@@ -1,0 +1,894 @@
+syntax = "proto3";
+
+package memos.api;
+
+import "api/common.proto";
+import "google/api/annotations.proto";
+import "google/api/client.proto";
+import "google/api/field_behavior.proto";
+import "google/api/httpbody.proto";
+import "google/api/resource.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+import "google/type/color.proto";
+
+option go_package = "gen/api";
+
+// UserService manages users and the resources they own: settings, statistics,
+// linked identities, personal access tokens, and memo export files.
+service UserService {
+  // ListUsers lists users in every state. Only admins may call it.
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse) {
+    option (google.api.http) = {get: "/api/users"};
+  }
+
+  // GetUser gets a user by resource name.
+  rpc GetUser(GetUserRequest) returns (User) {
+    option (google.api.http) = {get: "/api/{name=users/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // BatchGetUsers gets active users by username. Usernames that match no
+  // active user are omitted from the response.
+  rpc BatchGetUsers(BatchGetUsersRequest) returns (BatchGetUsersResponse) {
+    option (google.api.http) = {
+      post: "/api/users:batchGet"
+      body: "*"
+    };
+  }
+
+  // CreateUser creates a user. The first user of an instance becomes an admin.
+  // Otherwise, unless an admin calls it, the instance must allow user
+  // registration and password sign-up, and the new user gets the USER role.
+  rpc CreateUser(CreateUserRequest) returns (User) {
+    option (google.api.http) = {
+      post: "/api/users"
+      body: "user"
+    };
+    option (google.api.method_signature) = "user,user_id";
+  }
+
+  // UpdateUser updates a user. Users may update themselves; admins may update
+  // anyone. Changing the password ends the user's other sessions.
+  rpc UpdateUser(UpdateUserRequest) returns (User) {
+    option (google.api.http) = {
+      patch: "/api/{user.name=users/*}"
+      body: "user"
+    };
+    option (google.api.method_signature) = "user,update_mask";
+  }
+
+  // DeleteUser deletes a user. Users may delete themselves; admins may delete
+  // anyone. A user who belongs to any space cannot be deleted.
+  rpc DeleteUser(DeleteUserRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {delete: "/api/{name=users/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // ListUserSettings lists the settings of a user. Only the user may call it.
+  // The GENERAL setting is always included, with defaults when it was never
+  // saved.
+  rpc ListUserSettings(ListUserSettingsRequest) returns (ListUserSettingsResponse) {
+    option (google.api.http) = {get: "/api/{parent=users/*}/settings"};
+    option (google.api.method_signature) = "parent";
+  }
+
+  // GetUserSetting gets a user setting. Only the user may call it.
+  rpc GetUserSetting(GetUserSettingRequest) returns (UserSetting) {
+    option (google.api.http) = {get: "/api/{name=users/*/settings/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // UpdateUserSetting updates a user setting. Only the user may call it, and
+  // only the GENERAL and TAGS settings can be updated.
+  rpc UpdateUserSetting(UpdateUserSettingRequest) returns (UserSetting) {
+    option (google.api.http) = {
+      patch: "/api/{user_setting.name=users/*/settings/*}"
+      body: "user_setting"
+    };
+    option (google.api.method_signature) = "user_setting,update_mask";
+  }
+
+  // ListUserStats returns memo statistics for every user who created at least
+  // one matching memo the caller can read. Use the parent users/- for all
+  // users, or users/{user} for one user.
+  rpc ListUserStats(ListUserStatsRequest) returns (ListUserStatsResponse) {
+    option (google.api.http) = {get: "/api/{parent=users/*}/stats"};
+    option (google.api.method_signature) = "parent";
+  }
+
+  // GetUserStats returns memo statistics for one user, counting the user's
+  // memos that the caller can read.
+  rpc GetUserStats(GetUserStatsRequest) returns (UserStats) {
+    option (google.api.http) = {get: "/api/{name=users/*}:getStats"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // ListLinkedIdentities lists the SSO identities linked to a user. The user
+  // and admins may call it.
+  rpc ListLinkedIdentities(ListLinkedIdentitiesRequest) returns (ListLinkedIdentitiesResponse) {
+    option (google.api.http) = {get: "/api/{parent=users/*}/linkedIdentities"};
+    option (google.api.method_signature) = "parent";
+  }
+
+  // GetLinkedIdentity gets an SSO identity linked to a user. The user and
+  // admins may call it.
+  rpc GetLinkedIdentity(GetLinkedIdentityRequest) returns (LinkedIdentity) {
+    option (google.api.http) = {get: "/api/{name=users/*/linkedIdentities/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // CreateLinkedIdentity completes an OAuth flow and links the resulting SSO
+  // identity to the authenticated user, who must be the parent.
+  rpc CreateLinkedIdentity(CreateLinkedIdentityRequest) returns (LinkedIdentity) {
+    option (google.api.http) = {
+      post: "/api/{parent=users/*}/linkedIdentities"
+      body: "*"
+    };
+    option (google.api.method_signature) = "parent,identity_provider";
+  }
+
+  // DeleteLinkedIdentity unlinks an SSO identity from a user. The user and
+  // admins may call it.
+  rpc DeleteLinkedIdentity(DeleteLinkedIdentityRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {delete: "/api/{name=users/*/linkedIdentities/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // ListPersonalAccessTokens lists a user's personal access tokens (PATs),
+  // without their token values. PATs are long-lived tokens for API and script
+  // access, distinct from short-lived JWT access tokens. The user and admins
+  // may call it.
+  rpc ListPersonalAccessTokens(ListPersonalAccessTokensRequest) returns (ListPersonalAccessTokensResponse) {
+    option (google.api.http) = {get: "/api/{parent=users/*}/personalAccessTokens"};
+    option (google.api.method_signature) = "parent";
+  }
+
+  // CreatePersonalAccessToken creates a personal access token for a user.
+  // Only the user may call it. The token value is returned only once, in the
+  // response.
+  rpc CreatePersonalAccessToken(CreatePersonalAccessTokenRequest) returns (CreatePersonalAccessTokenResponse) {
+    option (google.api.http) = {
+      post: "/api/{parent=users/*}/personalAccessTokens"
+      body: "*"
+    };
+  }
+
+  // DeletePersonalAccessToken deletes a personal access token, which stops
+  // working immediately. Only the owner may call it.
+  rpc DeletePersonalAccessToken(DeletePersonalAccessTokenRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {delete: "/api/{name=users/*/personalAccessTokens/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // ExportMemos writes every memo the user created, with comments, archived
+  // memos, and attachment files, as a Memos export file (a ZIP file, see
+  // docs/design/memos-export-format.md). Only the user may export their own
+  // memos. The body is the archive; content_type is its media type.
+  rpc ExportMemos(ExportMemosRequest) returns (google.api.HttpBody) {
+    option (google.api.http) = {get: "/api/{name=users/*}:exportMemos"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // ImportMemos uploads a Memos export file in bounded chunks and imports it
+  // into the user's memos. The first call carries the spec and returns an
+  // upload_id; later calls carry that upload_id. A finishing call with
+  // validate_only returns the plan and keeps the archive staged; a finishing
+  // call without it imports and returns the report. Uploads are bound to the
+  // authenticated user, expire after 30 minutes of inactivity, and do not
+  // survive a server restart.
+  rpc ImportMemos(ImportMemosRequest) returns (ImportMemosResponse) {
+    option (google.api.http) = {
+      post: "/api/{name=users/*}:importMemos"
+      body: "*"
+    };
+  }
+}
+
+// User is an account on the instance.
+message User {
+  option (google.api.resource) = {
+    type: "memos.api/User"
+    pattern: "users/{user}"
+    singular: "user"
+    plural: "users"
+  };
+
+  // Identifier. The resource name of the user. {user} is the username.
+  // Format: users/{user}
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
+  // Required. The unique username, used to sign in.
+  string username = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Optional. The display name of the user.
+  string display_name = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. The email address of the user. Stored trimmed and lowercased;
+  // empty means no address. An address belongs to at most one user on the
+  // instance, so writes that would reuse one fail with ALREADY_EXISTS.
+  // Returned only to the user and to admins.
+  string email = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. The avatar URL of the user. An avatar set as a data URI (PNG,
+  // JPEG, GIF or WebP, at most 2 MiB) is returned as a file server URL.
+  string avatar_url = 5 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. The description of the user.
+  string description = 6 [(google.api.field_behavior) = OPTIONAL];
+
+  // Input only. The password of the user. Never returned.
+  string password = 7 [(google.api.field_behavior) = INPUT_ONLY];
+
+  // Required. The role of the user. Only admins can change it.
+  Role role = 8 [(google.api.field_behavior) = REQUIRED];
+
+  // Required. The state of the user. Only admins can change it.
+  State state = 9 [(google.api.field_behavior) = REQUIRED];
+
+  // Output only. The creation timestamp.
+  google.protobuf.Timestamp create_time = 10 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Output only. The last update timestamp.
+  google.protobuf.Timestamp update_time = 11 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Role is the instance-wide role of a user.
+  enum Role {
+    ROLE_UNSPECIFIED = 0;
+    // An administrator of the instance.
+    ADMIN = 2;
+    // A regular user.
+    USER = 3;
+  }
+}
+
+// Request message for UserService.ListUsers.
+message ListUsersRequest {
+  // Optional. The maximum number of users to return. The service may return
+  // fewer. If unspecified, at most 50 users are returned. The maximum value is
+  // 1000; values above 1000 are coerced to 1000.
+  int32 page_size = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. A page token from a previous call. Provide it to retrieve the
+  // next page.
+  string page_token = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. A CEL filter on the users. Only `username == '<username>'` is
+  // supported.
+  // Example: "username == 'steven'"
+  string filter = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. Currently ignored; the list includes users in every state.
+  bool show_deleted = 4 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response message for UserService.ListUsers.
+message ListUsersResponse {
+  // The users.
+  repeated User users = 1;
+
+  // A token to retrieve the next page. Empty when there are no more pages.
+  string next_page_token = 2;
+}
+
+// Request message for UserService.GetUser.
+message GetUserRequest {
+  // Required. The resource name of the user.
+  // Format: users/{user}
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "memos.api/User"}
+  ];
+
+  // Optional. Currently ignored; all fields are returned.
+  google.protobuf.FieldMask read_mask = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Request message for UserService.BatchGetUsers.
+message BatchGetUsersRequest {
+  // Required. The resource names of the users to get. Empty and duplicate
+  // entries are ignored. At most 100 non-empty names are allowed.
+  // Format: users/{user}
+  repeated string names = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "memos.api/User"}
+  ];
+}
+
+// Response message for UserService.BatchGetUsers.
+message BatchGetUsersResponse {
+  // The active users that match the requested names.
+  repeated User users = 1;
+}
+
+// Request message for UserService.CreateUser.
+message CreateUserRequest {
+  // Required. The user to create. username and password are required; role
+  // is honored only when an admin calls the method.
+  User user = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.field_behavior) = INPUT_ONLY
+  ];
+
+  // Optional. The resource ID to use for this user. If set, it must equal
+  // user.username and follow the username format.
+  // Format: ^[a-zA-Z0-9]([a-zA-Z0-9-]{0,34}[a-zA-Z0-9])?$
+  string user_id = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. If set, validate the request but do not create the user.
+  bool validate_only = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. An idempotency token. Currently ignored.
+  string request_id = 4 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Request message for UserService.UpdateUser.
+message UpdateUserRequest {
+  // Required. The user to update. Its name identifies the user.
+  User user = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Required. The fields to update. Supported paths: username, display_name,
+  // email, avatar_url, description, password, role, state. role and state
+  // require an admin.
+  google.protobuf.FieldMask update_mask = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Optional. Currently ignored; updating a missing user fails with NOT_FOUND.
+  bool allow_missing = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Request message for UserService.DeleteUser.
+message DeleteUserRequest {
+  // Required. The resource name of the user to delete.
+  // Format: users/{user}
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "memos.api/User"}
+  ];
+
+  // Optional. Currently ignored; deleting a user who belongs to any space
+  // fails with FAILED_PRECONDITION.
+  bool force = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// UserSetting is one group of a user's preferences, identified by its key.
+message UserSetting {
+  option (google.api.resource) = {
+    type: "memos.api/UserSetting"
+    pattern: "users/{user}/settings/{setting}"
+    singular: "userSetting"
+    plural: "userSettings"
+  };
+
+  // Identifier. The resource name of the user setting. {setting} is the
+  // setting key, such as GENERAL.
+  // Format: users/{user}/settings/{setting}
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
+  // The setting value. The set field matches the setting key.
+  oneof value {
+    // The value of the GENERAL setting.
+    GeneralSetting general_setting = 2;
+
+    // The value of the TAGS setting.
+    TagsSetting tags_setting = 4;
+  }
+
+  // Key identifies a user setting.
+  enum Key {
+    KEY_UNSPECIFIED = 0;
+    // General user preferences.
+    GENERAL = 1;
+    // Per-user tag metadata.
+    TAGS = 5;
+  }
+
+  // GeneralSetting holds general user preferences.
+  message GeneralSetting {
+    // Optional. The preferred locale of the user.
+    string locale = 1 [(google.api.field_behavior) = OPTIONAL];
+
+    // Optional. The default visibility of new memos: PRIVATE, PROTECTED or
+    // PUBLIC.
+    string memo_visibility = 2 [(google.api.field_behavior) = OPTIONAL];
+
+    // Optional. The preferred theme of the user. This references a CSS file in
+    // the web/public/themes/ directory. If not set, the default theme is used.
+    string theme = 3 [(google.api.field_behavior) = OPTIONAL];
+
+    // Optional. Whether the official client should save metadata from future
+    // media uploads.
+    bool save_media_metadata = 4 [(google.api.field_behavior) = OPTIONAL];
+  }
+
+  // TagsSetting holds user-specific tag metadata.
+  message TagsSetting {
+    // Optional. Map of tag name pattern to tag metadata. Each key is treated as
+    // an anchored regular expression (^pattern$).
+    map<string, TagMetadata> tags = 1 [(google.api.field_behavior) = OPTIONAL];
+  }
+
+  // TagMetadata holds user-specific display rules for a tag.
+  message TagMetadata {
+    // Optional. The background color of the tag label. When unset, the default
+    // tag color is used.
+    google.type.Color background_color = 1 [(google.api.field_behavior) = OPTIONAL];
+
+    // Optional. Whether memos with this tag have their content blurred.
+    bool blur_content = 2 [(google.api.field_behavior) = OPTIONAL];
+  }
+}
+
+// Request message for UserService.ListUserSettings.
+message ListUserSettingsRequest {
+  // Required. The user whose settings are listed.
+  // Format: users/{user}
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "memos.api/User"}
+  ];
+
+  // Optional. The maximum number of settings to return. The service may return
+  // fewer. Currently ignored; all settings are returned in one page.
+  int32 page_size = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. A page token from a previous call. Provide it to retrieve the
+  // next page.
+  string page_token = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response message for UserService.ListUserSettings.
+message ListUserSettingsResponse {
+  // The user settings.
+  repeated UserSetting user_settings = 1;
+
+  // A token to retrieve the next page. Empty when there are no more pages.
+  string next_page_token = 2;
+}
+
+// Request message for UserService.GetUserSetting.
+message GetUserSettingRequest {
+  // Required. The resource name of the user setting.
+  // Format: users/{user}/settings/{setting}
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "memos.api/UserSetting"}
+  ];
+}
+
+// Request message for UserService.UpdateUserSetting.
+message UpdateUserSettingRequest {
+  // Required. The user setting to update. Its name identifies the setting.
+  UserSetting user_setting = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Required. The fields to update, relative to the setting value. GENERAL
+  // supports locale, memo_visibility, theme and save_media_metadata; TAGS
+  // supports tags.
+  google.protobuf.FieldMask update_mask = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+// UserStats is a summary of a user's memos. Comments are not counted.
+message UserStats {
+  option (google.api.resource) = {
+    type: "memos.api/UserStats"
+    pattern: "users/{user}/stats"
+    singular: "userStats"
+    plural: "userStats"
+  };
+
+  // Identifier. The resource name of the user statistics singleton.
+  // Format: users/{user}/stats
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
+  // The number of counted memos.
+  int32 total_memo_count = 2;
+
+  // The number of counted memos by content type.
+  MemoTypeStats memo_type_stats = 3;
+
+  // The number of counted memos per tag.
+  map<string, int32> tag_counts = 4;
+
+  // The pinned memos among the counted memos.
+  // Format: memos/{memo}
+  repeated string pinned_memos = 5 [(google.api.resource_reference) = {type: "memos.api/Memo"}];
+
+  // The creation timestamps of the counted memos, one per memo.
+  repeated google.protobuf.Timestamp memo_created_timestamps = 6;
+
+  // The latest update timestamps of the counted memos (one per memo, mirrors
+  // memo_created_timestamps). Used by the activity heatmap when the client's
+  // view is set to update_time basis.
+  repeated google.protobuf.Timestamp memo_updated_timestamps = 7;
+
+  // Output only. Total persisted attachment size in bytes, including unlinked
+  // uploads and attachments in all spaces. Excludes temporary uploads and
+  // derived files. Returned only by GetUserStats for the authenticated user's
+  // own stats, independently of the request's memo filter.
+  optional int64 attachment_storage_bytes = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // MemoTypeStats counts memos by the kind of content they contain.
+  message MemoTypeStats {
+    // The number of memos that contain a link.
+    int32 link_count = 1;
+
+    // The number of memos that contain code.
+    int32 code_count = 2;
+
+    // The number of memos that contain a task list.
+    int32 todo_count = 3;
+
+    // The number of memos that contain incomplete tasks.
+    int32 undo_count = 4;
+  }
+}
+
+// Request message for UserService.ListUserStats.
+message ListUserStatsRequest {
+  // Required. The users to list statistics for: users/- for all users, or
+  // users/{user} for one user.
+  // Format: users/{user}
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {child_type: "memos.api/UserStats"}
+  ];
+
+  // Optional. A CEL expression selecting the memos to count. Uses the same
+  // filter syntax as ListMemos.
+  string filter = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. The state of the memos to count. Defaults to NORMAL. ARCHIVED
+  // counts only the caller's own memos.
+  State state = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response message for UserService.ListUserStats.
+message ListUserStatsResponse {
+  // The statistics, one entry per user.
+  repeated UserStats user_stats = 1;
+}
+
+// Request message for UserService.GetUserStats.
+message GetUserStatsRequest {
+  // Required. The resource name of the user.
+  // Format: users/{user}
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "memos.api/User"}
+  ];
+
+  // Optional. A CEL expression selecting the readable non-comment memos to
+  // count. Supports the same fields as ListMemos, including `space`.
+  string filter = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// LinkedIdentity is an SSO identity linked to a user account.
+message LinkedIdentity {
+  option (google.api.resource) = {
+    type: "memos.api/LinkedIdentity"
+    pattern: "users/{user}/linkedIdentities/{linked_identity}"
+    singular: "linkedIdentity"
+    plural: "linkedIdentities"
+  };
+
+  // Identifier. The resource name of the linked identity. {linked_identity} is
+  // the ID of the identity provider.
+  // Format: users/{user}/linkedIdentities/{linked_identity}
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
+  // Output only. The resource name of the identity provider.
+  // Format: identity-providers/{idp}
+  string identity_provider = 2 [
+    (google.api.field_behavior) = OUTPUT_ONLY,
+    (google.api.resource_reference) = {type: "memos.api/IdentityProvider"}
+  ];
+
+  // Output only. The external user identifier from the identity provider.
+  string external_uid = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// Request message for UserService.ListLinkedIdentities.
+message ListLinkedIdentitiesRequest {
+  // Required. The user whose linked identities are listed.
+  // Format: users/{user}
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "memos.api/User"}
+  ];
+}
+
+// Response message for UserService.ListLinkedIdentities.
+message ListLinkedIdentitiesResponse {
+  // The linked identities.
+  repeated LinkedIdentity linked_identities = 1;
+}
+
+// Request message for UserService.GetLinkedIdentity.
+message GetLinkedIdentityRequest {
+  // Required. The resource name of the linked identity.
+  // Format: users/{user}/linkedIdentities/{linked_identity}
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "memos.api/LinkedIdentity"}
+  ];
+}
+
+// Request message for UserService.CreateLinkedIdentity.
+message CreateLinkedIdentityRequest {
+  // Required. The user who owns the linked identity. Must be the caller.
+  // Format: users/{user}
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "memos.api/User"}
+  ];
+
+  // Required. The identity provider to link.
+  // Format: identity-providers/{idp}
+  string identity_provider = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "memos.api/IdentityProvider"}
+  ];
+
+  // Required. The authorization code from the identity provider.
+  string code = 3 [(google.api.field_behavior) = REQUIRED];
+
+  // Required. The redirect URI used in the OAuth flow.
+  string redirect_uri = 4 [(google.api.field_behavior) = REQUIRED];
+
+  // Optional. The PKCE code verifier used in the OAuth flow.
+  string code_verifier = 5 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Request message for UserService.DeleteLinkedIdentity.
+message DeleteLinkedIdentityRequest {
+  // Required. The resource name of the linked identity to delete.
+  // Format: users/{user}/linkedIdentities/{linked_identity}
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "memos.api/LinkedIdentity"}
+  ];
+}
+
+// PersonalAccessToken is a long-lived token for API and script access.
+// PATs are distinct from short-lived JWT access tokens used for session
+// authentication.
+message PersonalAccessToken {
+  option (google.api.resource) = {
+    type: "memos.api/PersonalAccessToken"
+    pattern: "users/{user}/personalAccessTokens/{personal_access_token}"
+    singular: "personalAccessToken"
+    plural: "personalAccessTokens"
+  };
+
+  // Identifier. The resource name of the personal access token.
+  // Format: users/{user}/personalAccessTokens/{personal_access_token}
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
+  // Optional. The description of the token.
+  string description = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Output only. The creation time.
+  google.protobuf.Timestamp create_time = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Optional. The expiration time. Unset means the token never expires.
+  google.protobuf.Timestamp expire_time = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Output only. The time the token was last used.
+  google.protobuf.Timestamp last_use_time = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// Request message for UserService.ListPersonalAccessTokens.
+message ListPersonalAccessTokensRequest {
+  // Required. The user whose personal access tokens are listed.
+  // Format: users/{user}
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "memos.api/User"}
+  ];
+
+  // Optional. The maximum number of tokens to return. The service may return
+  // fewer. Currently ignored; all tokens are returned in one page.
+  int32 page_size = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. A page token from a previous call. Provide it to retrieve the
+  // next page.
+  string page_token = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response message for UserService.ListPersonalAccessTokens.
+message ListPersonalAccessTokensResponse {
+  // The personal access tokens, without their token values.
+  repeated PersonalAccessToken personal_access_tokens = 1;
+
+  // A token to retrieve the next page. Empty when there are no more pages.
+  string next_page_token = 2;
+}
+
+// Request message for UserService.CreatePersonalAccessToken.
+message CreatePersonalAccessTokenRequest {
+  // Required. The user who owns the token. Must be the caller.
+  // Format: users/{user}
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "memos.api/User"}
+  ];
+
+  // Optional. The description of the token.
+  string description = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. The lifetime of the token in days. 0 means the token never
+  // expires.
+  int32 expires_in_days = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response message for UserService.CreatePersonalAccessToken.
+message CreatePersonalAccessTokenResponse {
+  // The personal access token metadata.
+  PersonalAccessToken personal_access_token = 1;
+
+  // The token value. This is the only time it is returned.
+  string token = 2;
+}
+
+// Request message for UserService.DeletePersonalAccessToken.
+message DeletePersonalAccessTokenRequest {
+  // Required. The resource name of the personal access token to delete.
+  // Format: users/{user}/personalAccessTokens/{personal_access_token}
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "memos.api/PersonalAccessToken"}
+  ];
+}
+
+// Request message for UserService.ExportMemos.
+message ExportMemosRequest {
+  // Required. The user whose memos are exported. Must be the caller.
+  // Format: users/{user}
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "memos.api/User"}
+  ];
+}
+
+// Request message for UserService.ImportMemos.
+message ImportMemosRequest {
+  // Required. The user who receives the memos. Must be the caller.
+  // Format: users/{user}
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "memos.api/User"}
+  ];
+
+  // Required. Start a new upload or continue an existing one.
+  oneof upload {
+    // Starts a new upload. The same call may also carry data and finish_write.
+    ImportMemosSpec spec = 2;
+
+    // Continues the upload identified by a previous response.
+    string upload_id = 3;
+  }
+
+  // Required. Zero-based byte offset at which data is written. Must equal the
+  // committed size, except when retrying the most recently accepted chunk
+  // with identical bytes and offset, which is accepted without writing again.
+  int64 write_offset = 4 [(google.api.field_behavior) = REQUIRED];
+
+  // Optional. Archive bytes, at most max_chunk_size long. With no data and
+  // finish_write false, the call reports progress without writing, and
+  // write_offset is ignored.
+  bytes data = 5 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. Finish the upload after writing data. The committed size must
+  // then equal total_size. The archive is validated and, unless
+  // validate_only is set, imported. Any later call for an imported upload
+  // returns the same report.
+  bool finish_write = 6 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. Read on the finishing call that imports. Unspecified means SKIP.
+  ConflictPolicy conflict_policy = 7 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. On a finishing call, validate the archive and return the plan
+  // without importing. The upload stays staged so a later finishing call can
+  // import it.
+  bool validate_only = 8 [(google.api.field_behavior) = OPTIONAL];
+
+  // ConflictPolicy says what the importer does with a memo whose UID the user
+  // already holds.
+  enum ConflictPolicy {
+    CONFLICT_POLICY_UNSPECIFIED = 0;
+    // Leave the existing memo untouched. This is the default.
+    SKIP = 1;
+    // Update the existing memo's content and metadata from the archive.
+    REPLACE = 2;
+    // Keep the existing memo and create the archive version under a fresh UID.
+    DUPLICATE = 3;
+  }
+}
+
+// Response message for UserService.ImportMemos.
+message ImportMemosResponse {
+  // Opaque ID for subsequent calls. This is not a resource name.
+  string upload_id = 1;
+
+  // Number of archive bytes committed so far.
+  int64 committed_size = 2;
+
+  // Maximum number of data bytes accepted in one call.
+  int32 max_chunk_size = 3;
+
+  // Set once the upload has been finished.
+  oneof result {
+    // What the import would do. Set by a finishing call with validate_only.
+    ImportMemosPlan plan = 4;
+
+    // What the import did. Set by a finishing call that imported.
+    ImportMemosReport report = 5;
+  }
+}
+
+// ImportMemosSpec describes a new memo import upload.
+message ImportMemosSpec {
+  // Optional. Total size of the archive in bytes.
+  int64 total_size = 1 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// ImportMemosPlan describes what importing a staged archive would do.
+message ImportMemosPlan {
+  // When the archive was written.
+  google.protobuf.Timestamp export_time = 1;
+
+  // Username of the user who exported the archive.
+  string exporter = 2;
+
+  // The software that wrote the archive.
+  string generator = 3;
+
+  // Number of memo records in the archive.
+  int32 memo_count = 4;
+
+  // Number of attachment files in the archive.
+  int32 attachment_count = 5;
+
+  // Memos whose UID nobody on the instance holds.
+  int32 new = 6;
+
+  // Memos the user already holds; the conflict policy applies to them.
+  int32 existing = 7;
+
+  // Memos whose UID another account holds; they are imported under fresh UIDs.
+  int32 renamed = 8;
+
+  // Deviations the archive reader corrected while validating.
+  repeated ImportMemosIssue warnings = 9;
+}
+
+// ImportMemosReport is the outcome of an import.
+message ImportMemosReport {
+  // Number of memos created.
+  int32 created = 1;
+
+  // Number of existing memos replaced under the REPLACE policy.
+  int32 updated = 2;
+
+  // Number of existing memos left untouched under the SKIP policy.
+  int32 skipped = 3;
+
+  // Number of memos that could not be imported.
+  int32 failed = 4;
+
+  // Deviations the importer corrected or tolerated.
+  repeated ImportMemosIssue warnings = 5;
+
+  // One entry per failed memo, with the reason.
+  repeated ImportMemosIssue failures = 6;
+}
+
+// ImportMemosIssue is one warning or failure of an import, tied to the memo
+// UID from the archive when there is one.
+message ImportMemosIssue {
+  // The archive memo UID the issue concerns, if any.
+  string memo_uid = 1;
+
+  // A description of the issue.
+  string message = 2;
+}

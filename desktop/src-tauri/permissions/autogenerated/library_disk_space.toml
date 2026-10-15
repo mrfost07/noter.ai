@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-library-disk-space"
+description = "Enables the library_disk_space command without any pre-configured scope."
+commands.allow = ["library_disk_space"]
+
+[[permission]]
+identifier = "deny-library-disk-space"
+description = "Denies the library_disk_space command without any pre-configured scope."
+commands.deny = ["library_disk_space"]

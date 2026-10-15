@@ -1,0 +1,180 @@
+import { create } from "@bufbuild/protobuf";
+import { act, render } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { useAutoSave } from "@/components/MemoEditor/hooks/useAutoSave";
+import { cacheService } from "@/components/MemoEditor/services/cacheService";
+import { EditorProvider, useEditorContext } from "@/components/MemoEditor/state";
+import { AttachmentSchema } from "@/types/proto/api/attachment_service_pb";
+
+// Probe surfaces the store's dispatch/actions plus the autosave API so tests can
+// drive content changes the way the editor does and assert on cache writes.
+let api: {
+  dispatch: ReturnType<typeof useEditorContext>["dispatch"];
+  actions: ReturnType<typeof useEditorContext>["actions"];
+  discardDraft: () => void;
+};
+
+function Probe({ username, cacheKey, enabled }: { username: string; cacheKey?: string; enabled?: boolean }) {
+  const { dispatch, actions } = useEditorContext();
+  const { discardDraft } = useAutoSave(username, cacheKey, enabled);
+  api = { dispatch, actions, discardDraft };
+  return null;
+}
+
+describe("useAutoSave (store-subscribed)", () => {
+  let saveSpy: ReturnType<typeof vi.spyOn>;
+  let saveNowSpy: ReturnType<typeof vi.spyOn>;
+  let clearSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    saveSpy = vi.spyOn(cacheService, "save").mockImplementation(() => {});
+    saveNowSpy = vi.spyOn(cacheService, "saveNow").mockImplementation(() => {});
+    clearSpy = vi.spyOn(cacheService, "clear").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("persists content to the draft cache when content changes", () => {
+    render(
+      <EditorProvider>
+        <Probe username="users/steven" cacheKey="k" enabled />
+      </EditorProvider>,
+    );
+    const key = cacheService.key("users/steven", "k");
+    saveSpy.mockClear(); // ignore the mount-time persist of the initial empty content
+    act(() => {
+      api.dispatch(api.actions.updateContent("hello world"));
+    });
+    expect(saveSpy).toHaveBeenCalledWith(key, {
+      content: "hello world",
+      attachments: [],
+      location: null,
+      space: undefined,
+    });
+  });
+
+  it("persists destination and audience changes even when content stays the same", () => {
+    render(
+      <EditorProvider>
+        <Probe username="users/steven" cacheKey="settings" enabled />
+      </EditorProvider>,
+    );
+    saveSpy.mockClear();
+    act(() => {
+      api.dispatch(api.actions.setMetadata({ space: "spaces/work" }));
+    });
+    expect(saveSpy).toHaveBeenLastCalledWith(cacheService.key("users/steven", "settings"), {
+      content: "",
+      attachments: [],
+      location: null,
+      space: "spaces/work",
+    });
+    act(() => {
+      api.dispatch(api.actions.setMetadata({ space: undefined }));
+    });
+    expect(saveSpy).toHaveBeenLastCalledWith(cacheService.key("users/steven", "settings"), {
+      content: "",
+      attachments: [],
+      location: null,
+      space: undefined,
+    });
+  });
+
+  it("persists uploaded attachments when editor metadata changes", () => {
+    render(
+      <EditorProvider>
+        <Probe username="users/steven" cacheKey="attachment-draft" enabled />
+      </EditorProvider>,
+    );
+    const key = cacheService.key("users/steven", "attachment-draft");
+    const image = create(AttachmentSchema, {
+      name: "attachments/image-one",
+      filename: "image.png",
+      type: "image/png",
+    });
+    saveSpy.mockClear();
+
+    act(() => {
+      api.dispatch(api.actions.setMetadata({ attachments: [image] }));
+    });
+
+    expect(saveSpy).toHaveBeenCalledWith(key, {
+      content: "",
+      attachments: [image],
+      location: null,
+      space: undefined,
+    });
+  });
+
+  it("persists metadata changes for an attachment with the same name", () => {
+    render(
+      <EditorProvider>
+        <Probe username="users/steven" cacheKey="attachment-update" enabled />
+      </EditorProvider>,
+    );
+    const key = cacheService.key("users/steven", "attachment-update");
+    const initial = create(AttachmentSchema, {
+      name: "attachments/image-one",
+      filename: "image.png",
+      type: "image/png",
+    });
+    const updated = create(AttachmentSchema, {
+      name: "attachments/image-one",
+      filename: "image.png",
+      type: "image/png",
+      externalLink: "https://cdn.example.com/image.png",
+    });
+
+    act(() => {
+      api.dispatch(api.actions.setMetadata({ attachments: [initial] }));
+    });
+    saveSpy.mockClear();
+    act(() => {
+      api.dispatch(api.actions.setMetadata({ attachments: [updated] }));
+    });
+
+    expect(saveSpy).toHaveBeenCalledWith(key, {
+      content: "",
+      attachments: [updated],
+      location: null,
+      space: undefined,
+    });
+  });
+
+  it("does not persist when disabled", () => {
+    render(
+      <EditorProvider>
+        <Probe username="users/steven" cacheKey="k" enabled={false} />
+      </EditorProvider>,
+    );
+    saveSpy.mockClear();
+    act(() => {
+      api.dispatch(api.actions.updateContent("ignored"));
+    });
+    expect(saveSpy).not.toHaveBeenCalled();
+  });
+
+  it("discardDraft clears the cache and suppresses the unmount flush", () => {
+    const { unmount } = render(
+      <EditorProvider>
+        <Probe username="users/steven" cacheKey="k2" enabled />
+      </EditorProvider>,
+    );
+    const key = cacheService.key("users/steven", "k2");
+    act(() => {
+      api.dispatch(api.actions.updateContent("draft body"));
+    });
+    act(() => {
+      api.discardDraft();
+    });
+    expect(clearSpy).toHaveBeenCalledWith(key);
+
+    saveNowSpy.mockClear();
+    unmount();
+    // The just-discarded content equals the latest content, so the unmount
+    // flush must NOT re-persist it as a stale draft.
+    expect(saveNowSpy).not.toHaveBeenCalled();
+  });
+});

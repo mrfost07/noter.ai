@@ -1,0 +1,290 @@
+syntax = "proto3";
+
+package memos.api;
+
+import "google/api/annotations.proto";
+import "google/api/client.proto";
+import "google/api/field_behavior.proto";
+
+option go_package = "gen/api";
+
+// AIService runs AI tasks through the AI providers configured on the instance.
+service AIService {
+  // Transcribe transcribes an audio file with the instance's configured
+  // transcription provider. The caller must be signed in, and requests are rate limited per user.
+  rpc Transcribe(TranscribeRequest) returns (TranscribeResponse) {
+    option (google.api.http) = {
+      post: "/api/ai:transcribe"
+      body: "*"
+    };
+    option (google.api.method_signature) = "audio";
+  }
+
+  // AnalyzeMeetingTranscript analyzes a speaker-tagged meeting transcript ([Client] vs [You])
+  // and extracts structured action items, client decisions, crucial info, and follow-up questions.
+  // The caller must be signed in, and requests are rate limited per user.
+  rpc AnalyzeMeetingTranscript(AnalyzeMeetingTranscriptRequest) returns (AnalyzeMeetingTranscriptResponse) {
+    option (google.api.http) = {
+      post: "/api/ai:analyzeMeetingTranscript"
+      body: "*"
+    };
+  }
+
+  // StartAntigravityOAuth starts a local OAuth 2.0 PKCE sign-in flow for Google Antigravity
+  // and saves the authenticated provider in InstanceAISetting.
+  rpc StartAntigravityOAuth(StartAntigravityOAuthRequest) returns (StartAntigravityOAuthResponse) {
+    option (google.api.http) = {
+      post: "/api/ai:startAntigravityOAuth"
+      body: "*"
+    };
+  }
+
+  // RunAgentTask runs an autonomous multi-step AI agent loop with full Memos tool access
+  // (listing, reading, creating, updating, deleting, commenting, and linking memos and spaces).
+  rpc RunAgentTask(RunAgentTaskRequest) returns (RunAgentTaskResponse) {
+    option (google.api.http) = {
+      post: "/api/ai:runAgentTask"
+      body: "*"
+    };
+  }
+
+  // TestAIProvider tests connection and credentials for an AI provider and model.
+  rpc TestAIProvider(TestAIProviderRequest) returns (TestAIProviderResponse) {
+    option (google.api.http) = {
+      post: "/api/ai:testProvider"
+      body: "*"
+    };
+  }
+
+  // FetchAvailableModels dynamically retrieves available models with live quota and capability information.
+  rpc FetchAvailableModels(FetchAvailableModelsRequest) returns (FetchAvailableModelsResponse) {
+    option (google.api.http) = {
+      post: "/api/ai:fetchAvailableModels"
+      body: "*"
+    };
+  }
+}
+
+// Request message for AIService.Transcribe.
+message TranscribeRequest {
+  // Required. The audio to transcribe.
+  TranscriptionAudio audio = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Optional. Provider ID override for test or multi-provider execution.
+  string provider_id = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. Model override for test or multi-provider execution.
+  string model = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Request speaker labels from a supported transcription provider.
+  bool diarize = 4 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response message for AIService.Transcribe.
+message TranscribeResponse {
+  // The transcribed text.
+  string text = 1;
+
+  // Timestamped turns; speaker IDs are scoped to this audio file.
+  repeated TranscriptionSegment segments = 2;
+}
+
+// TranscriptionSegment is a provider-identified speaker turn.
+message TranscriptionSegment {
+  string text = 1;
+  double start = 2;
+  double end = 3;
+  string speaker = 4;
+}
+
+// TranscriptionAudio is the audio input for a transcription.
+message TranscriptionAudio {
+  // The audio source. Only inline content is supported.
+  oneof source {
+    // Input only. Inline audio bytes, at most 25 MiB.
+    bytes content = 1 [(google.api.field_behavior) = INPUT_ONLY];
+
+    // URI of the audio content. Reserved for future use; the service rejects requests that set it.
+    string uri = 2;
+  }
+
+  // Optional. The uploaded filename, at most 255 characters.
+  string filename = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. The MIME type of the audio. If empty, the service detects it from the content.
+  string content_type = 4 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Request message for AIService.AnalyzeMeetingTranscript.
+message AnalyzeMeetingTranscriptRequest {
+  // Required. Speaker-tagged transcript lines, e.g. "[14:02:11] [Client]: We need SSO by Friday."
+  string transcript = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Optional. Previous structured state so the AI merges incrementally without losing earlier items.
+  MeetingNotesState previous_state = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. Provider ID override; defaults to the instance transcription/AI provider.
+  string provider_id = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. Model override (e.g. "gemini-2.5-flash", "gpt-4o-mini", "llama-3.3-70b-versatile").
+  string model = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. Resource name of the active memo (e.g. "memos/abc") so the agent can link related memos.
+  string memo_name = 5 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// MeetingNotesState holds the 4 structured lists extracted from a live meeting transcript.
+message MeetingNotesState {
+  // Actionable tasks, deliverables, or promises assigned to [You].
+  repeated string tasks_for_you = 1;
+
+  // Key approvals, preferences, rejections, or decisions made by [Client].
+  repeated string client_decisions = 2;
+
+  // Specific budgets, dates, deadlines, tech stack specs, metrics, or constraints mentioned.
+  repeated string crucial_info = 3;
+
+  // 1 to 3 concise, high-value clarifying questions [You] should ask [Client] right now.
+  repeated string follow_up_questions = 4;
+
+  // Mid-meeting scope pivots, changes, or revisions requested by the client.
+  repeated string mid_meeting_changes = 5;
+}
+
+// Response message for AIService.AnalyzeMeetingTranscript.
+message AnalyzeMeetingTranscriptResponse {
+  // The updated structured meeting notes state.
+  MeetingNotesState notes = 1;
+
+  // Pre-rendered GitHub-Flavored Markdown block ready to insert into a Memo.
+  string markdown = 2;
+
+  // Related memo resource names discovered and/or linked during analysis (e.g. "memos/xyz").
+  repeated string related_memo_names = 3;
+
+  // Concise status summary describing what the AI Agent updated (e.g. "Updated Tasks & Decisions · Linked 2 related memos").
+  string status_summary = 4;
+}
+
+// Request message for AIService.StartAntigravityOAuth.
+message StartAntigravityOAuthRequest {
+  // Optional. Existing provider ID to update; if empty, creates or updates the Antigravity provider.
+  string provider_id = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. Display title for the Antigravity provider (defaults to "Google Antigravity").
+  string title = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response message for AIService.StartAntigravityOAuth.
+message StartAntigravityOAuthResponse {
+  // The saved provider ID in InstanceAISetting.
+  string provider_id = 1;
+
+  // The resolved Google Cloud Code project ID (e.g. "rising-fact-p41fc").
+  string project_id = 2;
+
+  // The authorization URL opened for the user.
+  string auth_url = 3;
+
+  // Whether the OAuth flow completed and stored credentials.
+  bool connected = 4;
+}
+
+// Request message for AIService.RunAgentTask.
+message RunAgentTaskRequest {
+  // Required. Natural-language instruction for the autonomous Memos AI Agent.
+  string instruction = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Optional. Provider ID override; defaults to the instance LLM provider.
+  string provider_id = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. Model override.
+  string model = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// AgentToolAction records a single tool invocation executed by the autonomous AI Agent.
+message AgentToolAction {
+  // Tool name invoked (e.g. "create_memo", "update_memo", "link_memos", "list_memos").
+  string tool = 1;
+
+  // Human-readable summary of what the tool action accomplished.
+  string summary = 2;
+
+  // Optional memo resource name affected or created (e.g. "memos/abc").
+  string memo_name = 3;
+
+  // Optional space resource name affected or created (e.g. "spaces/xyz").
+  string space_name = 4;
+}
+
+// Response message for AIService.RunAgentTask.
+message RunAgentTaskResponse {
+  // Final natural-language response from the AI Agent.
+  string reply = 1;
+
+  // Ordered list of autonomous tool actions executed during the run.
+  repeated AgentToolAction actions = 2;
+}
+
+// Request message for AIService.TestAIProvider.
+message TestAIProviderRequest {
+  // Optional. Saved provider ID to test.
+  string provider_id = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. Model identifier to test.
+  string model = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. Capability to test: "LLM" (default) or "STT" (speech-to-text transcription).
+  string capability = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional draft provider type when testing before saving.
+  string provider_type = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional draft endpoint when testing before saving.
+  string endpoint = 5 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional draft API key when testing before saving.
+  string api_key = 6 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response message for AIService.TestAIProvider.
+message TestAIProviderResponse {
+  // Whether the connection test succeeded.
+  bool success = 1;
+
+  // Status message or error description.
+  string message = 2;
+
+  // Roundtrip response latency in milliseconds.
+  int64 latency_ms = 3;
+}
+
+// Request message for AIService.FetchAvailableModels.
+message FetchAvailableModelsRequest {
+  // Required. Provider ID to discover models for.
+  string provider_id = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+// ModelInfo describes a single model supported by an AI provider.
+message ModelInfo {
+  // Model identifier for API calls.
+  string id = 1;
+
+  // Human-readable model label.
+  string label = 2;
+
+  // Brief description (e.g. "Fastest", "Recommended", "Deep Reasoning").
+  string description = 3;
+
+  // Fraction of quota remaining (0.0 to 1.0, or negative if unknown/unlimited).
+  double remaining_quota = 4;
+
+  // Whether this is the recommended default model.
+  bool is_default = 5;
+}
+
+// Response message for AIService.FetchAvailableModels.
+message FetchAvailableModelsResponse {
+  // List of discovered or supported models for the provider.
+  repeated ModelInfo models = 1;
+}

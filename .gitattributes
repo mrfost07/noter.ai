@@ -1,0 +1,4 @@
+# Keep formatter-sensitive source identical on Windows and Unix CI runners.
+* text=auto eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf
