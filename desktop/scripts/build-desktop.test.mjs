@@ -3,7 +3,7 @@ import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
-import { assertTemporaryExtraction, assertVersions, launchSmoke, run, serverVersion, sha256, smokeCommand, targetConfig, targets, validateVersion, verifyAll, verifySmokeProfile } from "./build-desktop.mjs";
+import { assertCommitIdentity, assertTemporaryExtraction, assertVersions, launchSmoke, run, serverVersion, sha256, smokeCommand, targetConfig, targets, validateVersion, verifyAll, verifySmokeProfile } from "./build-desktop.mjs";
 
 const version = "26.10.15-rc.1";
 const commit = "a".repeat(40);
@@ -31,6 +31,14 @@ test("foreign or unrecognized targets cannot bypass native package verification"
 
 test("failed subprocesses stop the build", () => {
   assert.throws(() => run(process.execPath, ["-e", "process.exit(7)"], { capture: true }), /exited 7/);
+});
+
+test("trimpath sidecars identify their exact candidate through VCS metadata without linker flags", () => {
+  const info = `go1.27.2\nbuild\t-trimpath=true\nbuild\tvcs=git\nbuild\tvcs.revision=${commit}\nbuild\tvcs.modified=true`;
+  assert.doesNotThrow(() => assertCommitIdentity(info, commit));
+  assert.throws(() => assertCommitIdentity(info, "c".repeat(40)), /candidate commit/);
+  assert.throws(() => assertCommitIdentity(`build\t-ldflags=-X internal/version.Commit=${commit}`, commit), /candidate commit/);
+  assert.throws(() => assertCommitIdentity(`${info}\nbuild\tvcs.revision=${commit}`, commit), /candidate commit/);
 });
 
 test("package cleanup is confined to the known temporary directory", () => {

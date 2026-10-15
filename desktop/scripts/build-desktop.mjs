@@ -105,6 +105,14 @@ function goIdentity(file) {
   };
 }
 
+export function assertCommitIdentity(buildInfo, commit) {
+  // -trimpath omits linker flags from build settings. Require Go's VCS revision instead.
+  const revisions = [...buildInfo.matchAll(/^build[ \t]+vcs\.revision=([a-f0-9]{40,64})$/gm)];
+  if (revisions.length !== 1 || revisions[0][1] !== commit) {
+    throw new Error("Fresh sidecar does not identify the candidate commit.");
+  }
+}
+
 export function assertTemporaryExtraction(directory) {
   const root = path.resolve(tmpdir());
   const resolved = path.resolve(directory);
@@ -207,7 +215,7 @@ async function prepare(version, target, skipFrontend = false) {
   });
   verifySidecar(sidecar, version);
   const identity = goIdentity(sidecar);
-  if (!identity.buildInfo.includes(`github.com/usememos/memos/internal/version.Commit=${commit}`)) throw new Error("Fresh sidecar does not identify the candidate commit.");
+  assertCommitIdentity(identity.buildInfo, commit);
   return { commit, sidecar, sourceSidecarSha256: await sha256(sidecar), sourceIdentity: identity };
 }
 
