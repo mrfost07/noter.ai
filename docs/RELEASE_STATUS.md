@@ -24,6 +24,8 @@ Candidate packaging also verifies native startup from each extracted installer w
 
 ## Platform and distribution limits
 
+**Antigravity is blocked for a supported public launch.** Google's [official FAQ](https://antigravity.google/docs/faq/#why-cant-i-use-third-party-software-such-as-claude-code-openclaw-or-opencode-with-my-antigravity-login) explicitly states that third-party applications cannot use Antigravity account authentication to access the service. Google OAuth production status and consent verification do not change that restriction. The current experimental provider must not be presented as a supported public account connection; use supported Gemini API/Enterprise access for public Google AI functionality. The desktop candidate remains unpublished pending a public-provider decision and real-account acceptance tests.
+
 The first release preparation replaces the legacy process-killing development launcher with the fresh build command and adds explicit native startup errors. These packaging fixes do not resolve the meeting recovery and note-consistency issues above.
 
 - Windows installers, macOS disk images and Linux AppImage/Debian packages are desktop packages; Android APK packaging is not implemented.
