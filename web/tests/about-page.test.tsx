@@ -4,7 +4,7 @@ import About from "@/pages/About";
 
 const mockInstance = {
   profile: {
-    version: "0.25.0",
+    version: "26.10.15-rc.1",
     commit: "0123456789abcdef0123456789abcdef01234567",
     instanceUrl: "",
     demo: false,
@@ -33,7 +33,7 @@ const renderAbout = () => render(<About />);
 describe("<About>", () => {
   beforeEach(() => {
     mockInstance.profile = {
-      version: "0.25.0",
+      version: "26.10.15-rc.1",
       commit: "0123456789abcdef0123456789abcdef01234567",
       instanceUrl: "https://notes.example.com",
       demo: false,
@@ -52,28 +52,38 @@ describe("<About>", () => {
     expect(screen.getByRole("heading", { name: "Noter.ai" })).toBeInTheDocument();
     expect(screen.getByText(/Your AI meeting notepad/i)).toBeInTheDocument();
     expect(screen.getByText(/A minimalist notepad/)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Version\s*v0\.25\.0/ })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /Version\s*26\.10\.15-rc\.1/ })).toHaveAttribute(
       "href",
-      "https://github.com/usememos/memos/releases/tag/v0.25.0",
+      "https://github.com/mrfost07/noter.ai/releases/tag/26.10.15-rc.1",
     );
     expect(screen.getByRole("heading", { name: "Noter.ai" }).parentElement).toContainElement(
-      screen.getByRole("link", { name: /Version\s*v0\.25\.0/ }),
+      screen.getByRole("link", { name: /Version\s*26\.10\.15-rc\.1/ }),
     );
     expect(screen.getByRole("link", { name: "0123456" })).toHaveAttribute(
       "href",
-      "https://github.com/usememos/memos/commit/0123456789abcdef0123456789abcdef01234567",
+      "https://github.com/mrfost07/noter.ai/commit/0123456789abcdef0123456789abcdef01234567",
     );
     expect(screen.queryByRole("link", { name: "MIT" })).not.toBeInTheDocument();
   });
 
-  it("links to the project homepage, docs, API docs, GitHub, and Web Clipper", () => {
+  it("links to Noter.ai resources and welcomes contributors", () => {
     renderAbout();
 
-    expect(screen.getByRole("link", { name: /about\.official-website/ })).toHaveAttribute("href", "https://usememos.com/");
-    expect(screen.getByRole("link", { name: /about\.documents/ })).toHaveAttribute("href", "https://usememos.com/docs");
-    expect(screen.getByRole("link", { name: /about\.api-docs/ })).toHaveAttribute("href", "https://usememos.com/docs/api");
-    expect(screen.getByRole("link", { name: /about\.web-clipper/ })).toHaveAttribute("href", "https://github.com/usememos/web-clipper");
-    expect(screen.getByRole("link", { name: /about\.github-repository/ })).toHaveAttribute("href", "https://github.com/usememos/memos");
+    expect(screen.getByRole("link", { name: /about\.official-website/ })).toHaveAttribute("href", "https://github.com/mrfost07/noter.ai");
+    expect(screen.getByRole("link", { name: /about\.documents/ })).toHaveAttribute(
+      "href",
+      "https://github.com/mrfost07/noter.ai/blob/main/README.md",
+    );
+    expect(screen.getByRole("link", { name: /about\.api-docs/ })).toHaveAttribute(
+      "href",
+      "https://github.com/mrfost07/noter.ai/tree/main/proto/api",
+    );
+    expect(screen.getByRole("link", { name: /Contribute to Noter.ai/ })).toHaveAttribute(
+      "href",
+      "https://github.com/mrfost07/noter.ai/blob/main/CONTRIBUTING.md",
+    );
+    expect(screen.getByRole("link", { name: /about\.github-repository/ })).toHaveAttribute("href", "https://github.com/mrfost07/noter.ai");
+    for (const link of screen.getAllByRole("link")) expect(link.getAttribute("href")).not.toContain("usememos");
   });
 
   it("does not surface the instance URL, administrator, or birds", () => {
@@ -106,7 +116,7 @@ describe("<About>", () => {
     expect(screen.getByText("about.demo")).toBeInTheDocument();
   });
 
-  it("uses custom branding for the identity hero and credits Memos", () => {
+  it("uses custom branding for the identity hero and credits Noter.ai", () => {
     mockInstance.generalSetting = {
       customProfile: { title: "Team Notes", description: "Our shared scratchpad.", logoUrl: "/custom-logo.png" },
     };

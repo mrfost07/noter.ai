@@ -1,4 +1,4 @@
-import { BookOpenIcon, CodeXmlIcon, ExternalLinkIcon, GitForkIcon, GlobeIcon, ScissorsIcon } from "lucide-react";
+import { BookOpenIcon, CodeXmlIcon, ExternalLinkIcon, GitForkIcon, GlobeIcon, UsersRoundIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useInstance } from "@/contexts/InstanceContext";
 import {
@@ -8,13 +8,12 @@ import {
   MEMOS_DOCUMENTATION_URL,
   MEMOS_GITHUB_URL,
   MEMOS_WEBSITE_URL,
-  WEB_CLIPPER_URL,
 } from "@/lib/constants";
 import { getReleaseTag } from "@/lib/release-version";
 import { useTranslate } from "@/utils/i18n";
 
-const GITHUB_COMMIT_URL_PREFIX = "https://github.com/usememos/memos/commit/";
-const GITHUB_RELEASE_URL_PREFIX = "https://github.com/usememos/memos/releases/tag/";
+const GITHUB_COMMIT_URL_PREFIX = `${MEMOS_GITHUB_URL}/commit/`;
+const GITHUB_RELEASE_URL_PREFIX = `${MEMOS_GITHUB_URL}/releases/tag/`;
 
 const DEFAULT_TITLE = DEFAULT_APP_TITLE;
 const DEFAULT_LOGO = "/noter-icon-v2.png";
@@ -79,7 +78,12 @@ const About = () => {
       href: MEMOS_GITHUB_URL,
       icon: GitForkIcon,
     },
-    { label: t("about.web-clipper"), note: t("about.web-clipper-platforms"), href: WEB_CLIPPER_URL, icon: ScissorsIcon },
+    {
+      label: "Contribute to Noter.ai",
+      note: "Help improve the app or become a maintainer.",
+      href: `${MEMOS_GITHUB_URL}/blob/main/CONTRIBUTING.md`,
+      icon: UsersRoundIcon,
+    },
   ];
 
   return (
@@ -134,7 +138,7 @@ const About = () => {
             <nav aria-label={t("about.project-links")} className="mt-4">
               <ul className="grid gap-3 @min-[28rem]:grid-cols-2 @min-[60rem]:gap-4">
                 {projectLinks.map((link) => (
-                  <li key={link.href} className="min-w-0">
+                  <li key={link.label} className="min-w-0">
                     <a
                       className="group flex h-full flex-col rounded-xl border border-border p-5 transition-colors hover:border-muted-foreground/40 hover:bg-muted/40 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring @min-[60rem]:p-6"
                       href={link.href}
