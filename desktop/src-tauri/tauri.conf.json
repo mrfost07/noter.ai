@@ -32,6 +32,9 @@
     "category": "Productivity",
     "shortDescription": "AI assisted notes and meeting review",
     "createUpdaterArtifacts": false,
+    "windows": {
+      "wix": { "version": "26.10.15.1" }
+    },
     "macOS": {
       "minimumSystemVersion": "13.0",
       "signingIdentity": "-",

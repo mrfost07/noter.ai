@@ -154,7 +154,7 @@ jobs:
         run: node desktop/scripts/build-desktop.mjs build --version "$CANDIDATE_VERSION" --target "${{ matrix.target }}"
       - name: Native lifecycle and sidecar-location regression tests
         working-directory: desktop/src-tauri
-        run: cargo test --locked --target "${{ matrix.target }}"
+        run: cargo test --release --locked --target "${{ matrix.target }}"
       - name: Upload only verified candidate artifacts
         uses: actions/upload-artifact@v4
         with:

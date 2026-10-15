@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
   - name: Questions & Support
-    url: https://github.com/usememos/memos/discussions
+    url: https://github.com/mrfost07/noter.ai/discussions
     about: Ask questions or get help in GitHub Discussions — please don't open issues for questions
   - name: Documentation
-    url: https://www.usememos.com/docs
+    url: https://github.com/mrfost07/noter.ai/blob/main/README.md
     about: Check the documentation before opening an issue

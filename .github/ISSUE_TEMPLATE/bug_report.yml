@@ -1,13 +1,12 @@
 name: Bug Report
 description: Report something that is not working as expected
-type: Bug
 body:
   - type: markdown
     attributes:
       value: |
         Thanks for reporting a bug.
 
-        Before submitting, please search [existing issues](https://github.com/usememos/memos/issues) and, if possible, check the [latest release](https://github.com/usememos/memos/releases/latest). For questions and setup help, use [Discussions](https://github.com/usememos/memos/discussions).
+        Before submitting, please search [existing issues](https://github.com/mrfost07/noter.ai/issues) and, if possible, check [releases](https://github.com/mrfost07/noter.ai/releases). For questions and setup help, use [Discussions](https://github.com/mrfost07/noter.ai/discussions).
 
   - type: checkboxes
     id: pre-check
@@ -43,9 +42,9 @@ body:
   - type: input
     id: version
     attributes:
-      label: Memos version
-      description: Use the version from Settings > System, the image tag, or `memos --version`.
-      placeholder: "v0.29.x or main@abcdef"
+      label: Noter.ai version
+      description: Include the release version or the source commit used to build the app.
+      placeholder: "26.10.15-rc.1 or main@abcdef"
     validations:
       required: true
 

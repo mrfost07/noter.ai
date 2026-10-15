@@ -82,11 +82,16 @@ test("committed package, Cargo, lock and bundle versions must agree", async (t) 
   t.after(() => cleanup(root));
   await mkdir(path.join(root, "src-tauri"));
   await writeFile(path.join(root, "package.json"), JSON.stringify({ version }));
-  await writeFile(path.join(root, "src-tauri/tauri.conf.json"), JSON.stringify({ version, bundle: { macOS: { bundleVersion: "26.10.15" } } }));
+  const configFile = path.join(root, "src-tauri/tauri.conf.json");
+  const config = { version, bundle: { macOS: { bundleVersion: "26.10.15" }, windows: { wix: { version: "26.10.15.1" } } } };
+  await writeFile(configFile, JSON.stringify(config));
   await writeFile(path.join(root, "src-tauri/Cargo.toml"), `[package]\nname = "memos-desktop"\nversion = "${version}"\n`);
   const lock = path.join(root, "src-tauri/Cargo.lock");
   await writeFile(lock, `[[package]]\nname = "memos-desktop"\nversion = "${version}"\n`);
   await assertVersions(version, root);
+  await writeFile(configFile, JSON.stringify({ ...config, bundle: { ...config.bundle, windows: { wix: { version: "26.10.15.2" } } } }));
+  await assert.rejects(assertVersions(version, root), /numeric macOS\/MSI/);
+  await writeFile(configFile, JSON.stringify(config));
   await writeFile(lock, '[[package]]\nname = "memos-desktop"\nversion = "0.1.0"\n');
   await assert.rejects(assertVersions(version, root), /must match committed/);
 });

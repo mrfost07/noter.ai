@@ -1,41 +1,13 @@
-# Security Policy
+# Security policy
 
-## Supported Versions
+Noter.ai currently publishes experimental release candidates. They are not a production security sign-off. See [release status](docs/RELEASE_STATUS.md) for supported platforms and known limitations.
 
-Memos is currently a `0.x` project. Security fixes are only provided for the latest release. Older releases are not supported for security updates, and fixes are not backported.
+Security fixes target the current source on `main` and the newest candidate. Older builds do not receive separate backports.
 
-If you run Memos in production, keep your instance updated to the latest release.
+## Report a vulnerability
 
-## Reporting a Vulnerability
+Use [GitHub's private vulnerability reporting](https://github.com/mrfost07/noter.ai/security/advisories/new) to contact this project's owner and maintainers. Do not post active vulnerability details in public issues, discussions, or pull requests.
 
-Please report security issues privately by email: `dev@usememos.com`
+Include the affected version or commit, operating system, reproduction steps, expected impact, and relevant configuration. Remove API keys, OAuth tokens, private notes, and meeting recordings from the report.
 
-Do not open public GitHub issues, discussions, or pull requests for suspected vulnerabilities.
-
-Please include:
-
-- A clear description of the issue
-- Steps to reproduce
-- Affected version or commit
-- Deployment details that matter to reproduction
-- Your assessment of impact
-
-We will review reports as time permits and fix valid issues in regular releases.
-
-## Disclosure and CVEs
-
-Memos is self-hosted software and is still in the `0.x` stage. At this stage, we do not run a formal disclosure program, publish separate security advisories for every issue, or request CVE IDs.
-
-Security fixes may be shipped directly in normal releases or noted briefly in release notes and changelogs.
-
-## Self-Hosted Deployment Notes
-
-The security posture of a Memos instance depends heavily on how it is deployed and operated. In particular:
-
-- Keep Memos updated
-- Put it behind a properly configured reverse proxy when exposed to the internet
-- Require authentication for any non-public deployment
-- Use TLS in production
-- Limit access to trusted users and administrators
-
-Reports that depend entirely on intentionally unsafe deployment choices, unsupported local patches, or administrator actions may be treated as deployment issues rather than product vulnerabilities.
+The project owner, [mrfost07](https://github.com/mrfost07), coordinates review, fixes, and disclosure with contributors. Response time depends on maintainer availability.

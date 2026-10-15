@@ -33,7 +33,7 @@ Verified artifacts and manifests are written to `build/noter-desktop/<version>/<
 
 ## GitHub candidate workflow
 
-The [Noter.ai Desktop Candidate workflow](../.github/workflows/noter-desktop.yml) runs only when manually dispatched on committed `main` in `mrfost07/noter.ai`. Its version input must match `desktop/package.json`, `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`, and the application entry in `src-tauri/Cargo.lock`. Update the macOS numeric `bundleVersion` at the same time. SemVer omits numeric leading zeroes; the Go server's calendar version pads months 1–9.
+The [Noter.ai Desktop Candidate workflow](../.github/workflows/noter-desktop.yml) runs only when manually dispatched on committed `main` in `mrfost07/noter.ai`. Its version input must match `desktop/package.json`, `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`, and the application entry in `src-tauri/Cargo.lock`. Update the macOS numeric `bundleVersion` and Windows `wix.version` at the same time. For `26.10.15-rc.1`, these are `26.10.15` and `26.10.15.1`, respectively. SemVer omits numeric leading zeroes; the Go server's calendar version pads months 1–9.
 
 Frontend type/lint/format checks, frontend tests, and backend/meeting/provider tests with the race detector run alongside the native build matrix. Both must succeed for a release draft to be staged. Formatting failures block the candidate; they are never ignored.
 
@@ -50,7 +50,7 @@ Each extracted application is also launched with `--smoke-test` and three new te
 
 After every platform succeeds, a separate job rechecks all installer hashes, sizes, identities, and manifests. With `create_draft=true`, it stages an **unpublished prerelease draft** with six installers, four manifests, and `SHA256SUMS.txt`. A rerun can resume only a matching draft for the same commit with identical existing assets. It refuses to alter a published release, move an existing tag, or mix candidates. With `create_draft=false`, verified artifacts remain available on the workflow run.
 
-This workflow does not call the inherited upstream Memos Docker release or deployment pipelines. It does not publish the draft or enable an updater. Review the candidate and complete installation and physical-device acceptance tests before deciding whether to publish it.
+Desktop candidates use their own packaging workflow. It does not publish the draft or enable an updater. Review the candidate and complete installation and physical-device acceptance tests before deciding whether to publish it.
 
 ## Runtime data and platform limits
 

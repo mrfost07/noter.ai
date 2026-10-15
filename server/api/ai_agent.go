@@ -145,7 +145,7 @@ func (s *APIService) StartAntigravityOAuth(ctx context.Context, request *apipb.S
 		}
 
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		_, _ = w.Write([]byte(`<!DOCTYPE html><html><body style="font-family:system-ui,sans-serif;padding:2rem;text-align:center;"><h3>Connected to Noter.ai</h3><p>You can close this window and return to Noter.ai.</p><script>window.close();</script></body></html>`))
+		_, _ = w.Write([]byte(`<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Noter.ai · Google sign-in</title></head><body style="font-family:system-ui,sans-serif;padding:2rem;text-align:center;"><h1>Return to Noter.ai</h1><p>Your sign-in response was received. Return to Noter.ai to finish connecting.</p><script>window.close();</script></body></html>`))
 		select {
 		case resultCh <- callbackResult{code: code}:
 		default:

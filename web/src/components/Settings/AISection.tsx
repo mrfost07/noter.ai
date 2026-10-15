@@ -1630,7 +1630,7 @@ const AIAssistantForm = ({ providers, config, onSave, onAntigravityConnected }: 
         <div className="rounded-lg border border-border bg-muted/30 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold">Google Account Authentication</span>
+              <span className="text-xs font-semibold">Connect Noter.ai to Antigravity</span>
               {providerDraft.apiKeySet && (
                 <span className="inline-flex items-center rounded-full bg-emerald-500/15 px-2 py-0.5 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
                   Connected ✓

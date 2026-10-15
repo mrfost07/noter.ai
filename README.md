@@ -40,15 +40,14 @@ pnpm --dir desktop install --frozen-lockfile
 
 Follow [desktop/README.md](desktop/README.md) to build your platform's installer. CI builds fresh frontend assets, embeds them into the Go sidecar and packages the native desktop app from the same committed revision.
 
-For backend development:
-
-```sh
-pnpm --dir web release
-go run -buildvcs=true ./cmd/memos --addr 127.0.0.1 --port 5230
-```
-
 Provider API keys are configured in the app and are not included in this repository or its release installers. Antigravity OAuth additionally requires local `NOTER_ANTIGRAVITY_CLIENT_ID` and `NOTER_ANTIGRAVITY_CLIENT_SECRET` configuration; see [release status](docs/RELEASE_STATUS.md). See [AGENTS.md](AGENTS.md) for repository commands and contribution conventions.
 
-## License and attribution
+## Contribute
 
-Noter.ai is an independent project maintained by [mrfost07](https://github.com/mrfost07), derived from [Memos](https://github.com/usememos/memos). Original copyright notices and the [MIT license](LICENSE) are retained. Internal package paths and compatibility identifiers can still contain the upstream name.
+Noter.ai is an open-source project maintained by [mrfost07](https://github.com/mrfost07). Contributors and prospective maintainers are welcome: help improve notes, meeting capture, accessibility, AI integrations, documentation, and platform support.
+
+Read the [contribution guide](CONTRIBUTING.md), browse [open issues](https://github.com/mrfost07/noter.ai/issues), or join [Discussions](https://github.com/mrfost07/noter.ai/discussions). To help maintain the project, start a discussion describing your experience and the area you would like to support.
+
+## License
+
+Noter.ai is available under the [MIT license](LICENSE).

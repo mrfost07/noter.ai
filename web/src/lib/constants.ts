@@ -13,10 +13,10 @@ export const DEFAULT_APP_TITLE = "Noter.ai";
 // Older installations may still store the upstream default as their title.
 export const getInstanceTitle = (title?: string) => (!title?.trim() || /^memos?$/i.test(title.trim()) ? DEFAULT_APP_TITLE : title);
 
-export const MEMOS_WEBSITE_URL = "https://usememos.com/";
-export const MEMOS_DOCUMENTATION_URL = "https://usememos.com/docs";
-export const MEMOS_API_DOCUMENTATION_URL = "https://usememos.com/docs/api";
-export const MEMOS_GITHUB_URL = "https://github.com/usememos/memos";
+export const MEMOS_WEBSITE_URL = "https://github.com/mrfost07/noter.ai";
+export const MEMOS_DOCUMENTATION_URL = "https://github.com/mrfost07/noter.ai/blob/main/README.md";
+export const MEMOS_API_DOCUMENTATION_URL = "https://github.com/mrfost07/noter.ai/tree/main/proto/api";
+export const MEMOS_GITHUB_URL = "https://github.com/mrfost07/noter.ai";
 
 // Upstream Memos browser extension.
 export const WEB_CLIPPER_URL = "https://github.com/usememos/web-clipper";

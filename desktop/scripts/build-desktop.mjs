@@ -73,8 +73,8 @@ export async function assertVersions(version, root = desktop) {
   const lock = await readFile(path.join(root, "src-tauri/Cargo.lock"), "utf8");
   const cargoVersion = /\[package\][\s\S]*?^version\s*=\s*"([^"]+)"/m.exec(cargo)?.[1];
   const lockVersion = /\[\[package\]\]\s+name = "memos-desktop"\s+version = "([^"]+)"/.exec(lock)?.[1];
-  if ([packageJSON.version, config.version, cargoVersion, lockVersion].some((value) => value !== version) || config.bundle?.macOS?.bundleVersion !== version.split("-")[0]) {
-    throw new Error("Candidate version must match committed desktop package.json, tauri.conf.json, Cargo.toml, and Cargo.lock. Bump these together first.");
+  if ([packageJSON.version, config.version, cargoVersion, lockVersion].some((value) => value !== version) || config.bundle?.macOS?.bundleVersion !== version.split("-")[0] || config.bundle?.windows?.wix?.version !== version.replace("-rc.", ".")) {
+    throw new Error("Candidate version must match committed desktop package.json, tauri.conf.json, Cargo.toml, Cargo.lock, and numeric macOS/MSI bundle versions. Bump these together first.");
   }
 }
 
