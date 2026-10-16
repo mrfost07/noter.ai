@@ -600,16 +600,16 @@ func (m *Manager) UpdateMeeting(owner int32, mid string, title, folder, draft *s
 
 // SyncNote creates a managed saved copy and refuses to overwrite external edits.
 func (m *Manager) SyncNote(owner int32, name, title, content string, folder, mid *string) (*Index, error) {
-	return m.syncNote(owner, name, title, content, folder, mid, false)
+	return m.writeManagedNote(owner, name, title, content, folder, mid, false)
 }
 
 // SyncExistingNote updates a managed Markdown copy without registering an unrelated note.
 func (m *Manager) SyncExistingNote(owner int32, name, title, content string) error {
-	_, err := m.syncNote(owner, name, title, content, nil, nil, true)
+	_, err := m.writeManagedNote(owner, name, title, content, nil, nil, true)
 	return err
 }
 
-func (m *Manager) syncNote(owner int32, name, title, content string, folder, mid *string, existingOnly bool) (*Index, error) {
+func (m *Manager) writeManagedNote(owner int32, name, title, content string, folder, mid *string, existingOnly bool) (*Index, error) {
 	return m.mutate(owner, func(i *Index) error {
 		var note *Note
 		for n := range i.Notes {

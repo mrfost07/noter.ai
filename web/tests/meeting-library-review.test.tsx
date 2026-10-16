@@ -2,7 +2,7 @@ import { Code, ConnectError } from "@connectrpc/connect";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MeetingReview } from "@/components/MeetingLibrary/MeetingReview";
 import { memoServiceClient } from "@/connect";
 import { clock, type LibraryMeeting, type LibraryResponse, libraryRequest, matchingLines, sourceTime } from "@/lib/meeting-library";
@@ -51,6 +51,7 @@ beforeEach(() => {
   vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue();
   Element.prototype.scrollIntoView = vi.fn();
 });
+afterEach(() => vi.useRealTimers());
 function open(value = meeting) {
   return render(
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
@@ -171,14 +172,15 @@ describe("recorded meeting review", () => {
     expect(screen.getByRole("button", { name: "Follow playback: off" })).toBeInTheDocument();
   });
   it("hides legacy citations before revealing an answer and appends only on explicit request", async () => {
+    vi.useFakeTimers();
     vi.mocked(libraryRequest).mockResolvedValue({
       markdown: "## Decision\n\nShip Friday. [cite:abc, 123e4567-e89b-12d3-a456-426614174000]",
     } as never);
     const view = open();
     fireEvent.click(screen.getByRole("tab", { name: "Ask AI" }));
     fireEvent.change(screen.getByRole("textbox", { name: "Question about this meeting" }), { target: { value: "What did we decide?" } });
-    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
-    await screen.findByRole("button", { name: "Show full answer" });
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Ask" })));
+    expect(screen.getByRole("button", { name: "Show full answer" })).toBeInTheDocument();
     expect(view.container.textContent).not.toContain("cite:");
     expect(view.container.textContent).not.toContain("123e4567");
     expect(screen.getByRole("button", { name: "Append to note draft" })).toBeDisabled();
