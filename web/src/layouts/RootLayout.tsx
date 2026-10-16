@@ -22,7 +22,7 @@ import { InstanceAccessMode } from "@/types/proto/api/instance_service_pb";
 import { buildAuthRoute, shouldGatePrivateInstance } from "@/utils/auth-redirect";
 import { useTranslate } from "@/utils/i18n";
 
-const MEMOS_DEPLOY_URL = "https://usememos.com/docs/deploy";
+const NOTER_DOWNLOADS_URL = "https://github.com/mrfost07/noter.ai/releases";
 
 const DemoBanner = () => {
   const t = useTranslate();
@@ -32,7 +32,12 @@ const DemoBanner = () => {
       <div className="mx-auto flex max-w-5xl flex-col items-start gap-1 sm:flex-row sm:items-center sm:justify-center sm:gap-2">
         <span className="font-medium text-foreground">{t("demo.banner-title")}</span>
         <span>{t("demo.banner-description")}</span>
-        <a className="font-medium text-primary underline-offset-4 hover:underline" href={MEMOS_DEPLOY_URL} target="_blank" rel="noreferrer">
+        <a
+          className="font-medium text-primary underline-offset-4 hover:underline"
+          href={NOTER_DOWNLOADS_URL}
+          target="_blank"
+          rel="noreferrer"
+        >
           {t("demo.deploy-link")}
         </a>
       </div>

@@ -6,7 +6,7 @@
 
 Noter.ai is an AI-assisted notebook with editable Markdown notes, folders, meeting transcripts and searchable recordings. Organize a conversation into important details, decisions, dates and action items, review the draft, then save it to your notes.
 
-[Desktop downloads](https://github.com/mrfost07/noter.ai/releases) · [Desktop build guide](desktop/README.md) · [Release status and known issues](docs/RELEASE_STATUS.md)
+[Desktop downloads](https://github.com/mrfost07/noter.ai/releases) · [Notebook guide](docs/NOTEBOOK_GUIDE.md) · [Desktop build guide](desktop/README.md) · [Release status and known issues](docs/RELEASE_STATUS.md)
 
 ## Features
 
@@ -28,6 +28,8 @@ Installers are attached to [GitHub Releases](https://github.com/mrfost07/noter.a
 | Linux x64 | `.AppImage` and `.deb` — notes/review preview; live capture unavailable |
 
 The first candidates are experimental. Read the [release status](docs/RELEASE_STATUS.md) for known functional issues, platform testing limits and signing status. Android APKs and automatic updates are not currently implemented.
+
+After installing on Windows, use the Start menu shortcut or `Start-Noter.ai-Desktop.bat` in this checkout. `Start-Noter.ai-Browser.bat` opens the installed app's actual local server address in your browser; keep the desktop app open while using it. These launchers discover the installation and do not depend on the source folder's name. Browser access does not provide native desktop meeting controls.
 
 ## Build from source
 

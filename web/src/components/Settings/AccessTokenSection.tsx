@@ -20,7 +20,7 @@ const EXPIRING_SOON_MS = 30 * 24 * 60 * 60 * 1000;
 
 const ApiUsageExample = () => {
   const t = useTranslate();
-  const example = `curl ${window.location.origin}/api/memos \\\n  -H "Authorization: Bearer memos_pat_..."`;
+  const example = `curl ${window.location.origin}/api/memos \\\n  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"`;
 
   const handleCopy = () => {
     copy(example);
@@ -89,7 +89,7 @@ const HowToUseDisclosure = () => {
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
               <a
                 className="inline-flex items-center gap-1 text-xs text-muted-foreground underline-offset-4 hover:text-primary hover:underline"
-                href="https://usememos.com/docs/security/access-tokens"
+                href="https://github.com/mrfost07/noter.ai/blob/main/docs/NOTEBOOK_GUIDE.md#access-tokens"
                 target="_blank"
                 rel="noreferrer"
               >

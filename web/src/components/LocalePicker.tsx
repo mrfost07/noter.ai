@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { getLocaleDisplayName, localeMatchesSearch, useTranslate } from "@/utils/i18n";
 
 const MISSING_LANGUAGE_FEEDBACK_URL =
-  "https://github.com/usememos/memos/issues/new?title=Missing%20language%20support&body=Please%20add%20support%20for%20this%20language%3A%0A%0A-%20Language%3A%20";
+  "https://github.com/mrfost07/noter.ai/issues/new?title=Missing%20language%20support&body=Please%20add%20support%20for%20this%20language%3A%0A%0A-%20Language%3A%20";
 
 interface LocaleSearchListProps {
   value: Locale;
