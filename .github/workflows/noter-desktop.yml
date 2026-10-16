@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: Committed experimental RC version (for example 26.10.16-rc.1)
+        description: Committed experimental RC version (for example 26.10.16-rc.2)
         required: true
-        default: 26.10.16-rc.1
+        default: 26.10.16-rc.2
         type: string
       create_draft:
         description: Stage verified installers in an unpublished prerelease draft
@@ -205,7 +205,10 @@ jobs:
               let ref = (await github.rest.git.getRef({ owner, repo, ref: `tags/${version}` })).data.object;
               if (ref.type === 'tag') ref = (await github.rest.git.getTag({ owner, repo, tag_sha: ref.sha })).data.object;
               if (ref.sha !== commit) throw new Error('The candidate tag already identifies another commit. Choose the next RC version.');
-            } catch (error) { if (error.status !== 404) throw error; }
+            } catch (error) {
+              if (error.status !== 404) throw error;
+              throw new Error('A maintainer must push this version tag at the candidate commit before dispatching. The workflow token cannot create every tag involving workflow changes. See desktop/README.md.');
+            }
             const releases = await github.paginate(github.rest.repos.listReleases, { owner, repo, per_page: 100 });
             let release = releases.find(item => item.tag_name === version);
             const body = [
@@ -219,8 +222,8 @@ jobs:
               'This candidate has no trusted publisher signature and is not Apple-notarized. macOS bundles are ad-hoc signed. Windows SmartScreen and macOS Gatekeeper may require additional review. Automatic updates are not enabled.',
               'Linux live microphone/screen meeting capture is currently unavailable: the native WebKit permission path does not safely constrain every requesting frame, so requests are not automatically granted. Linux can review existing notes/recordings. Other platforms still require physical microphone/internal-audio, permission, playback and installation acceptance tests. Non-Windows folder selection and free-space reporting are not supported yet.',
               'Personal provider credentials and notes are not included in installers. Configure AI and transcription inside the app; local AI services must be installed separately. Existing profiles and library locations remain on the device.',
-              'Antigravity uses the publisher’s Google Desktop app OAuth configuration in the installer. Users sign in with their own Google account; manual client configuration is not required. Installed-app client metadata is extractable by design and is not a confidential web application secret. Google consent and Antigravity service access still depend on provider authorization.',
-              'PUBLIC ANTIGRAVITY BLOCKER: Google’s official FAQ states that third-party apps cannot use Antigravity account authentication to access its service. Publishing or verifying the OAuth app does not make this a supported integration. The existing experimental provider is not approved for public use; use supported Gemini API/Enterprise access for public Google AI functionality. See https://antigravity.google/docs/faq/.',
+              'The experimental Antigravity connection uses bundled reference installed-client OAuth configuration. Users sign in with their own Google account; manual client configuration is not required. Installed-app client metadata is extractable by design and is not a confidential web application secret. Google consent and Antigravity service access still depend on provider authorization.',
+              'Experimental provider limitation: Google’s official FAQ states that third-party apps cannot use Antigravity account authentication to access its service. Publishing or verifying the OAuth app does not make this a supported integration. The existing experimental provider is not approved for public use; use supported Gemini API/Enterprise access for public Google AI functionality. See https://antigravity.google/docs/faq/.',
               'ChatGPT account sign-in is separate from OpenAI API-key billing. Account eligibility, plan permissions and real provider inference require a live acceptance check; automated OAuth fixtures do not establish provider access.',
               'This release remains an unpublished prerelease draft for review. It is not a production-readiness claim.',
             ].join('\n\n');

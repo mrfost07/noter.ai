@@ -124,6 +124,10 @@ function AntigravityConnection({ provider, onConnected }: Props) {
                 : "Sign in with your Google account to connect Noter.ai."}
         </p>
       </div>
+      <p className="max-w-prose text-xs leading-5 text-muted-foreground">
+        Experimental connection. Google’s consent screen may name the bundled reference client. Noter.ai is an independent app; your account
+        tokens stay on this installation.
+      </p>
       {status.isError && (
         <p role="alert" className="text-sm text-destructive">
           Could not check setup.{" "}

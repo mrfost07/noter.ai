@@ -1753,7 +1753,7 @@ dependencies = [
 
 [[package]]
 name = "memos-desktop"
-version = "26.10.16-rc.1"
+version = "26.10.16-rc.2"
 dependencies = [
  "serde",
  "serde_json",

@@ -139,3 +139,30 @@ func TestAntigravityExpiredCredentialsRequireApplicationConfigBeforeGeneration(t
 	require.ErrorIs(t, err, errAntigravityOAuthNotConfigured)
 	require.Zero(t, calls)
 }
+
+func TestAntigravityRejectsUnusableSessionsBeforeProjectDiscovery(t *testing.T) {
+	for _, body := range []string{
+		`{"access_token":"fixture-access","expires_in":3600}`,
+		`{"access_token":"fixture-access","refresh_token":"fixture-refresh","expires_in":0}`,
+	} {
+		calls := 0
+		client := &http.Client{Transport: oauthFixtureTransport(func(request *http.Request) (*http.Response, error) {
+			calls++
+			require.Equal(t, AntigravityTokenURL, request.URL.String())
+			return oauthResponse(request, body), nil
+		})}
+		credentials, err := ExchangeAntigravityAuthCodeWithClient(context.Background(), client, "fixture-code", "fixture-verifier", AntigravityRedirectURI, "fixture-client", "fixture-secret")
+		require.Nil(t, credentials)
+		require.ErrorContains(t, err, "renewable session")
+		require.Equal(t, 1, calls)
+	}
+}
+
+func TestAntigravityRejectsExpiredRenewal(t *testing.T) {
+	client := &http.Client{Transport: oauthFixtureTransport(func(request *http.Request) (*http.Response, error) {
+		return oauthResponse(request, `{"access_token":"fixture-access","expires_in":0}`), nil
+	})}
+	credentials, err := RefreshAntigravityCredentials(context.Background(), client, AntigravityOAuthCredentials{ClientID: "fixture-client", ClientSecret: "fixture-secret", RefreshToken: "fixture-refresh", ProjectID: "fixture-project"})
+	require.Nil(t, credentials)
+	require.ErrorContains(t, err, "expired session")
+}

@@ -60,6 +60,9 @@ var errAntigravityOAuthNotConfigured = errors.New("Antigravity OAuth is not conf
 func antigravityOAuthClientConfig() (clientID, clientSecret string, err error) {
 	clientID = strings.TrimSpace(os.Getenv("NOTER_ANTIGRAVITY_CLIENT_ID"))
 	clientSecret = strings.TrimSpace(os.Getenv("NOTER_ANTIGRAVITY_CLIENT_SECRET"))
+	if clientID == "" && clientSecret == "" {
+		clientID, clientSecret = BundledAntigravityOAuthClient()
+	}
 	if clientID == "" || clientSecret == "" {
 		return "", "", errAntigravityOAuthNotConfigured
 	}
@@ -637,6 +640,9 @@ func ExchangeAntigravityAuthCodeWithClient(ctx context.Context, httpClient *http
 	if strings.TrimSpace(tokenResp.AccessToken) == "" {
 		return nil, errors.New("OAuth token response did not include access_token")
 	}
+	if strings.TrimSpace(tokenResp.RefreshToken) == "" || tokenResp.ExpiresIn <= 0 {
+		return nil, errors.New("connection: Google did not return a renewable session. Sign in again and allow offline access")
+	}
 
 	projectID := DiscoverAntigravityProjectID(ctx, httpClient, tokenResp.AccessToken)
 	return &AntigravityOAuthCredentials{
@@ -660,6 +666,9 @@ func RefreshAntigravityToken(ctx context.Context, httpClient *http.Client, refre
 
 // RefreshAntigravityCredentials retains the client used to issue this connection's refresh token.
 func RefreshAntigravityCredentials(ctx context.Context, httpClient *http.Client, credentials AntigravityOAuthCredentials) (*AntigravityOAuthCredentials, error) {
+	if strings.TrimSpace(credentials.RefreshToken) == "" {
+		return nil, errors.New("connection: This Google connection has no refresh token. Sign in again")
+	}
 	clientID, clientSecret := credentials.ClientID, credentials.ClientSecret
 	if clientID == "" || clientSecret == "" {
 		var err error
@@ -704,6 +713,9 @@ func RefreshAntigravityCredentials(ctx context.Context, httpClient *http.Client,
 	}
 	if strings.TrimSpace(tokenResp.AccessToken) == "" {
 		return nil, errors.New("refreshed OAuth token is empty")
+	}
+	if tokenResp.ExpiresIn <= 0 {
+		return nil, errors.New("connection: Google returned an expired session. Sign in again")
 	}
 
 	projectID := strings.TrimSpace(credentials.ProjectID)
