@@ -1,6 +1,6 @@
 [package]
 name = "memos-desktop"
-version = "26.10.16-rc.2"
+version = "26.10.16-rc.3"
 description = "Noter.ai Desktop App with Dual-Channel AI Meeting Note Taking (Offline & Online)"
 authors = ["Noter.ai"]
 edition = "2021"

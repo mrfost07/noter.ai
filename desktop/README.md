@@ -4,7 +4,7 @@ This directory packages Noter.ai's React interface and embedded Go server in a T
 
 Experimental desktop installers supply bundled reference installed-client OAuth configuration so users only sign in with their own account. This installed-app configuration is public client metadata and extractable from the binary; confidential web secrets and personal provider tokens are never bundled. Release maintainers set `NOTER_DESKTOP_GOOGLE_OAUTH_JSON` in repository Actions secrets using the downloaded Desktop app (`installed`) JSON. CI rejects web clients and missing configuration. Source builds can supply their own application setup. ChatGPT account sign-in is separate from OpenAI API-key access. See [AI connections](../docs/AI_CONNECTIONS.md).
 
-The current version is **26.10.16-rc.2**, an experimental candidate with no trusted publisher signature. macOS bundles use ad-hoc signatures and are not notarized. No automatic updater is configured.
+The current version is **26.10.16-rc.3**, an experimental candidate with no trusted publisher signature. macOS bundles use ad-hoc signatures and are not notarized. No automatic updater is configured.
 
 ## Build locally
 
@@ -33,11 +33,11 @@ Verified artifacts and manifests are written to `build/noter-desktop/<version>/<
 
 ## GitHub candidate workflow
 
-The [Noter.ai Desktop Candidate workflow](../.github/workflows/noter-desktop.yml) runs only when manually dispatched on committed `main` in `mrfost07/noter.ai`. Its version input must match `desktop/package.json`, `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`, and the application entry in `src-tauri/Cargo.lock`. Update the macOS numeric `bundleVersion` and Windows `wix.version` at the same time. For `26.10.16-rc.2`, these are `26.10.16` and `26.10.16.2`, respectively. SemVer omits numeric leading zeroes; the Go server's calendar version pads months 1–9.
+The [Noter.ai Desktop Candidate workflow](../.github/workflows/noter-desktop.yml) runs only when manually dispatched on committed `main` in `mrfost07/noter.ai`. Its version input must match `desktop/package.json`, `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`, and the application entry in `src-tauri/Cargo.lock`. Update the macOS numeric `bundleVersion` and Windows `wix.version` at the same time. For `26.10.16-rc.3`, these are `26.10.16` and `26.10.16.3`, respectively. SemVer omits numeric leading zeroes; the Go server's calendar version pads months 1–9.
 
 Frontend type/lint/format checks, frontend tests, and backend/meeting/provider tests with the race detector run alongside the native build matrix. Both must succeed for a release draft to be staged. Formatting failures block the candidate; they are never ignored.
 
-Before dispatch, a maintainer must push the candidate's version tag at that exact committed revision (for example, `git tag 26.10.16-rc.2 HEAD` followed by `git push origin 26.10.16-rc.2`). Never move an existing candidate tag. This avoids GitHub rejecting workflow-token release creation when the new tag would also introduce workflow-file changes. The draft job verifies the tag still identifies the candidate commit before creating or resuming a draft.
+Before dispatch, a maintainer must push the candidate's version tag at that exact committed revision (for example, `git tag 26.10.16-rc.3 HEAD` followed by `git push origin 26.10.16-rc.3`). Never move an existing candidate tag. This avoids GitHub rejecting workflow-token release creation when the new tag would also introduce workflow-file changes. The draft job verifies the tag still identifies the candidate commit before creating or resuming a draft.
 
 | Native runner | Target | Packages |
 | --- | --- | --- |

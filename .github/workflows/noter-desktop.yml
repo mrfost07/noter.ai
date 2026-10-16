@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: Committed experimental RC version (for example 26.10.16-rc.2)
+        description: Committed experimental RC version (for example 26.10.16-rc.3)
         required: true
-        default: 26.10.16-rc.2
+        default: 26.10.16-rc.3
         type: string
       create_draft:
         description: Stage verified installers in an unpublished prerelease draft
@@ -224,7 +224,9 @@ jobs:
               'Personal provider credentials and notes are not included in installers. Configure AI and transcription inside the app; local AI services must be installed separately. Existing profiles and library locations remain on the device.',
               'The experimental Antigravity connection uses bundled reference installed-client OAuth configuration. Users sign in with their own Google account; manual client configuration is not required. Installed-app client metadata is extractable by design and is not a confidential web application secret. Google consent and Antigravity service access still depend on provider authorization.',
               'Experimental provider limitation: Google’s official FAQ states that third-party apps cannot use Antigravity account authentication to access its service. Publishing or verifying the OAuth app does not make this a supported integration. The existing experimental provider is not approved for public use; use supported Gemini API/Enterprise access for public Google AI functionality. See https://antigravity.google/docs/faq/.',
-              'ChatGPT account sign-in is separate from OpenAI API-key billing. Account eligibility, plan permissions and real provider inference require a live acceptance check; automated OAuth fixtures do not establish provider access.',
+              'Connection fixes: official installers include the experimental Google installed-client setup; users sign in with their own account. Provider selection stays on the newly connected account when settings refresh. Connection checks clear when the account or model changes and ignore late results from the previous selection.',
+              'Live Windows development-preview checks completed Antigravity sign-in/model discovery/inference and a separate ChatGPT sign-in with plan permission/model discovery/inference. The ChatGPT account and model survived reopening settings without model detection. These checks cover one tested account on this computer; installer upgrade checks, other accounts and platform hardware acceptance remain separate.',
+              'ChatGPT account sign-in is separate from OpenAI API-key billing. Users authorize their own eligible account. Provider eligibility, granted permissions, model availability and usage limits remain account-dependent.',
               'This release remains an unpublished prerelease draft for review. It is not a production-readiness claim.',
             ].join('\n\n');
             if (release && (!release.draft || !release.prerelease || release.target_commitish !== commit)) throw new Error('An existing release is published or belongs to another candidate; refusing to modify it.');
