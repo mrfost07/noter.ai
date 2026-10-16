@@ -12,6 +12,8 @@ Meeting review now follows the latest passage across overlapping channels and re
 
 Candidate packaging also verifies native startup from each extracted installer with temporary data, library and WebView profiles. It requires the selected loopback page to load, an HTTP 200 response containing Noter.ai frontend HTML, SQLite initialization and termination of the owned sidecar. The GitHub matrix must pass these checks for every package before staging a release.
 
+On October 16, live testing in the isolated local development preview completed Google authorization with the bundled reference installed client, loaded nine Antigravity models, and passed the AI connection request with Gemini 3.8 Flash (High). A separate ChatGPT registration completed with plan usage enabled, loaded seven account models, and passed a real Responses API connection request with GPT-6.1-Sol. The ChatGPT account and saved model remained selected after reloading settings without model detection. These results establish access for one tested account on this computer, not every account or platform. The corresponding installers still need live installation/upgrade acceptance checks.
+
 ## Known functional issues
 
 - Reopening the meeting companion can lose its original meeting association and passage timing; organizing the recovered transcript can create a second meeting without video.
@@ -33,8 +35,8 @@ The first release preparation replaces the legacy process-killing development la
 - Linux live microphone and screen capture are unavailable in this candidate: WebKitGTK denies unhandled media permissions, and the current Tauri permission API does not expose the requesting frame's origin. This release does not grant media access broadly to work around that restriction. The Linux package is intended for note taking and review of existing recordings while safe capture support is developed.
 - The folder picker and disk-space display are currently Windows-only. Other systems can retain the default library location.
 - Initial candidates have no publisher certificate or Apple notarization. macOS builds use ad-hoc signing; Windows builds are unsigned. No trusted automatic update channel is configured.
-- Official desktop builds now include the publisher’s Google Desktop app client for one-click Antigravity sign-in; source builds can supply their own setup. The publisher’s client must still be authorized for the integration, and live sign-in plus inference must pass before distributing an authentication fix. ChatGPT account sign-in uses its own open-source OAuth registration, separate from API keys. Real provider approval and inference must be verified per account. See [AI connections](AI_CONNECTIONS.md).
-- The October 16 live Google attempt reached NoterAI's consent flow but was blocked with `403 access_denied` because the publisher's project was in Testing and the account was not listed as a test user. Public Antigravity access is not verified; test-user setup, applicable Google verification, and successful provider inference remain release acceptance requirements.
+- Official experimental desktop builds include reference installed-client configuration for one-click Antigravity sign-in; source builds can supply their own setup. ChatGPT account sign-in uses its own open-source OAuth registration, separate from API keys. Real provider authorization and inference must be verified per account. See [AI connections](AI_CONNECTIONS.md).
+- The earlier October 16 Google attempt with the maintainer's own client was blocked with `403 access_denied` because that project was in Testing. The subsequent bundled-reference-client test succeeded as recorded above. This does not establish public Google approval, supported Antigravity access, or universal account eligibility.
 - Keep backups of the profile/database and library together before testing upgrades. Installing an older executable alone cannot reverse database schema migrations.
 
 ## Promotion criteria

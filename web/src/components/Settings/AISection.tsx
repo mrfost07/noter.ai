@@ -610,6 +610,25 @@ export const ConnectionTestButton = ({ provider, model, capability, className }:
   const [testState, setTestState] = useState<"idle" | "testing" | "success" | "error">("idle");
   const [latency, setLatency] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const testGeneration = useRef(0);
+  useEffect(() => {
+    testGeneration.current++;
+    setTestState("idle");
+    setLatency(null);
+    setErrorMessage("");
+    return () => {
+      testGeneration.current++;
+    };
+  }, [
+    provider?.id,
+    provider?.type,
+    provider?.endpoint,
+    provider?.apiKey,
+    provider?.apiKeySet,
+    provider?.oauthPlanEnabled,
+    model,
+    capability,
+  ]);
 
   const handleTest = async () => {
     if (!provider) {
@@ -617,6 +636,7 @@ export const ConnectionTestButton = ({ provider, model, capability, className }:
       return;
     }
 
+    const generation = ++testGeneration.current;
     setTestState("testing");
     setErrorMessage("");
 
@@ -632,6 +652,7 @@ export const ConnectionTestButton = ({ provider, model, capability, className }:
         }),
       );
 
+      if (generation !== testGeneration.current) return;
       if (resp.success) {
         const ms = Math.max(0, Number(resp.latencyMs) || 0);
         setLatency(ms);
@@ -643,6 +664,7 @@ export const ConnectionTestButton = ({ provider, model, capability, className }:
         toast.error(`Connection failed: ${resp.message}`);
       }
     } catch (err) {
+      if (generation !== testGeneration.current) return;
       setTestState("error");
       const msg = err instanceof Error ? err.message : String(err);
       setErrorMessage(msg);
@@ -1283,7 +1305,7 @@ const TranscriptionForm = ({ providers, transcription, onSave, onAntigravityConn
     if (currentProvider && currentProvider.type !== selectedType) {
       setSelectedType(currentProvider.type);
     }
-  }, [currentProvider]);
+  }, [currentProvider?.id, currentProvider?.type]);
 
   // Active provider draft corresponding to selectedType
   const activeProvider = useMemo<LocalAIProvider>(() => {
@@ -1506,7 +1528,7 @@ interface AIAssistantFormProps {
   onAntigravityConnected: (provider: LocalAIProvider) => Promise<void>;
 }
 
-const AIAssistantForm = ({ providers, config, onSave, onAntigravityConnected }: AIAssistantFormProps) => {
+export const AIAssistantForm = ({ providers, config, onSave, onAntigravityConnected }: AIAssistantFormProps) => {
   const currentProvider = useMemo(() => {
     return providers.find((p) => p.id === config.providerId);
   }, [providers, config.providerId]);
@@ -1520,7 +1542,7 @@ const AIAssistantForm = ({ providers, config, onSave, onAntigravityConnected }: 
     if (currentProvider && currentProvider.type !== selectedType) {
       setSelectedType(currentProvider.type);
     }
-  }, [currentProvider]);
+  }, [currentProvider?.id, currentProvider?.type]);
 
   const activeProvider = useMemo<LocalAIProvider>(() => {
     const existing = currentProvider?.type === selectedType ? currentProvider : providers.find((p) => p.type === selectedType);
