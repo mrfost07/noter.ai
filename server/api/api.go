@@ -4,6 +4,8 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
+	"os"
+	"path/filepath"
 	"sync"
 
 	"google.golang.org/grpc/codes"
@@ -16,6 +18,7 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/sync/semaphore"
 
+	"github.com/usememos/memos/core/meetinglibrary"
 	"github.com/usememos/memos/core/notification"
 	"github.com/usememos/memos/internal/linkmeta"
 	"github.com/usememos/memos/internal/profile"
@@ -96,6 +99,7 @@ type APIService struct {
 	aiOAuthSignInMu     sync.Mutex
 	aiOAuthHTTPClient   *http.Client
 	aiOAuthOpenBrowser  func(string)
+	meetingLibrary      *meetinglibrary.Manager
 }
 
 // NewAPIService creates an API v1 service with its shared dependencies.
@@ -116,6 +120,11 @@ func NewAPIService(secret string, profile *profile.Profile, store *store.Store) 
 		imageProcessingSemaphore: semaphore.NewWeighted(2),
 	}
 	service.linkMetadataFetcher = linkmeta.NewHTMLMetaFetcher()
+	root := os.Getenv("NOTER_LIBRARY_ROOT")
+	if root == "" {
+		root = filepath.Join(profile.Data, "library")
+	}
+	service.meetingLibrary = meetinglibrary.New(profile.Data, root)
 	return service
 }
 

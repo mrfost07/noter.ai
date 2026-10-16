@@ -1,6 +1,6 @@
 # Code signing policy
 
-Status as of October 16, 2026: Windows signing preparation is in progress. The current Noter.ai installers are unsigned. A SignPath Foundation application is being prepared; no Foundation approval or production signing access has been granted. Mac signing and notarization are deferred.
+Status as of October 16, 2026: Windows signing preparation is in progress. The current Noter.ai installers are unsigned. A SignPath Foundation application has been submitted and is awaiting review; no Foundation approval or production signing access has been granted. Mac signing and notarization are deferred.
 
 ## Responsible maintainer
 

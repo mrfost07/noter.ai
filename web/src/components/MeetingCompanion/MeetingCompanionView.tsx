@@ -119,7 +119,9 @@ export function MeetingCompanionView() {
             size="icon"
             aria-label={meeting.isRecording ? "Pause recording" : "Resume recording"}
             disabled={busy}
-            onClick={() => void (meeting.isRecording ? meeting.stopMeeting() : meeting.startMeeting())}
+            onClick={() =>
+              void (meeting.isRecording ? meeting.stopMeeting() : meeting.startMeeting()).catch((error) => setDraftError(error.message))
+            }
           >
             {meeting.isRecording ? <PauseIcon className="size-4" /> : <PlayIcon className="size-4" />}
           </Button>
@@ -132,10 +134,10 @@ export function MeetingCompanionView() {
     );
   return (
     <aside
-      className="noter-meeting fixed inset-y-0 right-0 z-50 flex h-dvh w-full max-w-[440px] flex-col border-l border-border bg-card text-foreground"
+      className="noter-meeting fixed inset-y-0 right-0 z-50 flex h-dvh w-full max-w-[440px] flex-col overflow-y-auto border-l border-border bg-card text-foreground"
       aria-label="Meeting assistant"
     >
-      <header className="flex items-center gap-2 border-b border-border px-4 py-3">
+      <header className="flex shrink-0 items-center gap-2 border-b border-border px-4 py-3">
         <span className={cn("size-2 rounded-full", meeting.isRecording ? "bg-destructive" : "bg-muted-foreground")} />
         <h2 className="flex-1 text-sm font-semibold">Noter meeting</h2>
         <span className="text-xs tabular-nums text-muted-foreground">{time}</span>
@@ -150,15 +152,17 @@ export function MeetingCompanionView() {
           size="icon"
           aria-label="Stop and close meeting"
           disabled={meeting.isFinishing || preparing}
-          onClick={() => {
-            void meeting.stopMeeting();
-            void exitMeetingMode();
-          }}
+          onClick={() =>
+            void meeting
+              .stopMeeting()
+              .then(exitMeetingMode)
+              .catch((error) => setDraftError(error.message))
+          }
         >
           <XIcon className="size-4" />
         </Button>
       </header>
-      <div className="space-y-3 border-b border-border p-4">
+      <div className="shrink-0 space-y-3 border-b border-border p-4">
         {setCaptureMode && (
           <div className="space-y-2">
             <input
@@ -230,7 +234,9 @@ export function MeetingCompanionView() {
           className="w-full"
           variant={meeting.isRecording ? "outline" : "default"}
           disabled={busy || preparing}
-          onClick={() => void (meeting.isRecording ? meeting.stopMeeting() : meeting.startMeeting())}
+          onClick={() =>
+            void (meeting.isRecording ? meeting.stopMeeting() : meeting.startMeeting()).catch((error) => setDraftError(error.message))
+          }
         >
           {meeting.isRecording ? <PauseIcon className="size-4" /> : <PlayIcon className="size-4" />}
           {meeting.isStarting
@@ -257,13 +263,26 @@ export function MeetingCompanionView() {
           </p>
         )}
       </div>
-      <div className="flex border-b border-border px-4" role="tablist" aria-label="Meeting content">
+      <div
+        className="flex shrink-0 border-b border-border px-4"
+        role="tablist"
+        aria-label="Meeting content"
+        onKeyDown={(event) => {
+          if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+          event.preventDefault();
+          const next = event.key === "Home" ? "notes" : event.key === "End" ? "transcript" : tab === "notes" ? "transcript" : "notes";
+          setTab(next);
+          event.currentTarget.querySelector<HTMLButtonElement>(`[data-meeting-tab="${next}"]`)?.focus();
+        }}
+      >
         {(["notes", "transcript"] as const).map((value) => (
           <button
             key={value}
             type="button"
             role="tab"
             aria-selected={tab === value}
+            tabIndex={tab === value ? 0 : -1}
+            data-meeting-tab={value}
             onClick={() => setTab(value)}
             className={cn("px-4 py-3 text-xs", tab === value ? "font-semibold text-primary" : "text-muted-foreground")}
           >
@@ -272,7 +291,7 @@ export function MeetingCompanionView() {
         ))}
       </div>
       {tab === "transcript" && (
-        <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-1.5 text-xs text-muted-foreground">
+        <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border px-4 py-1.5 text-xs text-muted-foreground">
           <span>{transcriptFollow.following ? "Following live transcript" : "Reading earlier transcript"}</span>
           <Button type="button" variant="ghost" size="sm" disabled={transcriptFollow.following} onClick={transcriptFollow.resume}>
             Jump to latest
@@ -282,7 +301,7 @@ export function MeetingCompanionView() {
       <div
         ref={transcriptFollow.panelRef}
         onScroll={tab === "transcript" ? transcriptFollow.onScroll : undefined}
-        className="min-h-0 flex-1 overflow-y-auto p-4"
+        className="min-h-24 flex-1 overflow-y-auto p-4"
         role="tabpanel"
         aria-label={tab === "transcript" ? "Live transcript" : "Organized meeting notes"}
         tabIndex={0}
@@ -324,7 +343,7 @@ export function MeetingCompanionView() {
         )}
       </div>
       <form
-        className="flex gap-2 border-t border-border p-3"
+        className="flex shrink-0 gap-2 border-t border-border p-3"
         onSubmit={(event) => {
           event.preventDefault();
           handleAddManualLine();
@@ -350,7 +369,7 @@ export function MeetingCompanionView() {
           <PlusIcon className="size-4" />
         </Button>
       </form>
-      <footer className="space-y-2 border-t border-border p-3">
+      <footer className="shrink-0 space-y-2 border-t border-border p-3">
         <label className="flex items-center gap-2 text-xs">
           <input
             type="checkbox"

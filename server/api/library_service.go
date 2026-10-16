@@ -23,11 +23,7 @@ import (
 )
 
 func (s *APIService) registerMeetingLibrary(e *echo.Echo) {
-	root := os.Getenv("NOTER_LIBRARY_ROOT")
-	if root == "" {
-		root = filepath.Join(s.Profile.Data, "library")
-	}
-	manager := meetinglibrary.New(s.Profile.Data, root)
+	manager := s.meetingLibrary
 	authenticator := auth.NewAuthenticator(s.Store, s.Secret)
 	wrap := func(handler func(*echo.Context, *store.User) error) echo.HandlerFunc {
 		return func(c *echo.Context) error {

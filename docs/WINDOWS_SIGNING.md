@@ -2,7 +2,7 @@
 
 ## Current state
 
-The SignPath Foundation application is being prepared. Windows RC3 is unsigned; no SignPath account, production certificate policy or API token is configured in Actions. Mac signing and notarization are deferred at the maintainer's request.
+The SignPath Foundation application has been submitted and is awaiting review. Windows candidates are unsigned; no SignPath account, production certificate policy or API token is configured in Actions. Mac signing and notarization are deferred at the maintainer's request.
 
 Public application links:
 

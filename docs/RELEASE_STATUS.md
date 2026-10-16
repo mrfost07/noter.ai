@@ -18,21 +18,19 @@ The **26.10.16-rc.3** candidate at `fea935132336ce14bf5df980e2541f4c5b58896f` su
 
 The installed Windows app was upgraded from **26.10.15-rc.1** to **26.10.16-rc.3** with the NSIS installer. Installation exited successfully, the registered version and installed sidecar identified RC3, and the installed sidecar matched the verified CI binary. All four existing profile/database/library-configuration files were byte-for-byte unchanged before the updated app was launched. A consistent private profile backup was retained. The maintainer confirmed AI settings were visible in the actual updated desktop window. Trusted Windows signing and Apple signing/notarization are still unavailable; this remains an experimental unsigned release.
 
-## Known functional issues
+## RC4 reliability changes
 
-- Reopening the meeting companion can lose its original meeting association and passage timing; organizing the recovered transcript can create a second meeting without video.
-- Slow transcription requests can accumulate in an unbounded serial queue and delay stopping.
-- Assistant edits can leave the managed Markdown copy on disk stale.
-- Relinking a note can leave the previous meeting's note association inconsistent.
-- A delayed local-file import can replace text in the newly active tab.
-- Linked-note folder changes are not consistently reflected in meeting storage.
-- Some accessible field labels, main notebook tab keyboard navigation and focus restoration are missing; meeting review tabs now support arrow keys. Narrow library navigation and short-height meeting panels still need layout fixes.
+The next candidate, **26.10.16-rc.4**, includes regressions for preserving recovered meeting IDs and recording clocks (including older transcript-only backups), bounded live transcription queues and provider deadlines, managed Markdown updates after assistant edits, clearing previous meeting links when a note is relinked or detached, moving a linked note with its recording directory, and targeting delayed local imports at their original tab. External Markdown edits remain protected and assistant sync conflicts are reported explicitly. When transcription falls behind, the app warns that passages may be missing and retains the full local recording for review.
+
+Notebook tabs support arrow keys, Home/End and focus restoration after closing. Closing the assistant returns focus to its toggle. The narrow library layout no longer overlays its own navigation, and short meeting windows can scroll to their controls. Full CI, native package checks and manual visual acceptance must pass for this candidate before publication.
+
+The local targeted recovery/capture/workspace checks and installer-verifier tests passed. The workstation has no CGo compiler configured, so the full backend race gate runs on GitHub Actions. A broader local Go run was stopped to relieve memory pressure; this is not a substitute for the required CI gate.
 
 ## Platform and distribution limits
 
 **Antigravity is blocked for a supported public launch.** Google's [official FAQ](https://antigravity.google/docs/faq/#why-cant-i-use-third-party-software-such-as-claude-code-openclaw-or-opencode-with-my-antigravity-login) explicitly states that third-party applications cannot use Antigravity account authentication to access the service. Google OAuth production status and consent verification do not change that restriction. The current experimental provider must not be presented as a supported public account connection; use supported Gemini API/Enterprise access for public Google AI functionality. The maintainer has chosen to retain the experimental connection using the bundled reference installed client. This does not change Google’s position; real-account sign-in, model access and inference must still be checked, and this candidate must not be described as officially supported or production-ready.
 
-The first release preparation replaces the legacy process-killing development launcher with the fresh build command and adds explicit native startup errors. These packaging fixes do not resolve the meeting recovery and note-consistency issues above.
+The first release preparation replaces the legacy process-killing development launcher with the fresh build command and adds explicit native startup errors. RC4 adds the meeting recovery and note-consistency corrections described above; these still require the candidate verification gate.
 
 - Windows installers, macOS disk images and Linux AppImage/Debian packages are desktop packages; Android APK packaging is not implemented.
 - macOS and Linux installers are new build targets. Native capture, microphone/system-audio routing, meeting window behavior, playback codecs and provider authentication still require hardware testing on each platform.
@@ -45,4 +43,4 @@ The first release preparation replaces the legacy process-killing development la
 
 ## Promotion criteria
 
-Fix the functional issues with regressions, pass required CI and packaged-app installation/upgrade tests, test real audio and a long recording session on each supported OS, configure platform signing/notarization, and verify profile/library backup and restoration before describing a release as production-ready.
+Pass required CI and packaged-app installation/upgrade tests for the latest fixes, test real audio and a long recording session on each supported OS, configure platform signing/notarization, and verify profile/library backup and restoration before describing a release as production-ready.

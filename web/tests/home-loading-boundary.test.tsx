@@ -4,14 +4,15 @@ import { useEffect, useMemo, useState } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { MemoEditorProps } from "@/components/MemoEditor/types";
+import { libraryRequest } from "@/lib/meeting-library";
 import { workspaceKey } from "@/lib/noter-workspace";
 import Home from "@/pages/Home";
 import { MemoSchema } from "@/types/proto/api/memo_service_pb";
 
-const state = vi.hoisted(() => ({ noteError: false, startMeeting: vi.fn() }));
+const state = vi.hoisted(() => ({ noteError: false, startMeeting: vi.fn(), requestDraft: vi.fn() }));
 vi.mock("@/hooks/useLibraryQueries", () => ({
   useLibrary: () => ({
-    data: { library: { root: "test-library", folders: [], meetings: [], notes: [], drafts: [] }, desktop: false },
+    data: { library: { root: "test-library", folders: [], meetings: [], notes: [{ name: "memos/one" }], drafts: [] }, desktop: false },
     isPending: false,
     isError: false,
     refetch: vi.fn(),
@@ -41,7 +42,11 @@ vi.mock("@/components/MemoActionMenu", () => ({ default: () => <button type="but
 vi.mock("@/components/NoterLogo", () => ({ default: () => <span>Noter.ai</span> }));
 vi.mock("@/components/AgentSheet/AgentSheet", () => ({ default: () => <p>Noter assistant</p> }));
 vi.mock("@/contexts/MeetingCompanionContext", () => ({
-  useMeetingCompanion: () => ({ enterMeetingMode: state.startMeeting, meetingTaker: { isRecording: false } }),
+  useMeetingCompanion: () => ({
+    enterMeetingMode: state.startMeeting,
+    meetingTaker: { isRecording: false },
+    requestDraft: state.requestDraft,
+  }),
 }));
 vi.mock("@/components/MemoEditor", () => ({
   default: function TestEditor(props: MemoEditorProps) {
@@ -56,6 +61,8 @@ vi.mock("@/components/MemoEditor", () => ({
 beforeEach(() => {
   localStorage.clear();
   state.noteError = false;
+  state.requestDraft.mockClear();
+  vi.mocked(libraryRequest).mockResolvedValue({ library: { folders: [], meetings: [], notes: [], drafts: [] } } as never);
 });
 const open = () =>
   render(
@@ -64,6 +71,38 @@ const open = () =>
     </MemoryRouter>,
   );
 describe("Noter workspace", () => {
+  it("targets a delayed local import at its original tab", async () => {
+    const pending = Promise.withResolvers<{ content: string }>();
+    vi.mocked(libraryRequest).mockReturnValueOnce(pending.promise as never);
+    open();
+    fireEvent.click(screen.getByRole("button", { name: /^Saved project/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Review local Markdown file" }));
+    fireEvent.click(screen.getByRole("button", { name: "New note tab" }));
+    await act(async () => pending.resolve({ content: "External content" }));
+    expect(state.requestDraft).toHaveBeenCalledWith("External content", "replace", undefined, "memos/one");
+  });
+  it("refuses a delayed import after the original note changed", async () => {
+    const pending = Promise.withResolvers<{ content: string }>();
+    vi.mocked(libraryRequest).mockReturnValueOnce(pending.promise as never);
+    open();
+    fireEvent.click(screen.getByRole("button", { name: /^Saved project/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Review local Markdown file" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Note text" }), { target: { value: "Keep my newer edits" } });
+    await act(async () => pending.resolve({ content: "External content" }));
+    expect(state.requestDraft).not.toHaveBeenCalled();
+    expect(screen.getByRole("textbox", { name: "Note text" })).toHaveValue("Keep my newer edits");
+  });
+  it("switches notebook tabs by keyboard and restores focus after closing", () => {
+    open();
+    fireEvent.click(screen.getByRole("button", { name: /^Saved project/ }));
+    const saved = screen.getByRole("tab", { name: "Saved project" });
+    fireEvent.keyDown(saved, { key: "Home" });
+    expect(screen.getByRole("tab", { name: "Untitled note" })).toHaveFocus();
+    fireEvent.keyDown(screen.getByRole("tab", { name: "Untitled note" }), { key: "End" });
+    expect(saved).toHaveFocus();
+    fireEvent.click(screen.getByRole("button", { name: "Close Saved project" }));
+    expect(screen.getByRole("tab", { name: "Untitled note" })).toHaveFocus();
+  });
   it("keeps each open note's edits when switching tabs and restores the open tabs", async () => {
     const view = open();
     fireEvent.change(screen.getByRole("textbox", { name: "Note text" }), { target: { value: "An unsaved idea" } });

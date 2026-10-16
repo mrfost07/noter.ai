@@ -542,13 +542,19 @@ func (s *APIService) executeAgentTool(ctx context.Context, toolName string, rawA
 				MemoName: name,
 			}, map[string]string{"error": err.Error()}
 		}
-		return &apipb.AgentToolAction{
-			Tool:     "update_memo",
-			Summary:  "Updated note",
-			MemoName: updated.GetName(),
-		}, map[string]string{
-			"name": updated.GetName(),
+		summary := "Updated note"
+		result := map[string]string{"name": updated.GetName()}
+		if s.meetingLibrary != nil {
+			owner, ownerErr := s.fetchCurrentUser(ctx)
+			if ownerErr == nil && owner != nil {
+				title := strings.TrimLeft(strings.TrimSpace(strings.Split(updated.GetContent(), "\n")[0]), "# ")
+				if syncErr := s.meetingLibrary.SyncExistingNote(owner.ID, updated.GetName(), title, updated.GetContent()); syncErr != nil {
+					summary = "Updated note; local Markdown needs review"
+					result["warning"] = "The note is saved in Noter.ai, but its local Markdown copy could not be updated: " + syncErr.Error()
+				}
+			}
 		}
+		return &apipb.AgentToolAction{Tool: "update_memo", Summary: summary, MemoName: updated.GetName()}, result
 
 	case "delete_memo":
 		var args struct {

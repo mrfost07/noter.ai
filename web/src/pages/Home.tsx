@@ -246,6 +246,16 @@ export default function Home({ archived = false }: { archived?: boolean }) {
   }, [uid, tabs]);
 
   const [assistantOpen, setAssistantOpen] = useState(false);
+  const restoreTabFocus = useRef(false);
+  useEffect(() => {
+    if (!restoreTabFocus.current) return;
+    restoreTabFocus.current = false;
+    document.getElementById(`tab-${activeId}`)?.focus();
+  }, [activeId, tabs]);
+  const changeAssistantOpen = (open: boolean) => {
+    setAssistantOpen(open);
+    if (!open) document.querySelector<HTMLButtonElement>('[aria-label="Toggle AI assistant"]')?.focus();
+  };
 
   const [search, setSearch] = useState("");
 
@@ -318,7 +328,9 @@ export default function Home({ archived = false }: { archived?: boolean }) {
   const draftApplied = useCallback(
     (id: string) => {
       if (pendingDraft?.meetingId)
-        setTabs((tabs) => tabs.map((tab) => (tab.id === activeId ? { ...tab, meetingId: pendingDraft.meetingId } : tab)));
+        setTabs((tabs) =>
+          tabs.map((tab) => (tab.id === (pendingDraft.targetTabId ?? activeId) ? { ...tab, meetingId: pendingDraft.meetingId } : tab)),
+        );
       consumeDraft(id);
     },
     [pendingDraft, activeId, consumeDraft],
@@ -345,11 +357,13 @@ export default function Home({ archived = false }: { archived?: boolean }) {
       { id, title: "Untitled note", dirty: false, folderId: selectedFolder === "*" ? "" : selectedFolder },
     ]);
     setActiveId(id);
+    if (window.innerWidth < 760) setLibraryOpen(false);
   };
 
   const closeTab = (tab: NoteTab) => {
     if (tab.saving) return;
     if (tab.dirty && !window.confirm("Discard unsaved changes and close this note?")) return;
+    restoreTabFocus.current = true;
     void libraryRequest(`/drafts/${encodeURIComponent(tab.id)}`, "DELETE").catch((error) => toast.error(error.message));
 
     discardersRef.current.get(tab.id)?.();
@@ -436,6 +450,7 @@ export default function Home({ archived = false }: { archived?: boolean }) {
               onDraft={(id) => {
                 setActiveId(id);
                 setSearchParams({});
+                if (window.innerWidth < 760) setLibraryOpen(false);
               }}
               onMeeting={openMeeting}
               newNote={newNote}
@@ -592,9 +607,15 @@ export default function Home({ archived = false }: { archived?: boolean }) {
                     type="button"
                     className="mx-6 my-2 self-start text-xs underline"
                     onClick={async () => {
+                      const originalContent = documentContentRef.current.get(tab.id);
                       try {
                         const result = await libraryRequest<{ content: string }>(`/note-file?name=${encodeURIComponent(tab.name || "")}`);
-                        requestDraft(result.content, "replace");
+                        if (!tabSnapshot.current.some((item) => item.id === tab.id)) return;
+                        if (documentContentRef.current.get(tab.id) !== originalContent) {
+                          toast.error("This note changed while the file was opening. Review the local file again to import it.");
+                          return;
+                        }
+                        requestDraft(result.content, "replace", undefined, tab.id);
                         toast.success("Local file opened as a draft. Review and save to import.");
                       } catch (error) {
                         toast.error((error as Error).message);
@@ -608,7 +629,15 @@ export default function Home({ archived = false }: { archived?: boolean }) {
                   key={`${tab.id}:${tab.recoveryToken ?? 0}`}
                   tab={tab}
                   active={activeId === tab.id}
-                  incomingDraft={activeId === tab.id ? pendingDraft : null}
+                  incomingDraft={
+                    pendingDraft?.targetTabId
+                      ? pendingDraft.targetTabId === tab.id
+                        ? pendingDraft
+                        : null
+                      : activeId === tab.id
+                        ? pendingDraft
+                        : null
+                  }
                   onDraftApplied={draftApplied}
                   onContent={setDocumentContent}
                   onDiscard={setDiscarder}
@@ -644,14 +673,14 @@ export default function Home({ archived = false }: { archived?: boolean }) {
           {assistantOpen && (
             <aside className="noter-assistant" aria-label="AI assistant">
               <div className="flex justify-end border-b border-border px-2 py-1">
-                <Button variant="ghost" size="icon" aria-label="Close assistant" onClick={() => setAssistantOpen(false)}>
+                <Button variant="ghost" size="icon" aria-label="Close assistant" onClick={() => changeAssistantOpen(false)}>
                   <XIcon className="size-4" />
                 </Button>
               </div>
               <AgentSheet
                 embedded
                 open
-                onOpenChange={setAssistantOpen}
+                onOpenChange={changeAssistantOpen}
                 noteName={activeTab?.name}
                 getNoteContent={() => documentContentRef.current.get(activeId) ?? ""}
               />

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { transcriptionService } from "../services/transcriptionService";
 import type { SpeakerLabel } from "../services/websocketSTT";
 import { detectAudioActivity } from "../utils/audioActivity";
+import { meetingRequest } from "../utils/meetingRequest";
 import { appendCapturedLine, buildSpeakerTurns, displaySpeaker } from "../utils/meetingSpeakers";
 
 export interface TranscriptLine {
@@ -125,6 +126,8 @@ export function useMeetingNoteTaker(options: UseMeetingNoteTakerOptions = {}) {
   const finishingWaitRef = useRef<Promise<void>>(Promise.resolve());
   const generationRef = useRef(0);
   const pendingRef = useRef(new Set<Promise<void>>());
+  const requestsRef = useRef(new Set<AbortController>());
+  const transcriptionEpoch = useRef(0);
   const analysisBusyRef = useRef(false);
   const analysisFinishedRef = useRef<Promise<void>>(Promise.resolve());
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -202,10 +205,18 @@ export function useMeetingNoteTaker(options: UseMeetingNoteTakerOptions = {}) {
       const mimeType = selectMimeType();
       const generation = generationRef.current;
       const recording = recordingRef.current;
+      const epoch = transcriptionEpoch.current;
       let queue = Promise.resolve();
+      let queued = 0;
 
       const recordSingleChunk = () => {
         if (!audioOnlyStream.active || !isRecordingActiveRef.current) return;
+        if (queued >= 3) {
+          setError(
+            "Transcription cannot keep up. Some live passages may be missing; the local recording continues. Review its audio before relying on these notes.",
+          );
+          return;
+        }
         let recorder: MediaRecorder;
         const capturedAt = Date.now();
         try {
@@ -215,6 +226,7 @@ export function useMeetingNoteTaker(options: UseMeetingNoteTakerOptions = {}) {
         }
 
         activeRecordersRef.current.add(recorder);
+        queued++;
         const chunks: BlobPart[] = [];
         recorder.ondataavailable = (e) => {
           if (e.data.size > 0) chunks.push(e.data);
@@ -225,66 +237,69 @@ export function useMeetingNoteTaker(options: UseMeetingNoteTakerOptions = {}) {
         });
         pendingRef.current.add(pending);
         recorder.onstop = () => {
+          activeRecordersRef.current.delete(recorder);
           queue = queue
             .then(async () => {
-              activeRecordersRef.current.delete(recorder);
-              if (generation !== generationRef.current || chunks.length === 0) return;
-              const effectiveType = recorder.mimeType || mimeType || "audio/webm";
-              const blob = new Blob(chunks, { type: effectiveType });
-              if (!blob.size) return;
-              const activity = audioTracks.every((track) => track.enabled === false || track.muted)
-                ? false
-                : await detectAudioActivity(blob);
-              if (generation !== generationRef.current) return;
-              if (speaker === "[You]") setMicrophoneActivity(activity === null ? null : activity ? "audio" : "quiet");
-              if (activity === false) return;
-              const ext = effectiveType.includes("mp4") ? "m4a" : "webm";
-              const file = new File([blob], `${speaker === "[Client]" ? "client" : "you"}-${Date.now()}.${ext}`, {
-                type: effectiveType,
-              });
+              if (generation !== generationRef.current || epoch !== transcriptionEpoch.current || chunks.length === 0) return;
               try {
-                if (captureOptionsRef.current.onStreams && transcriptionService.transcribeTimedFile) {
-                  const result = await transcriptionService.transcribeTimedFile(file);
-                  if (generation === generationRef.current) {
-                    const segments = result.segments.filter(
-                      (segment) =>
-                        segment.text.trim() &&
-                        Number.isFinite(segment.start) &&
-                        Number.isFinite(segment.end) &&
-                        segment.start >= 0 &&
-                        segment.end >= segment.start,
-                    );
-                    if (segments.length)
-                      segments.forEach((segment) =>
-                        appendTranscript(speaker, segment.text, {
-                          source: speaker === "[You]" ? "microphone" : "shared",
-                          capturedAt: capturedAt + segment.start * 1000,
-                          recording,
-                          start: segment.start,
-                          end: segment.end,
-                        }),
+                await meetingRequest(async (signal) => {
+                  const effectiveType = recorder.mimeType || mimeType || "audio/webm";
+                  const blob = new Blob(chunks, { type: effectiveType });
+                  if (!blob.size) return;
+                  const activity = audioTracks.every((track) => track.enabled === false || track.muted)
+                    ? false
+                    : await detectAudioActivity(blob);
+                  if (generation !== generationRef.current || signal.aborted) return;
+                  if (speaker === "[You]") setMicrophoneActivity(activity === null ? null : activity ? "audio" : "quiet");
+                  if (activity === false) return;
+                  const ext = effectiveType.includes("mp4") ? "m4a" : "webm";
+                  const file = new File([blob], `${speaker === "[Client]" ? "client" : "you"}-${Date.now()}.${ext}`, {
+                    type: effectiveType,
+                  });
+                  if (captureOptionsRef.current.onStreams && transcriptionService.transcribeTimedFile) {
+                    const result = await transcriptionService.transcribeTimedFile(file, signal);
+                    if (generation === generationRef.current && !signal.aborted) {
+                      const segments = result.segments.filter(
+                        (segment) =>
+                          segment.text.trim() &&
+                          Number.isFinite(segment.start) &&
+                          Number.isFinite(segment.end) &&
+                          segment.start >= 0 &&
+                          segment.end >= segment.start,
                       );
-                    else if (result.text)
-                      appendTranscript(speaker, result.text, {
-                        source: speaker === "[You]" ? "microphone" : "shared",
-                        capturedAt,
-                        recording,
-                        start: 0,
-                        end: chunkMs / 1000,
-                        approximate: true,
-                      });
+                      if (segments.length)
+                        segments.forEach((segment) =>
+                          appendTranscript(speaker, segment.text, {
+                            source: speaker === "[You]" ? "microphone" : "shared",
+                            capturedAt: capturedAt + segment.start * 1000,
+                            recording,
+                            start: segment.start,
+                            end: segment.end,
+                          }),
+                        );
+                      else if (result.text)
+                        appendTranscript(speaker, result.text, {
+                          source: speaker === "[You]" ? "microphone" : "shared",
+                          capturedAt,
+                          recording,
+                          start: 0,
+                          end: chunkMs / 1000,
+                          approximate: true,
+                        });
+                    }
+                  } else {
+                    const text = await transcriptionService.transcribeFile(file, signal);
+                    if (text && generation === generationRef.current && !signal.aborted)
+                      appendTranscript(speaker, text, { source: speaker === "[You]" ? "microphone" : "shared", capturedAt, recording });
                   }
-                } else {
-                  const text = await transcriptionService.transcribeFile(file);
-                  if (text && generation === generationRef.current)
-                    appendTranscript(speaker, text, { source: speaker === "[You]" ? "microphone" : "shared", capturedAt, recording });
-                }
+                }, requestsRef.current);
               } catch (err) {
                 if (generation === generationRef.current)
                   setError(err instanceof Error ? err.message : `Could not transcribe ${speaker} audio.`);
               }
             })
             .finally(() => {
+              queued--;
               pendingRef.current.delete(pending);
               finish();
             });
@@ -292,6 +307,7 @@ export function useMeetingNoteTaker(options: UseMeetingNoteTakerOptions = {}) {
 
         recorder.start();
         const timeoutId = window.setTimeout(() => {
+          timeoutsRef.current = timeoutsRef.current.filter((id) => id !== timeoutId);
           if (recorder.state === "recording") {
             recorder.stop();
           }
@@ -333,13 +349,21 @@ export function useMeetingNoteTaker(options: UseMeetingNoteTakerOptions = {}) {
       try {
         const recentLines = analysisOptions.fullTranscript ? lines : lines.slice(Math.max(0, lastAnalyzedCountRef.current - 2));
         const fullTranscriptText = recentLines.map((l) => `[${l.timestamp}] ${l.speaker}: ${l.text}`).join("\n");
-        const response = await transcriptionService.analyzeMeetingTranscript({
-          transcript: fullTranscriptText,
-          previousState: analysisOptions.fullTranscript ? undefined : notesRef.current,
-          memoName: memoNameRef.current,
-          providerId: analystRef.current?.providerId,
-          model: analystRef.current?.model,
-        });
+        const response = await meetingRequest(
+          (signal) =>
+            transcriptionService.analyzeMeetingTranscript(
+              {
+                transcript: fullTranscriptText,
+                previousState: analysisOptions.fullTranscript ? undefined : notesRef.current,
+                memoName: memoNameRef.current,
+                providerId: analystRef.current?.providerId,
+                model: analystRef.current?.model,
+              },
+              signal,
+            ),
+          requestsRef.current,
+          90000,
+        );
 
         if (generation !== generationRef.current) return {};
         let nextNotes: MeetingNoteState | undefined;
@@ -631,10 +655,21 @@ export function useMeetingNoteTaker(options: UseMeetingNoteTakerOptions = {}) {
       } catch (error) {
         captureError = error;
       }
-      await Promise.all([...pendingRef.current]);
-      await analysisFinishedRef.current;
+      const finishDeadline = window.setTimeout(() => {
+        transcriptionEpoch.current++;
+        for (const request of requestsRef.current)
+          request.abort(
+            new Error("Stopped waiting for the provider. Some transcript passages may be missing; review the saved recording."),
+          );
+      }, 30000);
+      try {
+        await Promise.all([...pendingRef.current]);
+        await analysisFinishedRef.current;
+      } finally {
+        window.clearTimeout(finishDeadline);
+      }
       if (speakerCapture && speakerCapture.generation === generationRef.current) {
-        await speakerCapture.done;
+        await meetingRequest(() => speakerCapture.done, requestsRef.current, 10000);
         if (speakerCapture.bytes > 0 && speakerCapture.bytes <= 25 * 1024 * 1024 && speakerCapture.chunks.length) {
           setSpeakerStatus("Identifying voices in shared audio…");
           try {
@@ -642,7 +677,11 @@ export function useMeetingNoteTaker(options: UseMeetingNoteTakerOptions = {}) {
             const file = new File(speakerCapture.chunks, `meeting-${speakerCapture.recording}.${type.includes("mp4") ? "m4a" : "webm"}`, {
               type,
             });
-            const result = await transcriptionService.recognizeSpeakers(file);
+            const result = await meetingRequest(
+              (signal) => transcriptionService.recognizeSpeakers(file, signal),
+              requestsRef.current,
+              60000,
+            );
             if (speakerCapture.generation === generationRef.current) {
               const turns = buildSpeakerTurns(result.segments, speakerCapture.startedAt, speakerCapture.recording);
               if (turns.some((line) => line.speaker !== "[Client]")) {
@@ -691,6 +730,7 @@ export function useMeetingNoteTaker(options: UseMeetingNoteTakerOptions = {}) {
   useEffect(() => {
     return () => {
       generationRef.current++;
+      for (const request of requestsRef.current) request.abort();
       try {
         speakerCaptureRef.current?.recorder.stop();
       } catch {

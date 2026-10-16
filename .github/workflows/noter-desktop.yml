@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: Committed experimental RC version (for example 26.10.16-rc.3)
+        description: Committed experimental RC version (for example 26.10.16-rc.4)
         required: true
-        default: 26.10.16-rc.3
+        default: 26.10.16-rc.4
         type: string
       create_draft:
         description: Stage verified installers in an unpublished prerelease draft

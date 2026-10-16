@@ -233,3 +233,66 @@ func TestCaptionsFollowResumedPartTimeline(t *testing.T) {
 	require.Contains(t, captions, "00:00:03.000 --> 00:00:05.000")
 	require.NotContains(t, captions, "<script>")
 }
+
+func TestRelinkingAndDetachingNoteClearsPreviousMeeting(t *testing.T) {
+	m, i, _, _ := setup(t)
+	first := i.Meetings[0].ID
+	i, err := m.CreateMeeting(1, "Second", "")
+	require.NoError(t, err)
+	second := i.Meetings[1].ID
+	i, err = m.SyncNote(1, "memos/one", "One", "Original", nil, &first)
+	require.NoError(t, err)
+	oldPath := filepath.Join(i.Root, filepath.FromSlash(i.Notes[0].Path))
+	i, err = m.SyncNote(1, "memos/one", "One", "Revised", nil, &second)
+	require.NoError(t, err)
+	require.Empty(t, i.Meetings[0].NoteName)
+	require.Equal(t, "memos/one", i.Meetings[1].NoteName)
+	require.NoFileExists(t, oldPath)
+	_, err = m.SyncNote(1, "memos/two", "Two", "Another", nil, &first)
+	require.NoError(t, err)
+	detach := ""
+	i, err = m.SyncNote(1, "memos/one", "One", "Detached", nil, &detach)
+	require.NoError(t, err)
+	require.Empty(t, i.Meetings[1].NoteName)
+	require.Empty(t, i.Notes[0].MeetingID)
+	require.Contains(t, i.Notes[0].Path, "Notes/")
+}
+
+func TestMovingLinkedNoteMovesRecordingAndTranscriptTogether(t *testing.T) {
+	m, i, _, _ := setup(t)
+	mid := i.Meetings[0].ID
+	i, err := m.BeginPart(1, mid, "audio/webm")
+	require.NoError(t, err)
+	pid := i.Meetings[0].Parts[0].ID
+	_, err = m.FinishPart(1, mid, pid, 3)
+	require.NoError(t, err)
+	lines := []Line{{ID: "one", Text: "Deadline Friday", Start: 1, End: 2}}
+	_, err = m.UpdateMeeting(1, mid, nil, nil, nil, &lines, nil)
+	require.NoError(t, err)
+	i, err = m.SyncNote(1, "memos/one", "One", "Saved", nil, &mid)
+	require.NoError(t, err)
+	old := filepath.Join(i.Root, filepath.FromSlash(i.Meetings[0].Path))
+	i, err = m.CreateFolder(1, "Project", "")
+	require.NoError(t, err)
+	fid := i.Folders[0].ID
+	i, err = m.SyncNote(1, "memos/one", "One", "Saved again", &fid, nil)
+	require.NoError(t, err)
+	require.Equal(t, fid, i.Meetings[0].FolderID)
+	require.Equal(t, fid, i.Notes[0].FolderID)
+	require.NoDirExists(t, old)
+	base := filepath.Join(i.Root, filepath.FromSlash(i.Meetings[0].Path))
+	for _, file := range []string{"notes.md", "meeting.json", "transcript.json", "transcript.vtt", i.Meetings[0].Parts[0].File} {
+		require.FileExists(t, filepath.Join(base, file))
+	}
+	_, err = m.BeginPart(1, mid, "audio/webm")
+	require.NoError(t, err)
+	inbox := ""
+	_, err = m.SyncNote(1, "memos/one", "One", "Blocked", &inbox, nil)
+	require.ErrorContains(t, err, "pause capture")
+	i, err = m.Get(1)
+	require.NoError(t, err)
+	require.Equal(t, fid, i.Notes[0].FolderID)
+	data, err := os.ReadFile(filepath.Join(base, "notes.md"))
+	require.NoError(t, err)
+	require.Equal(t, "Saved again", string(data))
+}

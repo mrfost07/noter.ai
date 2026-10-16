@@ -67,7 +67,13 @@ beforeEach(() => {
   vi.mocked(libraryRequest).mockImplementation(async (path) => {
     if (path?.endsWith("/organize")) return mocks.analyze({ transcript: "Launch on November 15. Priya sends the schema by Friday." });
     return {
-      library: { root: "test-library", folders: [], meetings: [{ id: "review-test", parts: [], duration: 0 }], notes: [], drafts: [] },
+      library: {
+        root: "test-library",
+        folders: [],
+        meetings: [{ id: "review-test", parts: [], transcript: [], duration: 0 }],
+        notes: [],
+        drafts: [],
+      },
     } as never;
   });
   localStorage.clear();

@@ -506,6 +506,30 @@ func (m *Manager) FinishPart(owner int32, mid, pid string, duration float64) (*I
 	})
 }
 
+func (m *Manager) moveMeetingFolder(owner int32, i *Index, meeting *Meeting, folder string) error {
+	if folder == meeting.FolderID {
+		return nil
+	}
+	if meeting.Status == "recording" {
+		return errors.New("pause capture before moving a meeting")
+	}
+	base, err := folderPath(i, folder)
+	if err != nil {
+		return err
+	}
+	oldRel := meeting.Path
+	newRel := filepath.ToSlash(filepath.Join(base, "Meetings", filepath.Base(oldRel)))
+	meeting.Path = newRel
+	meeting.FolderID = folder
+	for n := range i.Notes {
+		if i.Notes[n].MeetingID == meeting.ID {
+			i.Notes[n].Path = filepath.ToSlash(filepath.Join(newRel, "notes.md"))
+			i.Notes[n].FolderID = folder
+		}
+	}
+	return m.commitMove(owner, i, oldRel, newRel)
+}
+
 // UpdateMeeting persists transcript recovery and explicit draft edits without saving a note.
 func (m *Manager) UpdateMeeting(owner int32, mid string, title, folder, draft *string, lines *[]Line, trashed *bool) (*Index, error) {
 	return m.mutate(owner, func(i *Index) error {
@@ -534,27 +558,6 @@ func (m *Manager) UpdateMeeting(owner int32, mid string, title, folder, draft *s
 		if trashed != nil && meeting.Status == "recording" {
 			return errors.New("stop capture before archiving")
 		}
-		oldRel := ""
-		newRel := ""
-		if folder != nil && *folder != meeting.FolderID {
-			if meeting.Status == "recording" {
-				return errors.New("pause capture before moving a meeting")
-			}
-			base, err := folderPath(i, *folder)
-			if err != nil {
-				return err
-			}
-			oldRel = meeting.Path
-			newRel = filepath.ToSlash(filepath.Join(base, "Meetings", filepath.Base(oldRel)))
-			meeting.Path = newRel
-			meeting.FolderID = *folder
-			for n := range i.Notes {
-				if i.Notes[n].MeetingID == mid {
-					i.Notes[n].Path = filepath.ToSlash(filepath.Join(newRel, "notes.md"))
-					i.Notes[n].FolderID = *folder
-				}
-			}
-		}
 		if title != nil {
 			meeting.Title = strings.TrimSpace(*title)
 		}
@@ -569,8 +572,8 @@ func (m *Manager) UpdateMeeting(owner int32, mid string, title, folder, draft *s
 			slices.SortStableFunc(meeting.Transcript, func(a, b Line) int { return cmp.Compare(a.Start, b.Start) })
 		}
 		meeting.UpdatedAt = stamp()
-		if oldRel != "" {
-			if err = m.commitMove(owner, i, oldRel, newRel); err != nil {
+		if folder != nil {
+			if err = m.moveMeetingFolder(owner, i, meeting, *folder); err != nil {
 				return err
 			}
 		}
@@ -597,6 +600,16 @@ func (m *Manager) UpdateMeeting(owner int32, mid string, title, folder, draft *s
 
 // SyncNote creates a managed saved copy and refuses to overwrite external edits.
 func (m *Manager) SyncNote(owner int32, name, title, content string, folder, mid *string) (*Index, error) {
+	return m.syncNote(owner, name, title, content, folder, mid, false)
+}
+
+// SyncExistingNote updates a managed Markdown copy without registering an unrelated note.
+func (m *Manager) SyncExistingNote(owner int32, name, title, content string) error {
+	_, err := m.syncNote(owner, name, title, content, nil, nil, true)
+	return err
+}
+
+func (m *Manager) syncNote(owner int32, name, title, content string, folder, mid *string, existingOnly bool) (*Index, error) {
 	return m.mutate(owner, func(i *Index) error {
 		var note *Note
 		for n := range i.Notes {
@@ -606,9 +619,13 @@ func (m *Manager) SyncNote(owner int32, name, title, content string, folder, mid
 			}
 		}
 		if note == nil {
+			if existingOnly {
+				return nil
+			}
 			i.Notes = append(i.Notes, Note{Name: name})
 			note = &i.Notes[len(i.Notes)-1]
 		}
+		oldMeetingID := note.MeetingID
 		oldPath := note.Path
 		if oldPath != "" {
 			path, err := SafePath(i.Root, oldPath)
@@ -642,6 +659,11 @@ func (m *Manager) SyncNote(owner int32, name, title, content string, folder, mid
 			if meeting.NoteName != "" && meeting.NoteName != name {
 				return errors.New("meeting already has a linked note")
 			}
+			if folder != nil && oldMeetingID == note.MeetingID {
+				if err = m.moveMeetingFolder(owner, i, meeting, *folder); err != nil {
+					return err
+				}
+			}
 			meeting.NoteName = name
 			meeting.Draft = content
 			note.FolderID = meeting.FolderID
@@ -659,6 +681,15 @@ func (m *Manager) SyncNote(owner int32, name, title, content string, folder, mid
 		}
 		note.Path = filepath.ToSlash(rel)
 		note.Hash = digest([]byte(content))
+		if oldMeetingID != "" && oldMeetingID != note.MeetingID {
+			if previous, previousErr := meetingByID(i, oldMeetingID); previousErr == nil && previous.NoteName == name {
+				previous.NoteName = ""
+				previous.UpdatedAt = stamp()
+				if err = manifest(i, previous); err != nil {
+					return err
+				}
+			}
+		}
 		if oldPath != "" && oldPath != note.Path {
 			old, err := SafePath(i.Root, oldPath)
 			if err != nil {

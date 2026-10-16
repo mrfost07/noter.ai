@@ -54,6 +54,38 @@ afterEach(() => {
   vi.useRealTimers();
 });
 describe("meeting capture lifecycle", () => {
+  it("bounds slow-provider backlog and finishes Stop even if the transport never resolves", async () => {
+    vi.useFakeTimers();
+    Object.defineProperty(navigator, "mediaDevices", {
+      configurable: true,
+      value: { getUserMedia: vi.fn().mockResolvedValue(stream()) },
+    });
+    vi.mocked(transcriptionService.transcribeFile)
+      .mockClear()
+      .mockImplementation(() => new Promise(() => {}));
+    const { result, unmount } = renderHook(() => useMeetingNoteTaker());
+    await act(async () => {
+      await result.current.startMeeting();
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(24000);
+    });
+    expect(transcriptionService.transcribeFile).toHaveBeenCalledTimes(1);
+    expect(result.current.error).toContain("cannot keep up");
+    let stopped!: Promise<void>;
+    act(() => {
+      stopped = result.current.stopMeeting();
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(30000);
+      await stopped;
+    });
+    expect(result.current.isFinishing).toBe(false);
+    expect(result.current.isRecording).toBe(false);
+    expect(result.current.error).toMatch(/timed out|Stopped waiting/);
+    expect(vi.mocked(transcriptionService.transcribeFile).mock.calls.every((call) => call[1]?.aborted)).toBe(true);
+    unmount();
+  });
   it("skips quiet microphone chunks instead of asking Whisper to invent words", async () => {
     vi.stubGlobal(
       "OfflineAudioContext",
