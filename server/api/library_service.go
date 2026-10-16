@@ -23,6 +23,15 @@ import (
 )
 
 func (s *APIService) registerMeetingLibrary(e *echo.Echo) {
+	// Some embedders construct APIService directly rather than through NewAPIService.
+	// Initialize once during route registration so every handler still shares one lock.
+	if s.meetingLibrary == nil {
+		root := os.Getenv("NOTER_LIBRARY_ROOT")
+		if root == "" {
+			root = filepath.Join(s.Profile.Data, "library")
+		}
+		s.meetingLibrary = meetinglibrary.New(s.Profile.Data, root)
+	}
 	manager := s.meetingLibrary
 	authenticator := auth.NewAuthenticator(s.Store, s.Secret)
 	wrap := func(handler func(*echo.Context, *store.User) error) echo.HandlerFunc {
