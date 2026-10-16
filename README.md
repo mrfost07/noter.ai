@@ -29,6 +29,8 @@ Installers are attached to [GitHub Releases](https://github.com/mrfost07/noter.a
 
 The first candidates are experimental. Read the [release status](docs/RELEASE_STATUS.md) for known functional issues, platform testing limits and signing status. Android APKs and automatic updates are not currently implemented.
 
+[Code signing policy](CODE_SIGNING.md): Windows signing through SignPath Foundation is being prepared and requires eligibility approval. Current installers remain unsigned. [Privacy policy](PRIVACY.md).
+
 After installing on Windows, use the Start menu shortcut or `Start-Noter.ai-Desktop.bat` in this checkout. `Start-Noter.ai-Browser.bat` opens the installed app's actual local server address in your browser; keep the desktop app open while using it. These launchers discover the installation and do not depend on the source folder's name. Browser access does not provide native desktop meeting controls.
 
 ## Build from source
