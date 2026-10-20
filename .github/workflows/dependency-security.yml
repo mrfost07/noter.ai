@@ -4,7 +4,7 @@ on:
     branches: [main]
     paths: ['go.mod', 'go.sum', 'web/package.json', 'web/pnpm-lock.yaml', 'web/pnpm-workspace.yaml', 'desktop/package.json', 'desktop/pnpm-lock.yaml', 'website/package-lock.json', 'website/package.json', '.github/workflows/dependency-security.yml']
   pull_request:
-    paths: ['go.mod', 'go.sum', 'web/package.json', 'web/pnpm-lock.yaml', 'web/pnpm-workspace.yaml', 'desktop/package.json', 'desktop/pnpm-lock.yaml', 'website/package-lock.json', 'website/package.json', '.github/workflows/dependency-security.yml']
+    branches: [main]
   schedule:
     - cron: '25 1 * * 1'
   workflow_dispatch:

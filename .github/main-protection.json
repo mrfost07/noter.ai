@@ -1,0 +1,28 @@
+{
+  "required_status_checks": {
+    "strict": true,
+    "checks": [
+      { "context": "Lint", "app_id": 15368 },
+      { "context": "Build", "app_id": 15368 },
+      { "context": "Desktop packaging tests", "app_id": 15368 },
+      { "context": "Static Checks", "app_id": 15368 },
+      { "context": "Tests (store)", "app_id": 15368 },
+      { "context": "Tests (server)", "app_id": 15368 },
+      { "context": "Tests (internal)", "app_id": 15368 },
+      { "context": "Tests (other)", "app_id": 15368 },
+      { "context": "JavaScript advisory audit", "app_id": 15368 },
+      { "context": "Reachable Go vulnerability audit", "app_id": 15368 },
+      { "context": "clean-checkout", "app_id": 15368 }
+    ]
+  },
+  "enforce_admins": true,
+  "required_pull_request_reviews": {
+    "dismiss_stale_reviews": true,
+    "require_code_owner_reviews": false,
+    "required_approving_review_count": 0
+  },
+  "restrictions": null,
+  "required_conversation_resolution": true,
+  "allow_force_pushes": false,
+  "allow_deletions": false
+}
