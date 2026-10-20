@@ -1,0 +1,26 @@
+name: noter-ai
+services:
+  noter:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VERSION: ${NOTER_BUILD_VERSION:-}
+        COMMIT: ${NOTER_BUILD_COMMIT:-unknown}
+    ports:
+      - "127.0.0.1:${NOTER_PORT:-8081}:8081"
+    environment:
+      MEMOS_DRIVER: sqlite
+      MEMOS_DATA: /data/profile
+      NOTER_LIBRARY_ROOT: /data/library
+      MEMOS_TRUSTED_PROXIES: none
+    volumes:
+      - noter-data:/data
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    init: true
+    restart: unless-stopped
+volumes:
+  noter-data:

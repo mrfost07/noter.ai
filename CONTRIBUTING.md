@@ -13,6 +13,8 @@ Contributors and prospective maintainers are welcome. Noter.ai focuses on a calm
 
 Follow [AGENTS.md](AGENTS.md) for repository conventions and [desktop/README.md](desktop/README.md) for native prerequisites and build commands. Use the pinned toolchain versions and locked dependencies.
 
+The [contributor verification guide](docs/CONTRIBUTOR_VERIFICATION.md) provides a clean-checkout container setup, persistence checks and test-environment requirements. Keep behavior changes and their regression tests in focused commits so reviewers can reproduce each change independently.
+
 Keep each pull request focused on one problem. Explain the resulting behavior, include relevant test results, and add screenshots for visual changes. Add meaningful regressions for behavior fixes. Never commit provider credentials, user profiles, notes, or recordings.
 
 Run checks for the surfaces you change:

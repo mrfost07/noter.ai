@@ -1,0 +1,43 @@
+name: Noter.ai Reproducible Build
+on:
+  push:
+    branches: [main]
+    paths: ['Dockerfile', 'Dockerfile.dockerignore', 'compose.yaml', 'scripts/compose.yaml', 'scripts/container-smoke.mjs', '.github/workflows/noter-reproducibility.yml', 'go.mod', 'go.sum', '**.go', 'web/**']
+  pull_request:
+    paths: ['Dockerfile', 'Dockerfile.dockerignore', 'compose.yaml', 'scripts/compose.yaml', 'scripts/container-smoke.mjs', '.github/workflows/noter-reproducibility.yml', 'go.mod', 'go.sum', '**.go', 'web/**']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: noter-reproducibility-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  clean-checkout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      COMPOSE_PROJECT_NAME: noter-ci-${{ github.run_id }}
+      NOTER_BUILD_COMMIT: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - uses: docker/setup-buildx-action@v3
+      - name: Build frontend and backend inside the container from locked dependencies
+        run: |
+          export NOTER_BUILD_VERSION="$(date -u +%y.%m)"
+          docker compose config --quiet
+          docker compose build
+      - name: Boot a fresh persistent profile
+        run: docker compose up --detach --wait --wait-timeout 120
+      - name: Verify readiness, real frontend, non-root runtime and persistence
+        run: node scripts/container-smoke.mjs
+      - name: Verify the compatibility Compose entry point
+        run: docker compose -f scripts/compose.yaml config --quiet
+      - name: Show container diagnostics
+        if: failure()
+        run: docker compose logs --no-color
+      - name: Remove only this CI project's containers and test volumes
+        if: always()
+        run: docker compose down --volumes --remove-orphans

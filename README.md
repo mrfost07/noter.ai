@@ -37,6 +37,16 @@ After installing on Windows, use the Start menu shortcut or `Start-Noter.ai-Desk
 
 ## Build from source
 
+For a browser-accessible notebook built entirely from this checkout, install Docker with Compose v2.20+ and run:
+
+```sh
+docker compose up --build --wait
+```
+
+Open **http://127.0.0.1:8081**. The build installs locked frontend dependencies and embeds the fresh frontend into the Go server. A named volume stores the profile/database and library together. `docker compose down` keeps this data; `docker compose down --volumes` deletes it. Optional port/build settings are in [.env.example](.env.example).
+
+This container is a browser/server environment, not the native desktop app. It does not provide the native meeting window, OS capture integration or desktop sign-in callbacks. Use the desktop installer for those workflows. See [contributor verification](docs/CONTRIBUTOR_VERIFICATION.md) for tests, container checks and backups.
+
 The backend uses Go; the web app uses Node.js 24 and pnpm 11.0.1; desktop builds also require Rust and the platform's Tauri prerequisites.
 
 ```sh
