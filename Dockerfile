@@ -3,7 +3,8 @@
 FROM node:24-alpine AS frontend
 WORKDIR /src/web
 RUN corepack enable && corepack prepare pnpm@11.0.1 --activate
-COPY web/package.json web/pnpm-lock.yaml ./
+COPY web/package.json web/pnpm-lock.yaml web/pnpm-workspace.yaml ./
+COPY web/patches/ ./patches/
 RUN --mount=type=cache,id=noter-pnpm,target=/pnpm/store \
     pnpm install --frozen-lockfile --store-dir=/pnpm/store
 COPY web/ ./
