@@ -56,16 +56,16 @@ if (writeFixtures) {
   };
   const token = await signIn();
   const content = "# Meeting — café\n\n- [ ] Review the recording\n\nKeep **decisions** and [details](https://example.test) intact.";
-  const note = await postJSON(`/api/memos?memoId=${randomUUID()}`, { content, visibility: "PRIVATE" }, token);
+  // The current notebook API creates owner-private notes and no longer exposes
+  // a visibility field. Verify privacy through actual access, not a removed DTO.
+  const note = await postJSON(`/api/memos?memoId=${randomUUID()}`, { content }, token);
   assert.equal(note.content, content);
-  assert.equal(note.visibility, "PRIVATE");
   assert.match(note.name, /^memos\/[A-Za-z0-9_-]+$/);
   const readPrivateNote = async (accessToken) => {
     const response = await request(`/api/${note.name}`, { headers: { Authorization: `Bearer ${accessToken}` } });
     assert.equal(response.status, 200, "authenticated note should survive container recreation");
     const saved = await response.json();
     assert.equal(saved.content, content, "Markdown and Unicode content must round-trip exactly");
-    assert.equal(saved.visibility, "PRIVATE");
     const anonymous = await request(`/api/${note.name}`);
     await anonymous.arrayBuffer();
     assert.ok([401, 403].includes(anonymous.status), "a private note must reject anonymous reads");
