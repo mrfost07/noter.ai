@@ -19,6 +19,8 @@ Noter.ai is an AI-assisted notebook with editable Markdown notes, folders, meeti
 
 ## Desktop downloads
 
+Get the [current experimental desktop preview](https://github.com/mrfost07/noter.ai/releases/latest), or use the [download page](https://mrfost07.github.io/noter.ai/download/) to choose the right installer.
+
 Installers are attached to [GitHub Releases](https://github.com/mrfost07/noter.ai/releases) after successful candidate builds:
 
 | Platform | Package |

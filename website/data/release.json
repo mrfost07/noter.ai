@@ -1,9 +1,9 @@
 {
   "tagName": "26.10.16-rc.4",
-  "name": "Noter.ai 26.10.16-rc.4 — experimental unsigned RC",
+  "name": "Noter.ai 26.10.16-rc.4 — Experimental desktop preview",
   "url": "https://github.com/mrfost07/noter.ai/releases/tag/26.10.16-rc.4",
   "publishedAt": "2026-10-16T12:25:39Z",
-  "isPrerelease": true,
+  "isPrerelease": false,
   "assets": [
     {
       "name": "manifest-aarch64-apple-darwin.json",

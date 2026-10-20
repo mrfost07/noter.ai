@@ -2,6 +2,10 @@
 
 The first desktop release is an **experimental release candidate**, not a production sign-off. It is built from the committed source in [mrfost07/noter.ai](https://github.com/mrfost07/noter.ai).
 
+## Finding the current desktop preview
+
+Use the [download page](https://mrfost07.github.io/noter.ai/download/) to choose your platform, or the repository's [current release](https://github.com/mrfost07/noter.ai/releases/latest). RC4 is listed as an ordinary GitHub release so it appears in the repository's Releases sidebar. Its title and notes explicitly identify it as an **experimental, unsigned desktop preview**; GitHub's Latest label identifies the current download, not production acceptance. The version tag, installer files, checksums and known limitations are unchanged. Future desktop candidates continue to be staged as unpublished prerelease drafts for maintainer review.
+
 ## Verified baseline
 
 The October 15, 2026 local audit passed 1,428 frontend tests across 169 files, 20 backend packages, TypeScript and the frontend release build. Synthetic meeting capture, explicit AI draft review/save, two-part playback, transcript search/seek, export byte integrity and model persistence were exercised with local test providers. Windows library opening, folder-picker cancellation and compact meeting-window controls were exercised against the installed app.
