@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-set-meeting-mode"
+description = "Enables the set_meeting_mode command without any pre-configured scope."
+commands.allow = ["set_meeting_mode"]
+
+[[permission]]
+identifier = "deny-set-meeting-mode"
+description = "Denies the set_meeting_mode command without any pre-configured scope."
+commands.deny = ["set_meeting_mode"]

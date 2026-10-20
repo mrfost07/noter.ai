@@ -1,0 +1,276 @@
+package sqlite
+
+import (
+	"context"
+	"database/sql"
+	"fmt"
+	"strings"
+
+	"github.com/pkg/errors"
+
+	"github.com/usememos/memos/store"
+)
+
+func (d *DB) CreateUser(ctx context.Context, create *store.User) (*store.User, error) {
+	if err := insertUser(ctx, d.db, create); err != nil {
+		return nil, err
+	}
+	return create, nil
+}
+
+func (d *DB) UpdateUser(ctx context.Context, update *store.UpdateUser) (*store.User, error) {
+	tx, err := d.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = tx.Rollback() }()
+	if update.RemovesInstanceAdmin() {
+		if err := ensureInstanceAdminRetained(ctx, tx, update.ID); err != nil {
+			return nil, err
+		}
+	}
+	if update.RowStatus != nil && *update.RowStatus == store.Archived {
+		if err := validateSQLiteUserArchive(ctx, tx, update.ID); err != nil {
+			return nil, err
+		}
+	}
+	set, args := []string{}, []any{}
+	if v := update.UpdatedTs; v != nil {
+		set, args = append(set, "updated_ts = ?"), append(args, *v)
+	}
+	if v := update.RowStatus; v != nil {
+		set, args = append(set, "row_status = ?"), append(args, *v)
+	}
+	if v := update.Username; v != nil {
+		set, args = append(set, "username = ?"), append(args, *v)
+	}
+	if v := update.Email; v != nil {
+		set, args = append(set, "email = ?"), append(args, nullableEmail(*v))
+	}
+	if v := update.Nickname; v != nil {
+		set, args = append(set, "nickname = ?"), append(args, *v)
+	}
+	if v := update.AvatarURL; v != nil {
+		set, args = append(set, "avatar_url = ?"), append(args, *v)
+	}
+	if v := update.PasswordHash; v != nil {
+		set, args = append(set, "password_hash = ?"), append(args, *v)
+	}
+	if v := update.Description; v != nil {
+		set, args = append(set, "description = ?"), append(args, *v)
+	}
+	if v := update.Role; v != nil {
+		set, args = append(set, "role = ?"), append(args, *v)
+	}
+	args = append(args, update.ID)
+
+	query := `
+		UPDATE user
+		SET ` + strings.Join(set, ", ") + `
+		WHERE id = ?
+		RETURNING id, username, role, email, nickname, password_hash, avatar_url, description, created_ts, updated_ts, row_status
+	`
+	user := &store.User{}
+	var email sql.NullString
+	if err := tx.QueryRowContext(ctx, query, args...).Scan(
+		&user.ID,
+		&user.Username,
+		&user.Role,
+		&email,
+		&user.Nickname,
+		&user.PasswordHash,
+		&user.AvatarURL,
+		&user.Description,
+		&user.CreatedTs,
+		&user.UpdatedTs,
+		&user.RowStatus,
+	); err != nil {
+		return nil, err
+	}
+	user.Email = email.String
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
+func validateSQLiteUserArchive(ctx context.Context, tx dbExecutor, userID int32) error {
+	var current store.RowStatus
+	if err := tx.QueryRowContext(ctx, "SELECT row_status FROM user WHERE id = ?", userID).Scan(&current); err != nil {
+		return err
+	}
+	if current != store.Normal {
+		return nil
+	}
+	var wouldLoseAdmin bool
+	err := tx.QueryRowContext(ctx, `SELECT EXISTS(
+		SELECT 1 FROM space_member target
+		WHERE target.user_id = ? AND target.status = 'ACTIVE' AND target.role = 'ADMIN'
+		AND NOT EXISTS (
+			SELECT 1 FROM space_member other JOIN user u ON u.id = other.user_id
+			WHERE other.space_id = target.space_id AND other.user_id <> ?
+				AND other.status = 'ACTIVE' AND other.role = 'ADMIN' AND u.row_status = 'NORMAL'
+		))`, userID, userID).Scan(&wouldLoseAdmin)
+	if err != nil {
+		return err
+	}
+	if wouldLoseAdmin {
+		return store.ErrLastSpaceAdmin
+	}
+	return nil
+}
+
+// ensureInstanceAdminRetained refuses a mutation that would remove the last
+// active instance administrator. Mutations of ordinary users skip the admin
+// count. SQLite transactions begin IMMEDIATE, so concurrent removals
+// serialize.
+func ensureInstanceAdminRetained(ctx context.Context, tx dbExecutor, userID int32) error {
+	var role, rowStatus string
+	if err := tx.QueryRowContext(ctx, `SELECT role, row_status FROM user WHERE id = ?`, userID).Scan(&role, &rowStatus); errors.Is(err, sql.ErrNoRows) {
+		return nil
+	} else if err != nil {
+		return err
+	}
+	if role != string(store.RoleAdmin) || rowStatus != string(store.Normal) {
+		return nil
+	}
+	var adminCount int
+	if err := tx.QueryRowContext(ctx, `SELECT COUNT(*) FROM user WHERE role = 'ADMIN' AND row_status = 'NORMAL'`).Scan(&adminCount); err != nil {
+		return err
+	}
+	if adminCount <= 1 {
+		return store.ErrLastInstanceAdmin
+	}
+	return nil
+}
+
+func (d *DB) ListUsers(ctx context.Context, find *store.FindUser) ([]*store.User, error) {
+	where, args := []string{"1 = 1"}, []any{}
+	orderBy := []string{"created_ts DESC", "row_status DESC", "id DESC"}
+
+	if len(find.Filters) > 0 {
+		return nil, errors.Errorf("user filters are not supported")
+	}
+
+	if v := find.ID; v != nil {
+		where, args = append(where, "id = ?"), append(args, *v)
+	}
+	if len(find.IDList) > 0 {
+		placeholders := make([]string, 0, len(find.IDList))
+		for range find.IDList {
+			placeholders = append(placeholders, "?")
+		}
+		where, args = append(where, fmt.Sprintf("id IN (%s)", strings.Join(placeholders, ", "))), append(args, func() []any {
+			list := make([]any, 0, len(find.IDList))
+			for _, id := range find.IDList {
+				list = append(list, id)
+			}
+			return list
+		}()...)
+	}
+	if len(find.UsernameList) > 0 {
+		placeholders := make([]string, 0, len(find.UsernameList))
+		for range find.UsernameList {
+			placeholders = append(placeholders, "?")
+		}
+		where, args = append(where, fmt.Sprintf("username IN (%s)", strings.Join(placeholders, ", "))), append(args, func() []any {
+			list := make([]any, 0, len(find.UsernameList))
+			for _, username := range find.UsernameList {
+				list = append(list, username)
+			}
+			return list
+		}()...)
+	}
+	if v := find.RowStatus; v != nil {
+		where, args = append(where, "row_status = ?"), append(args, *v)
+	}
+	if v := find.Username; v != nil {
+		where, args = append(where, "username = ?"), append(args, *v)
+	}
+	if v := find.Role; v != nil {
+		where, args = append(where, "role = ?"), append(args, *v)
+	}
+	if v := find.Email; v != nil {
+		where, args = append(where, "email = ?"), append(args, *v)
+	}
+	if v := find.Nickname; v != nil {
+		where, args = append(where, "nickname = ?"), append(args, *v)
+	}
+	if v := find.Search; v != nil && strings.TrimSpace(*v) != "" {
+		query := strings.ToLower(strings.TrimSpace(*v))
+		where, args = append(where, "(LOWER(username) LIKE ? OR LOWER(nickname) LIKE ?)"), append(args, "%"+query+"%", "%"+query+"%")
+		orderBy = []string{
+			"CASE WHEN LOWER(username) = ? THEN 0 WHEN LOWER(username) LIKE ? THEN 1 WHEN LOWER(nickname) LIKE ? THEN 2 ELSE 3 END",
+			"LENGTH(username) ASC",
+			"created_ts DESC",
+			"row_status DESC",
+		}
+		args = append(args, query, query+"%", query+"%")
+	}
+	query := `
+		SELECT 
+			id,
+			username,
+			role,
+			email,
+			nickname,
+			password_hash,
+			avatar_url,
+			description,
+			created_ts,
+			updated_ts,
+			row_status
+		FROM user
+		WHERE ` + strings.Join(where, " AND ") + ` ORDER BY ` + strings.Join(orderBy, ", ")
+	if v := find.Limit; v != nil {
+		query += fmt.Sprintf(" LIMIT %d", *v)
+		if v := find.Offset; v != nil {
+			query += fmt.Sprintf(" OFFSET %d", *v)
+		}
+	}
+
+	rows, err := d.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	list := make([]*store.User, 0)
+	for rows.Next() {
+		var user store.User
+		var email sql.NullString
+		if err := rows.Scan(
+			&user.ID,
+			&user.Username,
+			&user.Role,
+			&email,
+			&user.Nickname,
+			&user.PasswordHash,
+			&user.AvatarURL,
+			&user.Description,
+			&user.CreatedTs,
+			&user.UpdatedTs,
+			&user.RowStatus,
+		); err != nil {
+			return nil, err
+		}
+		user.Email = email.String
+		list = append(list, &user)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return list, nil
+}
+
+// nullableEmail maps the store's "no address" value to SQL NULL. The email
+// column is nullable so the unique index ignores users without an address;
+// an empty string must never reach the table.
+func nullableEmail(email string) any {
+	if email == "" {
+		return nil
+	}
+	return email
+}

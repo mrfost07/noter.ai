@@ -1,0 +1,17 @@
+[package]
+name = "memos-desktop"
+version = "26.10.16-rc.4"
+description = "Noter.ai Desktop App with Dual-Channel AI Meeting Note Taking (Offline & Online)"
+authors = ["Noter.ai"]
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.62.2", features = ["Win32_Foundation", "Win32_System_Com", "Win32_UI_Shell"] }

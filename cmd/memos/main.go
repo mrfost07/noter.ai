@@ -1,0 +1,255 @@
+package main
+
+import (
+	"context"
+	"fmt"
+	"log/slog"
+	"net"
+	"net/url"
+	"os"
+	"os/exec"
+	"os/signal"
+	"strconv"
+	"strings"
+	"syscall"
+
+	"github.com/inconshreveable/mousetrap"
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+
+	"github.com/usememos/memos/internal/profile"
+	"github.com/usememos/memos/internal/version"
+	"github.com/usememos/memos/internal/webhook"
+	storepb "github.com/usememos/memos/proto/gen/store"
+	"github.com/usememos/memos/server"
+	"github.com/usememos/memos/store"
+	"github.com/usememos/memos/store/db"
+)
+
+func initSlogDefault() {
+	level, err := parseSlogLevel(viper.GetString("log-level"))
+	if err != nil {
+		slog.Warn("invalid log-level value, defaulting to info", "error", err)
+	}
+	slog.SetDefault(newLogger(level, os.Stderr))
+}
+
+var (
+	rootCmd = &cobra.Command{
+		Use:           "memos",
+		Short:         "Noter.ai — AI Meeting Notes",
+		SilenceErrors: true,
+		SilenceUsage:  true,
+		RunE: func(_ *cobra.Command, _ []string) error {
+			return runServer()
+		},
+	}
+	versionCmd = &cobra.Command{
+		Use:   "version",
+		Short: "Print the current Noter.ai version",
+		Run: func(cmd *cobra.Command, _ []string) {
+			// Print the root's version so every form shares one source.
+			fmt.Fprintln(cmd.OutOrStdout(), cmd.Root().Version)
+		},
+	}
+)
+
+func init() {
+	cobra.MousetrapHelpText = ""
+	cobra.OnInitialize(initSlogDefault)
+
+	viper.SetDefault("demo", false)
+	viper.SetDefault("driver", "sqlite")
+	viper.SetDefault("port", 8081)
+
+	rootCmd.Flags().Bool("demo", false, "enable demo mode")
+	rootCmd.Flags().String("addr", "", "address of server")
+	rootCmd.Flags().Int("port", 8081, "port of server")
+	rootCmd.Flags().String("unix-sock", "", "path to the unix socket, overrides --addr and --port")
+	rootCmd.Flags().String("data", "", "data directory")
+	rootCmd.Flags().String("driver", "sqlite", "database driver (sqlite, mysql, postgres)")
+	rootCmd.Flags().String("dsn", "", "database source name (DSN)")
+	rootCmd.Flags().String("instance-url", "", "canonical external URL of the Noter.ai instance")
+	rootCmd.Flags().Bool("allow-private-webhooks", false, "allow webhooks to access any private/reserved IP address")
+	rootCmd.Flags().StringSlice("webhook-private-network-allowlist", nil, "private webhook destinations to allow (exact hostname, IP, or CIDR)")
+	rootCmd.Flags().String("log-level", "info", "log verbosity level (debug, info, warn, error)")
+	rootCmd.Flags().Bool("rate-limit", true, "enable request rate limiting")
+	rootCmd.Flags().StringSlice("trusted-proxies", []string{"private"}, "proxies whose forwarding headers identify the client: CIDRs, IPs, \"private\" (default; the loopback and private ranges), or \"none\" when the instance is reached without a header-rewriting proxy")
+
+	if err := rootCmd.Flags().MarkDeprecated("allow-private-webhooks", "use --webhook-private-network-allowlist to allow only required destinations"); err != nil {
+		panic(err)
+	}
+	for _, key := range []string{
+		"demo",
+		"addr",
+		"port",
+		"unix-sock",
+		"data",
+		"driver",
+		"dsn",
+		"instance-url",
+		"allow-private-webhooks",
+		"webhook-private-network-allowlist",
+		"log-level",
+		"rate-limit",
+		"trusted-proxies",
+	} {
+		if err := viper.BindPFlag(key, rootCmd.Flags().Lookup(key)); err != nil {
+			panic(err)
+		}
+	}
+
+	viper.SetEnvPrefix("memos")
+	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
+	viper.AutomaticEnv()
+
+	// POSIX/BSD users reach for `-V`, GNU users for `--version`, and Go/Rust
+	// users for the `version` subcommand. Register the flag before Cobra's
+	// default so the shorthand stays `-V` rather than Cobra's `-v`, and use a
+	// bare template so all three print exactly the same string.
+	rootCmd.Flags().BoolP("version", "V", false, "print the current Noter.ai version")
+	rootCmd.Version = version.GetCurrentVersion()
+	rootCmd.SetVersionTemplate("{{.Version}}\n")
+
+	rootCmd.AddCommand(versionCmd)
+}
+
+func runServer() error {
+	instanceProfile := &profile.Profile{
+		Demo:           viper.GetBool("demo"),
+		Addr:           viper.GetString("addr"),
+		Port:           viper.GetInt("port"),
+		UNIXSock:       viper.GetString("unix-sock"),
+		Data:           viper.GetString("data"),
+		Driver:         viper.GetString("driver"),
+		DSN:            viper.GetString("dsn"),
+		InstanceURL:    viper.GetString("instance-url"),
+		RateLimit:      viper.GetBool("rate-limit"),
+		TrustedProxies: viper.GetStringSlice("trusted-proxies"),
+		Version:        version.GetCurrentVersion(),
+		Commit:         version.Commit,
+	}
+
+	allowPrivateWebhooks := viper.GetBool("allow-private-webhooks")
+	//nolint:staticcheck // The deprecated CLI/env input remains supported for upgrade compatibility.
+	webhook.AllowPrivateIPs = allowPrivateWebhooks
+	if allowPrivateWebhooks {
+		slog.Warn("--allow-private-webhooks is deprecated and disables webhook private-network protection; use --webhook-private-network-allowlist")
+	}
+	if err := webhook.ConfigurePrivateDestinationAllowlist(privateWebhookAllowlist()); err != nil {
+		return errors.Wrap(err, "failed to configure private webhook destinations")
+	}
+	if err := instanceProfile.Validate(); err != nil {
+		return errors.Wrap(err, "failed to validate profile")
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	dbDriver, err := db.NewDBDriver(instanceProfile)
+	if err != nil {
+		return errors.Wrap(err, "failed to create database driver")
+	}
+	storeInstance := store.New(dbDriver, instanceProfile)
+	closeStore := true
+	defer func() {
+		if closeStore {
+			if err := storeInstance.Close(); err != nil {
+				slog.Error("failed to close store", "error", err)
+			}
+		}
+	}()
+
+	if err := storeInstance.Migrate(ctx); err != nil {
+		return errors.Wrap(err, "failed to migrate database")
+	}
+	if err := storeInstance.LoadDeploymentConfiguration(ctx); err != nil {
+		return errors.Wrap(err, "failed to load deployment configuration")
+	}
+	accessSetting, err := storeInstance.GetInstanceAccessSetting(ctx)
+	if err != nil {
+		return errors.Wrap(err, "failed to get instance access setting")
+	}
+
+	s, err := server.NewServer(ctx, instanceProfile, storeInstance)
+	if err != nil {
+		return errors.Wrap(err, "failed to create server")
+	}
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
+	defer signal.Stop(signals)
+
+	if err := s.Start(); err != nil {
+		return errors.Wrap(err, "failed to start server")
+	}
+	closeStore = false
+
+	printServerInfo(instanceProfile, accessSetting.AccessMode)
+	if mousetrap.StartedByExplorer() {
+		_ = exec.Command("cmd", "/c", "title", "Noter.ai").Run()
+		host := "localhost"
+		if len(instanceProfile.Addr) > 0 && instanceProfile.Addr != "0.0.0.0" {
+			host = instanceProfile.Addr
+		}
+		// The server's direct endpoint uses HTTP; HTTPS is provided by a reverse proxy.
+		targetURL := (&url.URL{Scheme: "http", Host: net.JoinHostPort(host, strconv.Itoa(instanceProfile.Port))}).String()
+		_ = exec.Command("cmd", "/c", fmt.Sprintf("start \"Noter.ai\" %s", targetURL)).Start()
+	}
+	<-signals
+	s.Shutdown(context.Background())
+	return nil
+}
+
+func privateWebhookAllowlist() []string {
+	var entries []string
+	for _, value := range viper.GetStringSlice("webhook-private-network-allowlist") {
+		for entry := range strings.SplitSeq(value, ",") {
+			if entry = strings.TrimSpace(entry); entry != "" {
+				entries = append(entries, entry)
+			}
+		}
+	}
+	return entries
+}
+
+func printServerInfo(profile *profile.Profile, accessMode storepb.InstanceAccessMode) {
+	fmt.Printf("Noter.ai %s started successfully!\n", profile.Version)
+
+	if profile.Demo {
+		fmt.Fprint(os.Stderr, "Demo mode is enabled\n")
+	}
+
+	// Server information
+	fmt.Printf("Data directory: %s\n", profile.Data)
+	fmt.Printf("Database driver: %s\n", profile.Driver)
+
+	// Connection information
+	if len(profile.UNIXSock) == 0 {
+		if len(profile.Addr) == 0 {
+			fmt.Printf("Server running on port %d\n", profile.Port)
+			fmt.Printf("Access Noter.ai at: http://localhost:%d\n", profile.Port)
+		} else {
+			fmt.Printf("Server running on %s:%d\n", profile.Addr, profile.Port)
+			fmt.Printf("Access Noter.ai at: http://%s:%d\n", profile.Addr, profile.Port)
+		}
+	} else {
+		fmt.Printf("Server running on unix socket: %s\n", profile.UNIXSock)
+	}
+
+	accessModeLabel := "private"
+	if accessMode == storepb.InstanceAccessMode_INSTANCE_ACCESS_MODE_PUBLIC {
+		accessModeLabel = "public"
+	}
+	fmt.Printf("Access mode: %s\n", accessModeLabel)
+}
+
+func main() {
+	if err := version.Validate(); err != nil {
+		slog.Error("invalid build metadata", slog.String("error", err.Error()))
+		os.Exit(1)
+	}
+	if err := rootCmd.Execute(); err != nil {
+		slog.Error("memos failed", slog.String("error", err.Error()))
+		os.Exit(1)
+	}
+}

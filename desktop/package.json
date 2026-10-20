@@ -1,0 +1,18 @@
+{
+  "name": "noter-ai-desktop",
+  "version": "26.10.16-rc.4",
+  "private": true,
+  "description": "Noter.ai desktop note taking and meeting review",
+  "packageManager": "pnpm@11.0.1",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "prepare:sidecar": "node scripts/build-desktop.mjs prepare",
+    "tauri": "tauri",
+    "tauri:dev": "node scripts/build-desktop.mjs prepare && tauri dev",
+    "tauri:build": "node scripts/build-desktop.mjs build",
+    "test:build": "node --test scripts/build-desktop.test.mjs"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.5.0"
+  }
+}

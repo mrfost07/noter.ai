@@ -1,0 +1,249 @@
+name: Noter.ai Desktop Candidate
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Committed experimental RC version (for example 26.10.16-rc.4)
+        required: true
+        default: 26.10.16-rc.4
+        type: string
+      create_draft:
+        description: Stage verified installers in an unpublished prerelease draft
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: noter-desktop-${{ github.repository }}-${{ inputs.version }}
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: "24"
+  PNPM_VERSION: "11.0.1"
+  GO_VERSION: "1.27.2"
+  RUST_VERSION: "1.99.0"
+  CANDIDATE_VERSION: ${{ inputs.version }}
+  CI: "true"
+
+jobs:
+  checks:
+    name: Check the candidate commit
+    if: github.repository == 'mrfost07/noter.ai' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4.2.0
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: |
+            web/pnpm-lock.yaml
+            desktop/pnpm-lock.yaml
+      - uses: actions/setup-go@v6
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+      - name: Check committed version and artifact verifier
+        run: |
+          node desktop/scripts/build-desktop.mjs validate --version "$CANDIDATE_VERSION"
+          node --test desktop/scripts/build-desktop.test.mjs
+      - name: Verify backend dependency files and modernization
+        run: |
+          go mod tidy -go="$GO_VERSION"
+          git diff --exit-code -- go.mod go.sum
+          go fix -diff ./... > "$RUNNER_TEMP/noter-go-fix.diff"
+          if [ -s "$RUNNER_TEMP/noter-go-fix.diff" ]; then
+            cat "$RUNNER_TEMP/noter-go-fix.diff"
+            exit 1
+          fi
+      - name: Backend static analysis
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.14.0
+          args: --timeout=5m --concurrency=2
+      - name: Install locked frontend dependencies
+        run: pnpm --dir web install --frozen-lockfile
+      - name: TypeScript, lint, and formatting gate
+        run: pnpm --dir web lint
+      - name: Frontend regression tests
+        run: pnpm --dir web test --maxWorkers=2
+      - name: Backend, meeting library, and provider regression tests
+        run: go test -count=1 -race -p 2 ./server/... ./core/... ./provider/... ./cmd/...
+
+  build:
+    name: Package ${{ matrix.target }}
+    if: github.repository == 'mrfost07/noter.ai' && github.ref == 'refs/heads/main'
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-2022
+            target: x86_64-pc-windows-msvc
+          - runner: macos-15
+            target: aarch64-apple-darwin
+          - runner: macos-15-intel
+            target: x86_64-apple-darwin
+          - runner: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+    env:
+      CARGO_TARGET_DIR: ${{ github.workspace }}/desktop/src-tauri/target
+      CARGO_BUILD_JOBS: "2"
+      NO_STRIP: "true"
+      APPIMAGE_EXTRACT_AND_RUN: "1"
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4.2.0
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: |
+            web/pnpm-lock.yaml
+            desktop/pnpm-lock.yaml
+      - uses: actions/setup-go@v6
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+      - name: Install Linux packaging and media dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y \
+            build-essential curl wget file libwebkit2gtk-4.1-dev libxdo-dev \
+            libssl-dev libayatana-appindicator3-dev librsvg2-dev patchelf xvfb xauth xdg-utils \
+            gstreamer1.0-plugins-base gstreamer1.0-plugins-good \
+            gstreamer1.0-plugins-bad gstreamer1.0-libav
+      - name: Install the pinned Rust toolchain
+        run: |
+          rustup toolchain install "$RUST_VERSION" --profile minimal
+          rustup default "$RUST_VERSION"
+          rustup target add "${{ matrix.target }}"
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            desktop/src-tauri/target
+          key: noter-rust-${{ runner.os }}-${{ matrix.target }}-${{ env.RUST_VERSION }}-${{ hashFiles('desktop/src-tauri/Cargo.lock') }}
+      - name: Install locked JavaScript dependencies
+        run: |
+          pnpm --dir web install --frozen-lockfile
+          pnpm --dir desktop install --frozen-lockfile
+      - name: Build fresh SPA, target sidecar, and unsigned installers
+        env:
+          NOTER_DESKTOP_GOOGLE_OAUTH_JSON: ${{ secrets.NOTER_DESKTOP_GOOGLE_OAUTH_JSON }}
+        run: node desktop/scripts/build-desktop.mjs build --version "$CANDIDATE_VERSION" --target "${{ matrix.target }}"
+      - name: Native lifecycle and sidecar-location regression tests
+        working-directory: desktop/src-tauri
+        run: cargo test --release --locked --target "${{ matrix.target }}"
+      - name: Upload only verified candidate artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: noter-desktop-${{ matrix.target }}
+          path: build/noter-desktop/${{ inputs.version }}/${{ matrix.target }}/*
+          if-no-files-found: error
+          retention-days: 30
+
+  draft:
+    name: Stage an experimental prerelease draft
+    needs: [checks, build]
+    if: inputs.create_draft && github.repository == 'mrfost07/noter.ai' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: noter-desktop-*
+          path: candidate-assets
+          merge-multiple: true
+      - name: Recheck every platform, identity, size, and SHA-256
+        run: node desktop/scripts/build-desktop.mjs verify-all --version "$CANDIDATE_VERSION" --commit "$GITHUB_SHA" --directory candidate-assets
+      - name: Create or resume only the matching unpublished draft
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('node:fs/promises');
+            const crypto = require('node:crypto');
+            const { owner, repo } = context.repo;
+            const version = process.env.CANDIDATE_VERSION;
+            const commit = context.sha;
+            const all = await fs.readdir('candidate-assets');
+            const files = all.filter(name => name === 'SHA256SUMS.txt' || /^manifest-.*\.json$/.test(name) || /\.(msi|exe|dmg|deb|AppImage)$/.test(name));
+            if (files.length !== 11) throw new Error(`Expected 6 installers, 4 manifests and aggregate checksums; found ${files.length}.`);
+            // Never move an existing tag to a different commit.
+            try {
+              let ref = (await github.rest.git.getRef({ owner, repo, ref: `tags/${version}` })).data.object;
+              if (ref.type === 'tag') ref = (await github.rest.git.getTag({ owner, repo, tag_sha: ref.sha })).data.object;
+              if (ref.sha !== commit) throw new Error('The candidate tag already identifies another commit. Choose the next RC version.');
+            } catch (error) {
+              if (error.status !== 404) throw error;
+              throw new Error('A maintainer must push this version tag at the candidate commit before dispatching. The workflow token cannot create every tag involving workflow changes. See desktop/README.md.');
+            }
+            const releases = await github.paginate(github.rest.repos.listReleases, { owner, repo, per_page: 100 });
+            let release = releases.find(item => item.tag_name === version);
+            const body = [
+              `Experimental unsigned Noter.ai desktop candidate **${version}**.`,
+              `Choose your download:\n\n| Your computer | Download |\n| --- | --- |\n| Windows 64-bit | [Noter.ai Setup.exe](https://github.com/${owner}/${repo}/releases/download/${version}/Noter.ai_${version}_x86_64-pc-windows-msvc.setup.exe) |\n| Mac with Apple Silicon (M-series) | [Noter.ai for Apple Silicon.dmg](https://github.com/${owner}/${repo}/releases/download/${version}/Noter.ai_${version}_aarch64-apple-darwin.dmg) |\n| Mac with Intel processor | [Noter.ai for Intel Mac.dmg](https://github.com/${owner}/${repo}/releases/download/${version}/Noter.ai_${version}_x86_64-apple-darwin.dmg) |\n| Linux 64-bit | [Noter.ai.AppImage](https://github.com/${owner}/${repo}/releases/download/${version}/Noter.ai_${version}_x86_64-unknown-linux-gnu.AppImage) |\n\nMSI and Debian packages are alternatives. JSON manifests, SHA256SUMS.txt and source archives are verification/developer files, not apps.`,
+              `Source commit: \`${commit}\`. All installers were built from this commit after frontend lint/tests and backend regression checks passed.`,
+              `Known limitations and acceptance checklist: [Release status](https://github.com/${owner}/${repo}/blob/${commit}/docs/RELEASE_STATUS.md).`,
+              'Windows x64: NSIS and MSI. macOS: separate Apple Silicon and Intel DMGs. Linux x64: AppImage and Debian package.',
+              'Each installer was extracted on its native runner; its embedded Go sidecar version, build metadata and build ID matched the fresh build. Windows/Linux sidecar bytes also matched exactly. macOS uses verified ad-hoc signatures, which can change signature bytes; manifests record both hashes. SHA256SUMS.txt covers installers and manifests.',
+              'Each extracted desktop application also launched with an isolated temporary profile, loaded its selected loopback WebView page, served HTTP 200 with Noter.ai frontend HTML, initialized SQLite, and stopped its own sidecar. Linux startup was tested under Xvfb with the normal WebKit sandbox enabled. macOS microphone usage metadata was checked.',
+              'This candidate has no trusted publisher signature and is not Apple-notarized. macOS bundles are ad-hoc signed. Windows SmartScreen and macOS Gatekeeper may require additional review. Automatic updates are not enabled.',
+              'Linux live microphone/screen meeting capture is currently unavailable: the native WebKit permission path does not safely constrain every requesting frame, so requests are not automatically granted. Linux can review existing notes/recordings. Other platforms still require physical microphone/internal-audio, permission, playback and installation acceptance tests. Non-Windows folder selection and free-space reporting are not supported yet.',
+              'Personal provider credentials and notes are not included in installers. Configure AI and transcription inside the app; local AI services must be installed separately. Existing profiles and library locations remain on the device.',
+              'The experimental Antigravity connection uses bundled reference installed-client OAuth configuration. Users sign in with their own Google account; manual client configuration is not required. Installed-app client metadata is extractable by design and is not a confidential web application secret. Google consent and Antigravity service access still depend on provider authorization.',
+              'Experimental provider limitation: Google’s official FAQ states that third-party apps cannot use Antigravity account authentication to access its service. Publishing or verifying the OAuth app does not make this a supported integration. The existing experimental provider is not approved for public use; use supported Gemini API/Enterprise access for public Google AI functionality. See https://antigravity.google/docs/faq/.',
+              'Connection fixes: official installers include the experimental Google installed-client setup; users sign in with their own account. Provider selection stays on the newly connected account when settings refresh. Connection checks clear when the account or model changes and ignore late results from the previous selection.',
+              'Live Windows development-preview checks completed Antigravity sign-in/model discovery/inference and a separate ChatGPT sign-in with plan permission/model discovery/inference. The ChatGPT account and model survived reopening settings without model detection. These checks cover one tested account on this computer; installer upgrade checks, other accounts and platform hardware acceptance remain separate.',
+              'ChatGPT account sign-in is separate from OpenAI API-key billing. Users authorize their own eligible account. Provider eligibility, granted permissions, model availability and usage limits remain account-dependent.',
+              'This release remains an unpublished prerelease draft for review. It is not a production-readiness claim.',
+            ].join('\n\n');
+            if (release && (!release.draft || !release.prerelease || release.target_commitish !== commit)) throw new Error('An existing release is published or belongs to another candidate; refusing to modify it.');
+            if (!release) release = (await github.rest.repos.createRelease({ owner, repo, tag_name: version, target_commitish: commit, name: `Noter.ai ${version} — experimental unsigned RC`, body, draft: true, prerelease: true, make_latest: 'false' })).data;
+            const existing = await github.paginate(github.rest.repos.listReleaseAssets, { owner, repo, release_id: release.id, per_page: 100 });
+            if (existing.some(asset => !files.includes(asset.name))) throw new Error('The matching draft contains unexpected assets; review it manually.');
+            for (const name of files.sort()) {
+              const data = await fs.readFile(`candidate-assets/${name}`);
+              const digest = `sha256:${crypto.createHash('sha256').update(data).digest('hex')}`;
+              const asset = existing.find(item => item.name === name);
+              if (asset) {
+                if (asset.size !== data.length || asset.digest !== digest) throw new Error(`Existing draft asset differs: ${name}.`);
+                continue;
+              }
+              await github.rest.repos.uploadReleaseAsset({ owner, repo, release_id: release.id, name, data, headers: { 'content-type': 'application/octet-stream', 'content-length': data.length } });
+            }
+            const verified = (await github.rest.repos.getRelease({ owner, repo, release_id: release.id })).data;
+            if (!verified.draft || !verified.prerelease || verified.assets.length !== files.length) throw new Error('Final draft verification failed.');
+            core.summary.addHeading('Experimental desktop draft staged').addLink(version, verified.html_url).addRaw(`\n\nCommit: ${commit}\n\nUnpublished, unsigned prerelease; manual platform acceptance testing remains.`);
+            await core.summary.write();

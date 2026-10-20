@@ -1,0 +1,41 @@
+name: Feature Request
+description: Suggest an improvement to Noter.ai
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting an improvement. Please keep the request focused on one problem.
+
+        Before submitting, search [existing issues](https://github.com/mrfost07/noter.ai/issues) to avoid duplicates. For broad ideas and questions, use [Discussions](https://github.com/mrfost07/noter.ai/discussions).
+
+  - type: checkboxes
+    id: pre-check
+    attributes:
+      label: Check before submitting
+      options:
+        - label: I searched existing issues and did not find a duplicate
+          required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Briefly describe what you are trying to do and why it is difficult today.
+      placeholder: I want to ... but currently ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: What would you like to happen?
+      description: Describe the behavior you would like Noter.ai to support.
+      placeholder: It would be helpful if Noter.ai could ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: Add workarounds, examples, screenshots, mockups, or related links if useful.

@@ -1,0 +1,10 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Bundled Noter.ai desktop loader capabilities",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "allow-get-server-url"
+  ]
+}

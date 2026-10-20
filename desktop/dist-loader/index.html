@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Noter.ai — AI Meeting Notes</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: #0f172a;
+        color: #f8fafc;
+        gap: 14px;
+      }
+      .spinner {
+        width: 32px;
+        height: 32px;
+        border: 3px solid rgba(255, 255, 255, 0.15);
+        border-top-color: #38bdf8;
+        border-radius: 50%;
+        animation: spin 0.75s linear infinite;
+      }
+      .title {
+        font-size: 16px;
+        font-weight: 600;
+      }
+      .sub {
+        font-size: 12px;
+        color: #94a3b8;
+      }
+      @media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="spinner"></div>
+    <div class="title">Opening Noter.ai…</div>
+    <div class="sub">Your notes and meeting assistant are loading.</div>
+    <script>
+      async function boot() {
+        try {
+          if (window.__TAURI__?.core?.invoke) {
+            const url = await window.__TAURI__.core.invoke("get_server_url");
+            for (let i = 0; i < 60; i++) {
+              try {
+                const res = await fetch(url + "/api/instance/profile");
+                if (res.ok) {
+                  window.location.replace(url);
+                  return;
+                }
+              } catch {}
+              await new Promise((r) => setTimeout(r, 150));
+            }
+          }
+        } catch {}
+      }
+      boot();
+    </script>
+  </body>
+</html>

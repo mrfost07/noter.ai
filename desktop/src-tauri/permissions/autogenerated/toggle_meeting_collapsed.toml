@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-toggle-meeting-collapsed"
+description = "Enables the toggle_meeting_collapsed command without any pre-configured scope."
+commands.allow = ["toggle_meeting_collapsed"]
+
+[[permission]]
+identifier = "deny-toggle-meeting-collapsed"
+description = "Denies the toggle_meeting_collapsed command without any pre-configured scope."
+commands.deny = ["toggle_meeting_collapsed"]
