@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "measuredOn": "2026-10-20",
+  "policy": "Go groups use the union of covered source statements across packages and database drivers. Generated proto/gen bindings are excluded. Frontend V8 coverage includes maintained src TypeScript/TSX, excluding generated protobuf bindings and declarations. Floors allow approximately one to two percentage points of variation below the measured baseline.",
+  "groups": {
+    "frontend": {
+      "run": "https://github.com/mrfost07/noter.ai/actions/runs/39436666562",
+      "measured": { "lines": 72.17, "statements": 71.12, "functions": 61.95, "branches": 62.44 },
+      "floors": { "lines": 71, "statements": 70, "functions": 60, "branches": 61 }
+    },
+    "store": {
+      "run": "https://github.com/mrfost07/noter.ai/actions/runs/39437765555",
+      "measured": { "statements": 79.58 },
+      "floors": { "statements": 78 }
+    },
+    "server": {
+      "run": "https://github.com/mrfost07/noter.ai/actions/runs/39436666572",
+      "measured": { "statements": 71.00 },
+      "floors": { "statements": 70 }
+    },
+    "internal": {
+      "run": "https://github.com/mrfost07/noter.ai/actions/runs/39436666572",
+      "measured": { "statements": 79.17 },
+      "floors": { "statements": 78 }
+    },
+    "other": {
+      "run": "https://github.com/mrfost07/noter.ai/actions/runs/39436666572",
+      "measured": { "statements": 70.23 },
+      "floors": { "statements": 69 }
+    }
+  }
+}

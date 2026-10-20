@@ -55,6 +55,11 @@ cd web && pnpm test                # Vitest unit tests
 cd web && pnpm build               # Production build
 cd web && pnpm release             # Build SPA into server/frontend/dist
 
+# Reproducible browser/server setup and coverage utilities (repository root)
+docker compose up --build --wait   # Builds this checkout; persists profile and library together
+node scripts/container-smoke.mjs   # Real container readiness/assets/non-root/persistence checks
+node --test scripts/check-coverage.test.mjs
+
 # Protocol Buffers
 cd proto && buf generate           # Regenerate Go + TypeScript + OpenAPI
 cd proto && buf lint               # Lint proto files
@@ -159,4 +164,5 @@ Black-box service tests live in `server/api/test/`, unit tests next to the code.
   `store`, `server`, `internal`, `other` (`cmd`, `core`, `markdown`, `filter`, `provider`, `proto`).
 - Frontend CI: Node 24, pnpm 11.0.1, `pnpm lint`, `pnpm test`, `pnpm build`.
 - Proto CI: `buf lint` and `buf format` check.
-- Docker: `scripts/Dockerfile`, Alpine 3.21 runtime, non-root user, port 5230, multi-arch amd64/arm64/arm/v7.
+- Reproducible local server: root `Dockerfile` and `compose.yaml`, fresh locked frontend/backend builds, non-root Alpine runtime, host loopback port 8081. `noter-reproducibility.yml` tests a clean build and persistent library.
+- Legacy server distribution: `scripts/Dockerfile` expects the frontend to be built first; port 5230 and multi-arch amd64/arm64/arm/v7. Do not substitute its upstream image for the root Compose build.

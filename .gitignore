@@ -5,6 +5,7 @@
 /memos
 /memos.exe
 coverage.out
+/coverage-*.out
 coverage/
 # Frontend bundles: web/dist from `pnpm build`, and
 # server/frontend/dist from `pnpm release`, which go:embed bakes

@@ -11,6 +11,11 @@ on:
       - "**.go"
       - ".golangci.yaml"
       - ".github/workflows/backend-tests.yml"
+      - ".github/coverage-baseline.json"
+      - "scripts/check-coverage*"
+
+permissions:
+  contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -38,6 +43,13 @@ jobs:
         run: |
           go mod tidy -go=${{ env.GO_VERSION }}
           git diff --exit-code
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Test coverage regression and profile-merge checks
+        run: node --test scripts/check-coverage.test.mjs
 
       - name: Verify go fix
         run: go fix -diff ./...
@@ -97,6 +109,9 @@ jobs:
           esac
         env:
           DRIVER: sqlite
+
+      - name: Enforce measured backend coverage floor
+        run: node scripts/check-coverage.mjs "${{ matrix.test-group }}" coverage.out
 
       - name: Upload coverage
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'

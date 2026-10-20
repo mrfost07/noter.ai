@@ -7,6 +7,12 @@ on:
     branches: [main]
     paths:
       - "web/**"
+      - ".github/workflows/frontend-tests.yml"
+      - ".github/coverage-baseline.json"
+      - "scripts/check-coverage*"
+
+permissions:
+  contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -56,6 +62,10 @@ jobs:
           path: web/coverage/
           if-no-files-found: warn
           retention-days: 14
+
+      - name: Enforce measured frontend coverage floors
+        working-directory: web
+        run: node ../scripts/check-coverage.mjs frontend coverage/coverage-summary.json
 
   build:
     name: Build

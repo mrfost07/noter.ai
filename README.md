@@ -60,6 +60,8 @@ Provider API keys are configured in the app and are not included in this reposit
 
 ## Contribute
 
+CI runs frontend type checking, lint, unit tests and builds; backend static checks, race tests and real database suites; measured source-coverage floors; dependency vulnerability checks; and a clean-checkout container smoke test. See the [verification guide](docs/CONTRIBUTOR_VERIFICATION.md), [AI request validation](docs/API_VALIDATION.md) and [measured coverage baseline](.github/coverage-baseline.json) for commands, evidence and limitations.
+
 Noter.ai is an open-source project maintained by [mrfost07](https://github.com/mrfost07). Contributors and prospective maintainers are welcome: help improve notes, meeting capture, accessibility, AI integrations, documentation, and platform support.
 
 Read the [contribution guide](CONTRIBUTING.md), browse [open issues](https://github.com/mrfost07/noter.ai/issues), or join [Discussions](https://github.com/mrfost07/noter.ai/discussions). To help maintain the project, start a discussion describing your experience and the area you would like to support.
