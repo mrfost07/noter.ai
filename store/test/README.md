@@ -7,6 +7,8 @@ go test -v ./store/... # SQLite, MySQL, and PostgreSQL; TestContainers creates i
 DRIVER=mysql go test -v ./store/test/... # One driver only
 ```
 
+`NewTestingStore` and `NewTestingStoreWithDSN` register test cleanup as soon as the store exists. Database connections and cache workers close before the fixture's temporary directories are removed, including on assertion or migration failure. Tests may still explicitly close a store when checking shutdown/reopen behavior; sequential cleanup is safe. Avoid opening extra connections without their own cleanup. The lifecycle regression verifies both helper variants, explicit closes and post-subtest connection/file cleanup.
+
 ## Upgrade coverage
 
 ```bash

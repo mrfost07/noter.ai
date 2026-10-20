@@ -23,6 +23,7 @@ import (
 //   - SQLite: new temp file per test
 //   - MySQL/PostgreSQL: new database per test in shared container
 func NewTestingStore(ctx context.Context, t *testing.T) *store.Store {
+	t.Helper()
 	driver := getDriverFromEnv()
 	profile := getTestingProfileForDriver(t, driver)
 	dbDriver, err := db.NewDBDriver(profile)
@@ -31,6 +32,13 @@ func NewTestingStore(ctx context.Context, t *testing.T) *store.Store {
 	}
 
 	store := store.New(dbDriver, profile)
+	// Registered after TempDir, so connections and cache workers stop before
+	// temporary files are removed, including when migration aborts the test.
+	t.Cleanup(func() {
+		if err := store.Close(); err != nil {
+			t.Errorf("close testing store: %v", err)
+		}
+	})
 	if err := store.Migrate(ctx); err != nil {
 		t.Fatalf("failed to migrate db: %v", err)
 	}
@@ -40,6 +48,7 @@ func NewTestingStore(ctx context.Context, t *testing.T) *store.Store {
 // NewTestingStoreWithDSN creates a testing store connected to a specific DSN.
 // This is useful for testing migrations on existing data.
 func NewTestingStoreWithDSN(_ context.Context, t *testing.T, driver, dsn string) *store.Store {
+	t.Helper()
 	profile := &profile.Profile{
 		Port:    getUnusedPort(),
 		Data:    t.TempDir(), // Dummy dir, DSN matters
@@ -53,6 +62,11 @@ func NewTestingStoreWithDSN(_ context.Context, t *testing.T, driver, dsn string)
 	}
 
 	store := store.New(dbDriver, profile)
+	t.Cleanup(func() {
+		if err := store.Close(); err != nil {
+			t.Errorf("close testing store: %v", err)
+		}
+	})
 	// Do not run Migrate() automatically, as we might be testing pre-migration state
 	// or want to run it manually.
 	return store
