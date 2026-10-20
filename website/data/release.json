@@ -1,0 +1,64 @@
+{
+  "tagName": "26.10.16-rc.4",
+  "name": "Noter.ai 26.10.16-rc.4 — experimental unsigned RC",
+  "url": "https://github.com/mrfost07/noter.ai/releases/tag/26.10.16-rc.4",
+  "publishedAt": "2026-10-16T12:25:39Z",
+  "isPrerelease": true,
+  "assets": [
+    {
+      "name": "manifest-aarch64-apple-darwin.json",
+      "size": 1445,
+      "url": "https://github.com/mrfost07/noter.ai/releases/download/26.10.16-rc.4/manifest-aarch64-apple-darwin.json"
+    },
+    {
+      "name": "manifest-x86_64-apple-darwin.json",
+      "size": 1443,
+      "url": "https://github.com/mrfost07/noter.ai/releases/download/26.10.16-rc.4/manifest-x86_64-apple-darwin.json"
+    },
+    {
+      "name": "manifest-x86_64-pc-windows-msvc.json",
+      "size": 2321,
+      "url": "https://github.com/mrfost07/noter.ai/releases/download/26.10.16-rc.4/manifest-x86_64-pc-windows-msvc.json"
+    },
+    {
+      "name": "manifest-x86_64-unknown-linux-gnu.json",
+      "size": 2335,
+      "url": "https://github.com/mrfost07/noter.ai/releases/download/26.10.16-rc.4/manifest-x86_64-unknown-linux-gnu.json"
+    },
+    {
+      "name": "Noter.ai_26.10.16-rc.4_aarch64-apple-darwin.dmg",
+      "size": 28570757,
+      "url": "https://github.com/mrfost07/noter.ai/releases/download/26.10.16-rc.4/Noter.ai_26.10.16-rc.4_aarch64-apple-darwin.dmg"
+    },
+    {
+      "name": "Noter.ai_26.10.16-rc.4_x86_64-apple-darwin.dmg",
+      "size": 30413634,
+      "url": "https://github.com/mrfost07/noter.ai/releases/download/26.10.16-rc.4/Noter.ai_26.10.16-rc.4_x86_64-apple-darwin.dmg"
+    },
+    {
+      "name": "Noter.ai_26.10.16-rc.4_x86_64-pc-windows-msvc.msi",
+      "size": 27074560,
+      "url": "https://github.com/mrfost07/noter.ai/releases/download/26.10.16-rc.4/Noter.ai_26.10.16-rc.4_x86_64-pc-windows-msvc.msi"
+    },
+    {
+      "name": "Noter.ai_26.10.16-rc.4_x86_64-pc-windows-msvc.setup.exe",
+      "size": 19711616,
+      "url": "https://github.com/mrfost07/noter.ai/releases/download/26.10.16-rc.4/Noter.ai_26.10.16-rc.4_x86_64-pc-windows-msvc.setup.exe"
+    },
+    {
+      "name": "Noter.ai_26.10.16-rc.4_x86_64-unknown-linux-gnu.AppImage",
+      "size": 171063800,
+      "url": "https://github.com/mrfost07/noter.ai/releases/download/26.10.16-rc.4/Noter.ai_26.10.16-rc.4_x86_64-unknown-linux-gnu.AppImage"
+    },
+    {
+      "name": "Noter.ai_26.10.16-rc.4_x86_64-unknown-linux-gnu.deb",
+      "size": 27503838,
+      "url": "https://github.com/mrfost07/noter.ai/releases/download/26.10.16-rc.4/Noter.ai_26.10.16-rc.4_x86_64-unknown-linux-gnu.deb"
+    },
+    {
+      "name": "SHA256SUMS.txt",
+      "size": 1115,
+      "url": "https://github.com/mrfost07/noter.ai/releases/download/26.10.16-rc.4/SHA256SUMS.txt"
+    }
+  ]
+}

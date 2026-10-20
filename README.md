@@ -6,7 +6,7 @@
 
 Noter.ai is an AI-assisted notebook with editable Markdown notes, folders, meeting transcripts and searchable recordings. Organize a conversation into important details, decisions, dates and action items, review the draft, then save it to your notes.
 
-[Desktop downloads](https://github.com/mrfost07/noter.ai/releases) · [Notebook guide](docs/NOTEBOOK_GUIDE.md) · [Desktop build guide](desktop/README.md) · [Release status and known issues](docs/RELEASE_STATUS.md)
+[Website](https://mrfost07.github.io/noter.ai/) · [Desktop downloads](https://mrfost07.github.io/noter.ai/download/) · [Documentation](https://mrfost07.github.io/noter.ai/docs/) · [Desktop build guide](desktop/README.md) · [Release status and known issues](docs/RELEASE_STATUS.md)
 
 ## Features
 
