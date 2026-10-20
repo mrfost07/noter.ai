@@ -1,0 +1,137 @@
+name: Noter.ai Native Checks
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+    paths: ['desktop/src-tauri/**', 'desktop/dist-loader/**', '.github/workflows/noter-native-checks.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: noter-native-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  RUST_VERSION: '1.99.0'
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      required: ${{ steps.detect.outputs.required }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - id: detect
+        name: Detect native changes without skipping the required gate
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          MANUAL: ${{ github.event_name == 'workflow_dispatch' }}
+        run: |
+          node --input-type=module <<'JS'
+          import { execFileSync } from 'node:child_process';
+          import { appendFileSync } from 'node:fs';
+          const { BASE_SHA, HEAD_SHA, MANUAL, GITHUB_OUTPUT } = process.env;
+          let required = true;
+          if (MANUAL !== 'true' && /^[a-f0-9]{40,64}$/.test(BASE_SHA || '') && !/^0+$/.test(BASE_SHA)) {
+            const names = execFileSync('git', ['diff', '--name-only', BASE_SHA, HEAD_SHA], { encoding: 'utf8' }).split('\n');
+            required = names.some(name => /^(desktop\/(src-tauri|dist-loader)\/|\.github\/workflows\/noter-native-checks\.yml$)/.test(name));
+          }
+          appendFileSync(GITHUB_OUTPUT, `required=${required}\n`);
+          JS
+
+  native:
+    name: Native tests (${{ matrix.target }})
+    needs: changes
+    if: needs.changes.outputs.required == 'true'
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-2022
+            target: x86_64-pc-windows-msvc
+          - runner: macos-15
+            target: aarch64-apple-darwin
+          - runner: macos-15-intel
+            target: x86_64-apple-darwin
+          - runner: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+    env:
+      CARGO_BUILD_JOBS: '2'
+      TARGET: ${{ matrix.target }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - name: Install Linux native compile dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y build-essential libwebkit2gtk-4.1-dev libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
+      - name: Install the pinned Rust compiler and formatter
+        run: |
+          rustup toolchain install "$RUST_VERSION" --profile minimal --component rustfmt
+          rustup default "$RUST_VERSION"
+          rustup target add "$TARGET"
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            desktop/src-tauri/target
+          key: noter-rust-${{ runner.os }}-${{ matrix.target }}-${{ env.RUST_VERSION }}-${{ hashFiles('desktop/src-tauri/Cargo.lock') }}
+      - name: Create the compile-only sidecar fixture
+        # tauri-build requires an externalBin resource even for pure unit tests.
+        # These tests never launch it. No package is built or uploaded, and this
+        # job has no publisher OAuth secret or release-writing permissions.
+        run: |
+          node --input-type=module <<'JS'
+          import { mkdirSync, writeFileSync } from 'node:fs';
+          const target = process.env.TARGET;
+          if (!/^(x86_64-pc-windows-msvc|aarch64-apple-darwin|x86_64-apple-darwin|x86_64-unknown-linux-gnu)$/.test(target)) throw new Error('Unexpected native target');
+          mkdirSync('desktop/src-tauri/binaries', { recursive: true });
+          writeFileSync(`desktop/src-tauri/binaries/memos-server-${target}${target.includes('windows') ? '.exe' : ''}`, 'NATIVE UNIT TEST RESOURCE ONLY — NEVER DISTRIBUTE\n', { flag: 'wx' });
+          JS
+      - name: Check native formatting
+        working-directory: desktop/src-tauri
+        run: cargo fmt --check
+      - name: Compile the native application and run pure regression tests
+        working-directory: desktop/src-tauri
+        run: cargo test --release --locked --target "$TARGET"
+
+  gate:
+    name: Desktop native verification
+    needs: [changes, native]
+    if: always()
+    runs-on: ubuntu-latest
+    env:
+      DETECTION: ${{ needs.changes.result }}
+      REQUIRED: ${{ needs.changes.outputs.required }}
+      NATIVE: ${{ needs.native.result }}
+    steps:
+      - name: Require successful native tests whenever native code changes
+        run: |
+          test "$DETECTION" = success
+          if [ "$REQUIRED" = true ]; then
+            test "$NATIVE" = success
+          elif [ "$REQUIRED" != false ]; then
+            exit 1
+          fi

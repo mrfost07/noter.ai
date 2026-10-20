@@ -9,5 +9,6 @@ fn main() {
             "set_recording_active",
             "library_disk_space",
         ]),
-    )).expect("failed to build Noter.ai desktop permissions");
+    ))
+    .expect("failed to build Noter.ai desktop permissions");
 }
