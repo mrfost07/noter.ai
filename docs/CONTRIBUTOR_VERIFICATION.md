@@ -41,6 +41,8 @@ node --test desktop/scripts/build-desktop.test.mjs
 
 Frontend tests live under `web/tests`, not alongside `web/src`. `pnpm lint` includes both TypeScript checking and Biome. Backend CI exercises SQLite, MySQL and PostgreSQL; the latter two use Docker containers. `SKIP_CONTAINER_TESTS=1` explicitly skips those integrations on a workstation without Docker and must not be treated as a full passing database suite. Race tests require a working CGo toolchain.
 
+For the explicit SQLite-only workstation runner and the categorized configuration inventory, see [Environment settings and local tests](ENVIRONMENT_AND_LOCAL_TESTS.md). CI exercises that runner with Docker unreachable as a separate check; it also preserves the full three-driver store matrix. `node scripts/check-env.mjs` prevents a statically referenced application setting from silently losing its example documentation. OS and build-tool variables are categorized separately.
+
 ## Coverage evidence
 
 `pnpm --dir web test:coverage --maxWorkers=2` writes JSON, LCOV and text summaries under `web/coverage/`. Generated protocol bindings are excluded; maintained application code is included. CI retains the reports as artifacts alongside backend coverage profiles.
@@ -90,6 +92,8 @@ See [AI API validation](API_VALIDATION.md) for existing request boundaries and t
 ## Main branch checks
 
 Backend static checks and all four test groups, frontend lint/type checks/coverage and production build, desktop packaging regressions, JavaScript/Go advisory audits, and the real container smoke test run on every pull request to main. They intentionally have no pull-request path filter: a required check that never starts would leave an unrelated change permanently pending.
+
+Native Rust changes also compile and run the existing pure lifecycle/path regression tests on Windows x64, Linux x64, and Apple Silicon/Intel macOS. The native workflow always reports `Desktop native verification`; its matrix runs only when native inputs change. A failed change-detection job or failed/cancelled native matrix fails the gate. These jobs use an explicitly non-executable sidecar resource only to satisfy the compiler's bundle metadata requirement. They never launch or distribute that fixture and do not establish native startup, capture, installer or real-provider acceptance. Candidate releases keep their separate real-sidecar build and native launch verification.
 
 The branch protection policy in [`.github/main-protection.json`](../.github/main-protection.json) requires these named GitHub Actions checks and an up-to-date pull request. It blocks force pushes and deletion, applies to administrators, and requires review conversations to be resolved. No second human approval is required for this solo-maintainer repository. The repository owner can inspect the applied policy with `gh api repos/mrfost07/noter.ai/branches/main/protection` and restore it using `gh api --method PUT repos/mrfost07/noter.ai/branches/main/protection --input .github/main-protection.json`. The JSON file is the intended policy; the GitHub API response is the evidence that it is actually enabled.
 
