@@ -4,7 +4,7 @@ on:
     branches: [main]
     paths: ['Dockerfile', 'Dockerfile.dockerignore', 'compose.yaml', 'scripts/compose.yaml', 'scripts/container-smoke.mjs', '.github/workflows/noter-reproducibility.yml', 'go.mod', 'go.sum', '**.go', 'web/**']
   pull_request:
-    paths: ['Dockerfile', 'Dockerfile.dockerignore', 'compose.yaml', 'scripts/compose.yaml', 'scripts/container-smoke.mjs', '.github/workflows/noter-reproducibility.yml', 'go.mod', 'go.sum', '**.go', 'web/**']
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
@@ -32,7 +32,7 @@ jobs:
       - name: Boot a fresh persistent profile
         run: docker compose up --detach --wait --wait-timeout 120
       - name: Verify readiness, real frontend, non-root runtime and persistence
-        run: node scripts/container-smoke.mjs
+        run: node scripts/container-smoke.mjs --write-fixtures
       - name: Verify the compatibility Compose entry point
         run: docker compose -f scripts/compose.yaml config --quiet
       - name: Show container diagnostics
