@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # Build the actual application from a clean checkout; no host frontend build is needed.
-FROM node:24-alpine AS frontend
+FROM node:26-alpine AS frontend
 WORKDIR /src/web
 RUN corepack enable && corepack prepare pnpm@11.0.1 --activate
 COPY web/package.json web/pnpm-lock.yaml web/pnpm-workspace.yaml ./
