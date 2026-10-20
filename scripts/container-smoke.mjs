@@ -7,7 +7,9 @@ import { execFileSync } from "node:child_process";
 const base = process.env.NOTER_TEST_URL || "http://127.0.0.1:8081";
 const compose = (...args) => execFileSync("docker", ["compose", ...args], { encoding: "utf8" }).trim();
 const get = async (route) => {
-  const response = await fetch(`${base}${route}`, { signal: AbortSignal.timeout(10000) });
+  // The smoke test deliberately recreates the server. Do not reuse a pooled
+  // connection to the previous container when checking the replacement.
+  const response = await fetch(`${base}${route}`, { headers: { Connection: "close" }, signal: AbortSignal.timeout(10000) });
   assert.equal(response.status, 200, `${route} should be ready`);
   return response;
 };
@@ -16,7 +18,7 @@ const html = await (await get("/")).text();
 assert.match(html, /Noter\.ai/);
 const bundle = html.match(/src="([^"]+\.js)"/);
 assert.ok(bundle, "fresh frontend HTML should reference a built JavaScript bundle");
-await get(bundle[1]);
+await (await get(bundle[1])).arrayBuffer();
 const id = compose("ps", "-q", "noter");
 assert.ok(id, "the Noter.ai service must exist");
 assert.equal(execFileSync("docker", ["inspect", "--format", "{{.Config.User}}", id], { encoding: "utf8" }).trim(), "10001:10001");
