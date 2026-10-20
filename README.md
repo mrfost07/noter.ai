@@ -6,7 +6,7 @@
 
 Noter.ai is an AI-assisted notebook with editable Markdown notes, folders, meeting transcripts and searchable recordings. Organize a conversation into important details, decisions, dates and action items, review the draft, then save it to your notes.
 
-[Website](https://mrfost07.github.io/noter.ai/) · [Desktop downloads](https://mrfost07.github.io/noter.ai/download/) · [Documentation](https://mrfost07.github.io/noter.ai/docs/) · [Desktop build guide](desktop/README.md) · [Release status and known issues](docs/RELEASE_STATUS.md)
+[Website](https://mrfost07.github.io/noter.ai/) · [Desktop downloads](https://mrfost07.github.io/noter.ai/download/) · [Documentation](https://mrfost07.github.io/noter.ai/docs/) · [Desktop build guide](desktop/README.md) · [Release status and known issues](docs/RELEASE_STATUS.md) · [Changelog](CHANGELOG.md)
 
 ## Features
 
@@ -45,6 +45,8 @@ docker compose up --build --wait
 
 Open **http://127.0.0.1:8081**. The build installs locked frontend dependencies and embeds the fresh frontend into the Go server. A named volume stores the profile/database and library together. `docker compose down` keeps this data; `docker compose down --volumes` deletes it. Optional port/build settings are in [.env.example](.env.example).
 
+The root [compose.yaml](compose.yaml) is exercised by the [clean-checkout workflow](.github/workflows/noter-reproducibility.yml). Readiness is exposed at `GET /healthz` and checks the database connection; it does not establish hardware or provider-account acceptance.
+
 This container is a browser/server environment, not the native desktop app. It does not provide the native meeting window, OS capture integration or desktop sign-in callbacks. Use the desktop installer for those workflows. See [contributor verification](docs/CONTRIBUTOR_VERIFICATION.md) for tests, container checks and backups.
 
 The backend uses Go; the web app uses Node.js 24 and pnpm 11.0.1; desktop builds also require Rust and the platform's Tauri prerequisites.
@@ -61,6 +63,8 @@ Provider API keys are configured in the app and are not included in this reposit
 ## Contribute
 
 CI runs frontend type checking, lint, unit tests and builds; backend static checks, race tests and real database suites; measured source-coverage floors; dependency vulnerability checks; and a clean-checkout container smoke test. See the [verification guide](docs/CONTRIBUTOR_VERIFICATION.md), [AI request validation](docs/API_VALIDATION.md) and [measured coverage baseline](.github/coverage-baseline.json) for commands, evidence and limitations.
+
+Frontend tests are in [web/tests](web/tests), with [Vitest configuration](web/vitest.config.mts) and [frontend CI](.github/workflows/frontend-tests.yml). Run `pnpm --dir web test:coverage --maxWorkers=2` to generate maintained-source coverage. For a workstation without Docker, `node scripts/local-test.mjs` runs the explicit SQLite-only path; see [environment and local-test instructions](docs/ENVIRONMENT_AND_LOCAL_TESTS.md) for platform scope and integration skips. `node scripts/check-env.mjs` checks configuration-documentation drift.
 
 Noter.ai is an open-source project maintained by [mrfost07](https://github.com/mrfost07). Contributors and prospective maintainers are welcome: help improve notes, meeting capture, accessibility, AI integrations, documentation, and platform support.
 

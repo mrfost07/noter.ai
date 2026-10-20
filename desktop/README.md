@@ -6,6 +6,21 @@ Experimental desktop installers supply bundled reference installed-client OAuth 
 
 The current version is **26.10.16-rc.4**, an experimental candidate with no trusted publisher signature. macOS bundles use ad-hoc signatures and are not notarized. No automatic updater is configured.
 
+## Native implementation
+
+`src-tauri/src/main.rs` wires the application, loopback-only IPC capability, window lifecycle, and startup errors. Native responsibilities and their regression tests live beside one another:
+
+| Module | Responsibility |
+| --- | --- |
+| `sidecar.rs` | Bundled server discovery, private profile setup, startup, readiness, and owned-child cleanup |
+| `companion.rs` | Meeting companion sizing, restoration, collapse, and recording state |
+| `library.rs` | Native folder selection, registered-library reveal, and disk space |
+| `smoke.rs` | Explicit smoke mode, temporary-directory isolation, selected origin, and completion report |
+| `smoke_http.rs` | Bounded HTTP verification of the bundled Noter.ai page |
+| `state.rs` | Shared native application state |
+
+Command names, app identity, data paths, permissions, and sidecar filename compatibility remain independent of these Rust module boundaries.
+
 ## Build locally
 
 Install Node.js 24, pnpm 11.0.1, Go 1.27.2, Rust 1.99.0, and the [Tauri platform prerequisites](https://v2.tauri.app/start/prerequisites/). Windows needs Visual Studio C++ Build Tools and WebView2. macOS needs Xcode command-line tools. Linux needs WebKitGTK 4.1 and the packages listed in the workflow.

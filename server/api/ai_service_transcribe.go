@@ -84,6 +84,10 @@ func (s *APIService) Transcribe(ctx context.Context, request *apipb.TranscribeRe
 	if !isSupportedTranscriptionContentType(contentType) {
 		return nil, status.Errorf(codes.InvalidArgument, "audio content type %q is not supported", contentType)
 	}
+	model := strings.TrimSpace(request.GetModel())
+	if len(model) > maxTranscriptionConfigModelLength {
+		return nil, status.Errorf(codes.InvalidArgument, "model is too long; maximum length is %d bytes", maxTranscriptionConfigModelLength)
+	}
 
 	aiSetting, err := s.Store.GetInstanceAISetting(ctx)
 	if err != nil {
@@ -108,7 +112,6 @@ func (s *APIService) Transcribe(ctx context.Context, request *apipb.TranscribeRe
 		return nil, err
 	}
 
-	model := strings.TrimSpace(request.GetModel())
 	if model == "" {
 		if request.GetDiarize() {
 			model = persisted.GetSpeakerModel()

@@ -1,7 +1,9 @@
 package api
 
 import (
+	"strings"
 	"testing"
+	"unicode/utf8"
 
 	"github.com/stretchr/testify/require"
 
@@ -45,4 +47,21 @@ func TestMeetingNotesRetainLegacyInformation(t *testing.T) {
 func TestEmptyMeetingAnalysisIsNotAnOrganizedDraft(t *testing.T) {
 	_, err := parseMeetingNotesJSON(`{}`)
 	require.ErrorContains(t, err, "AI returned no meeting notes")
+}
+
+func TestMeetingNotesTruncateAtUTF8Boundaries(t *testing.T) {
+	for _, character := range []string{"é", "会", "📅"} {
+		t.Run(character, func(t *testing.T) {
+			prefix := strings.Repeat("a", maxMeetingNotesItemLength-1)
+			input := prefix + character + " review"
+			notes, err := parseMeetingNotesJSON(`{"crucialInfo":["` + input + `"]}`)
+			require.NoError(t, err)
+			require.Equal(t, []string{prefix}, notes.GetCrucialInfo())
+			require.True(t, utf8.ValidString(notes.GetCrucialInfo()[0]))
+			require.True(t, utf8.ValidString(formatMeetingNotesMarkdown(notes)))
+		})
+	}
+	// A complete multibyte character that fits at the exact limit is retained.
+	input := strings.Repeat("a", maxMeetingNotesItemLength-len("📅")) + "📅"
+	require.Equal(t, []string{input}, sanitizeNoteSlice([]string{input + " more"}))
 }
