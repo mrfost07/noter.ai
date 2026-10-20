@@ -66,12 +66,21 @@ jobs:
           cache: true
           cache-dependency-path: go.sum
 
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
       - name: Run tests
         run: |
           case "${{ matrix.test-group }}" in
             store)
               # Run store tests for all drivers (sqlite, mysql, postgres)
-              DRIVER= go test -v -coverpkg=./store/... -coverprofile=coverage.out -covermode=atomic ./store/...
+              # The all-driver TestMain wrapper starts child Go commands that do
+              # not inherit coverage flags. Run each real driver explicitly.
+              for driver in sqlite mysql postgres; do
+                DRIVER="$driver" go test -v -count=1 -coverpkg=./store/... -coverprofile="coverage-$driver.out" -covermode=atomic ./store/...
+              done
+              node scripts/check-coverage.mjs merge coverage.out coverage-sqlite.out coverage-mysql.out coverage-postgres.out
               ;;
             server)
               # Includes ./server/test, which boots the real server via
