@@ -65,10 +65,12 @@ func TestCacheEviction(t *testing.T) {
 	cache := New(config)
 	defer cache.Close()
 
-	// Add 5 items (max capacity)
+	// Capacity eviction chooses the earliest expiration, not insertion order.
+	// Separate the TTLs explicitly: rapid Set calls can share a clock reading,
+	// and equal expiration timestamps do not define which tied key is evicted.
 	for i := range 5 {
 		key := fmt.Sprintf("key%d", i)
-		cache.Set(ctx, key, i)
+		cache.SetWithTTL(ctx, key, i, time.Duration(i+1)*time.Hour)
 	}
 
 	// Verify all 5 items are in the cache
@@ -80,25 +82,21 @@ func TestCacheEviction(t *testing.T) {
 	}
 
 	// Add 2 more items to trigger eviction
-	cache.Set(ctx, "keyA", "valueA")
-	cache.Set(ctx, "keyB", "valueB")
+	cache.SetWithTTL(ctx, "keyA", "valueA", 6*time.Hour)
+	cache.SetWithTTL(ctx, "keyB", "valueB", 7*time.Hour)
 
 	// Verify size is still within limits
 	if cache.Size() > int64(config.MaxItems) {
 		t.Errorf("Cache size %d exceeds limit %d", cache.Size(), config.MaxItems)
 	}
 
-	// Some of the original keys should have been evicted
-	evictedCount := 0
+	// Exactly the two earliest expirations should have been evicted.
 	for i := range 5 {
 		key := fmt.Sprintf("key%d", i)
-		if _, ok := cache.Get(ctx, key); !ok {
-			evictedCount++
+		_, exists := cache.Get(ctx, key)
+		if expected := i >= 2; exists != expected {
+			t.Errorf("Key '%s' existence %v, want %v after earliest-expiration eviction", key, exists, expected)
 		}
-	}
-
-	if evictedCount == 0 {
-		t.Error("No keys were evicted despite exceeding max items")
 	}
 
 	// The newer keys should still be present
@@ -107,6 +105,70 @@ func TestCacheEviction(t *testing.T) {
 	}
 	if _, ok := cache.Get(ctx, "keyB"); !ok {
 		t.Error("Key 'keyB' should be in the cache")
+	}
+}
+
+func TestCacheEvictionWithEqualExpirations(t *testing.T) {
+	ctx := context.Background()
+	type eviction struct {
+		key   string
+		value any
+	}
+	config := DefaultConfig()
+	config.MaxItems = 5
+	evictions := make(chan eviction, config.MaxItems+1)
+	config.OnEviction = func(key string, value any) {
+		evictions <- eviction{key: key, value: value}
+	}
+	cache := New(config)
+	defer cache.Close()
+
+	// Force exact equal timestamps without depending on platform clock precision.
+	// No particular key wins the tie, but capacity and callbacks still must agree.
+	expiration := time.Now().Add(time.Hour)
+	for i := range config.MaxItems + 1 {
+		cache.data.Store(fmt.Sprintf("key%d", i), item{value: i, expiration: expiration, size: estimateSize(i)})
+	}
+	cache.itemCount.Store(int64(config.MaxItems + 1))
+	cache.cleanupOldest()
+	if size := cache.Size(); size != int64(config.MaxItems) {
+		t.Fatalf("Cache size %d, want %d after one tied eviction", size, config.MaxItems)
+	}
+
+	var removed string
+	select {
+	case event := <-evictions:
+		removed = event.key
+		if expected := fmt.Sprintf("key%v", event.value); event.key != expected {
+			t.Errorf("Eviction callback key %q does not match value %v", event.key, event.value)
+		}
+	default:
+		t.Fatal("Capacity eviction must notify its callback")
+	}
+	remaining := 0
+	for i := range config.MaxItems + 1 {
+		key := fmt.Sprintf("key%d", i)
+		value, exists := cache.Get(ctx, key)
+		if key == removed {
+			if exists {
+				t.Errorf("Evicted key %q still exists", key)
+			}
+		} else if !exists || value != i {
+			t.Errorf("Non-evicted key %q lost its value: %v, exists: %v", key, value, exists)
+		}
+		if exists {
+			remaining++
+		}
+	}
+	if remaining != config.MaxItems {
+		t.Errorf("Found %d keys, want %d", remaining, config.MaxItems)
+	}
+	// At capacity, another cleanup must neither remove a key nor notify again.
+	cache.cleanupOldest()
+	select {
+	case event := <-evictions:
+		t.Errorf("Unexpected additional eviction at capacity: %+v", event)
+	default:
 	}
 }
 
