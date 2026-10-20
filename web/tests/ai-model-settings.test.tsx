@@ -1,7 +1,9 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { AIAssistantForm, ConnectionTestButton, ProviderModelSelector } from "@/components/Settings/AISection";
+import { AIAssistantForm } from "@/components/Settings/AIAssistantForm";
+import { ConnectionTestButton } from "@/components/Settings/AIConnectionTestButton";
+import { ProviderModelSelector } from "@/components/Settings/AIProviderModelSelector";
 import { InstanceSetting_AIProviderType } from "@/types/proto/api/instance_service_pb";
 
 const mocks = vi.hoisted(() => ({ fetchModels: vi.fn(), status: vi.fn(), test: vi.fn() }));

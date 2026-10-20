@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import NoterLogo from "@/components/NoterLogo";
-import { getProviderTypeLabel } from "@/components/Settings/AISection";
+import { getProviderTypeLabel } from "@/components/Settings/aiProviderPresets";
 import { getInstanceTitle } from "@/lib/constants";
 import { InstanceSetting_AIProviderType } from "@/types/proto/api/instance_service_pb";
 

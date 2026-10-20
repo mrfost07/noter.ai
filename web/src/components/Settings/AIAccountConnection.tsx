@@ -15,7 +15,7 @@ import {
   StartChatGPTOAuthRequestSchema,
 } from "@/types/proto/api/ai_service_pb";
 import { InstanceSetting_AIProviderType } from "@/types/proto/api/instance_service_pb";
-import type { LocalAIProvider } from "./AISection";
+import type { LocalAIProvider } from "./aiSettingsState";
 
 const statusKey = ["ai-connection-status"];
 

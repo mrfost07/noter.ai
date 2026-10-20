@@ -19,7 +19,7 @@ import { type FC, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
 import { NotePreview } from "@/components/MeetingLibrary/NotePreview";
-import { loadAIAssistantConfig } from "@/components/Settings/AISection";
+import { loadAIAssistantConfig } from "@/components/Settings/aiSettingsState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
