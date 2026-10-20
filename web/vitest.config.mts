@@ -24,5 +24,11 @@ export default defineConfig({
     //  - restoreMocks additionally restores original implementations for spies.
     mockReset: true,
     restoreMocks: true,
+    coverage: {
+      provider: "v8",
+      include: ["src/**/*.{ts,tsx}"],
+      exclude: ["src/types/proto/**", "src/**/*.d.ts"],
+      reporter: ["text-summary", "json-summary", "lcov"],
+    },
   },
 });

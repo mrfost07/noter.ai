@@ -44,9 +44,18 @@ jobs:
         working-directory: web
         run: pnpm lint
 
-      - name: Run unit tests
+      - name: Run unit tests with source coverage
         working-directory: web
-        run: pnpm test
+        run: pnpm test:coverage --maxWorkers=2
+
+      - name: Preserve frontend coverage evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-frontend
+          path: web/coverage/
+          if-no-files-found: warn
+          retention-days: 14
 
   build:
     name: Build

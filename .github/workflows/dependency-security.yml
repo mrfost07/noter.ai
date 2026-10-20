@@ -1,0 +1,46 @@
+name: Dependency Security
+on:
+  push:
+    branches: [main]
+    paths: ['go.mod', 'go.sum', 'web/package.json', 'web/pnpm-lock.yaml', 'web/pnpm-workspace.yaml', 'desktop/package.json', 'desktop/pnpm-lock.yaml', 'website/package-lock.json', 'website/package.json', '.github/workflows/dependency-security.yml']
+  pull_request:
+    paths: ['go.mod', 'go.sum', 'web/package.json', 'web/pnpm-lock.yaml', 'web/pnpm-workspace.yaml', 'desktop/package.json', 'desktop/pnpm-lock.yaml', 'website/package-lock.json', 'website/package.json', '.github/workflows/dependency-security.yml']
+  schedule:
+    - cron: '25 1 * * 1'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: dependency-security-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  javascript:
+    name: JavaScript advisory audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4.2.0
+        with:
+          version: '11.0.1'
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - run: pnpm --dir web audit --prod --audit-level=high
+      - run: pnpm --dir desktop audit --audit-level=high
+      - run: npm audit --audit-level=high
+        working-directory: website
+  go:
+    name: Reachable Go vulnerability audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.27.2'
+          cache: true
+      - name: Install pinned vulnerability scanner
+        run: go install golang.org/x/vuln/cmd/govulncheck@v1.9.0
+      - name: Check application call paths
+        run: govulncheck ./...

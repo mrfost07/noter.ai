@@ -2,3 +2,10 @@ allowBuilds:
   esbuild: true
 patchedDependencies:
   "@bufbuild/protobuf@2.12.0": patches/@bufbuild__protobuf@2.12.0.patch
+
+# Compatible transitive security patches, retained until parent minimums catch up.
+overrides:
+  'uuid@>=11.0.0 <11.1.1': 11.1.1
+  'dompurify@>=3.0.0 <3.4.17': 3.4.17
+  'source-map-js@<1.2.2': 1.2.2
+
