@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"strings"
 	"unicode"
+	"unicode/utf8"
 
 	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
@@ -246,7 +247,11 @@ func sanitizeNoteSlice(items []string) []string {
 			continue
 		}
 		if len(cleaned) > maxMeetingNotesItemLength {
-			cleaned = cleaned[:maxMeetingNotesItemLength]
+			end := maxMeetingNotesItemLength
+			for !utf8.RuneStart(cleaned[end]) {
+				end--
+			}
+			cleaned = cleaned[:end]
 		}
 		key := strings.ToLower(cleaned)
 		if seen[key] {
