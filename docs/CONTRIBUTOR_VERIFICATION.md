@@ -19,6 +19,10 @@ docker compose down
 
 The smoke check requires Node 24 and a running Compose project. It verifies database readiness, real frontend HTML and a referenced JavaScript bundle, a non-root runtime, initialized SQLite and library persistence after recreating the service. CI runs this from a clean checkout and deletes only its own temporary volumes afterward.
 
+On a **disposable, empty profile only**, `node scripts/container-smoke.mjs --write-fixtures` also creates a randomly named account and a private note containing Unicode, Markdown, a task and a link. It checks exact content and visibility before and after container recreation, checks anonymous reads are denied, and verifies both the existing token and a new password login afterward. It refuses to create fixtures when the instance already has users. CI uses this opt-in mode with its own temporary Compose project; the default command does not create an account or note.
+
+`Upgrade Smoke` separately seeds an older server image, upgrades its database and verifies that old and new notes remain readable. Its explicit default is the retained `neosmemo/memos:0.31.0` server baseline, with a manual-dispatch override for other supported server images. Desktop release tags are not server image names, and the reset main history cannot discover an ancestral server tag. The fixture image is used only for this compatibility test; it is not the image launched by the root Noter.ai Compose setup.
+
 `docker compose down` preserves data. `docker compose down --volumes` deletes it. For a consistent backup, stop the service and back up the entire named volume, including both profile and library. Provider tokens and notes in that volume are private.
 
 This is a browser/server environment. Native desktop windows, OS recording integration and desktop OAuth callbacks still require the [native prerequisites](../desktop/README.md). Docker is not a replacement for platform acceptance tests. Explicit container build arguments `VERSION` and `COMMIT` record source identity; an omitted version uses the UTC build month and an omitted commit is `unknown`.
@@ -66,7 +70,9 @@ The second command needs the merged store report from CI (or equivalent explicit
 
 `.github/dependabot.yml` checks Go, web/desktop/website JavaScript, Rust, Actions and container base-image dependencies weekly. Compatible updates are grouped to keep review manageable; major updates remain separate and are not automatically merged.
 
-The Dependency Security workflow runs on relevant dependency changes, weekly and by manual dispatch. It blocks high/critical JavaScript advisories and reachable Go vulnerabilities. Audit/network failures fail the job instead of being reported as a clean scan. Reproduce the checks with:
+Web, desktop and website updates have separate groups, each limited to two open version-update proposals. Babel and Node major migrations are deferred because their current proposals fail compatibility checks; compatible fixes still arrive. Audits independently check the installed dependency graph, so deferring a migration is not an advisory exemption. Existing bot branches are review proposals, not installed app updates. A failed proposal must be fixed or deliberately deferred before merging, even if its production build passes.
+
+The Dependency Security workflow runs on every pull request to main, relevant dependency pushes, weekly and by manual dispatch. It blocks high/critical JavaScript advisories and reachable Go vulnerabilities. Audit/network failures fail the job instead of being reported as a clean scan. Reproduce the checks with:
 
 ```sh
 pnpm --dir web audit --prod --audit-level=high
@@ -80,6 +86,14 @@ govulncheck ./...
 The October 20 dependency update removed the high/moderate advisories identified in the web production dependency graph. The scan still reports a low-severity [KaTeX prototype-pollution advisory](https://github.com/advisories/GHSA-238p-pmpm-9mq7); its published fix requires a separate 0.18.x migration from the existing 0.16.x rendering stack. This finding is not hidden or allowlisted. A green high-severity audit is not a claim that no advisories exist. Recheck current registry/database results before a release.
 
 See [AI API validation](API_VALIDATION.md) for existing request boundaries and the tests that exercise them.
+
+## Main branch checks
+
+Backend static checks and all four test groups, frontend lint/type checks/coverage and production build, desktop packaging regressions, JavaScript/Go advisory audits, and the real container smoke test run on every pull request to main. They intentionally have no pull-request path filter: a required check that never starts would leave an unrelated change permanently pending.
+
+The branch protection policy in [`.github/main-protection.json`](../.github/main-protection.json) requires these named GitHub Actions checks and an up-to-date pull request. It blocks force pushes and deletion, applies to administrators, and requires review conversations to be resolved. No second human approval is required for this solo-maintainer repository. The repository owner can inspect the applied policy with `gh api repos/mrfost07/noter.ai/branches/main/protection` and restore it using `gh api --method PUT repos/mrfost07/noter.ai/branches/main/protection --input .github/main-protection.json`. The JSON file is the intended policy; the GitHub API response is the evidence that it is actually enabled.
+
+These gates do not establish native hardware acceptance, Rust vulnerability coverage, exclusive rights to upstream code, or a third-party evaluation score. A 90/100 DataFactor result remains an external target, not a promise. Sustained genuine development history, original work with clear rights, and useful tested fixes are still needed; do not manufacture activity or increase coverage floors without execution evidence.
 
 ## Changes and provenance
 

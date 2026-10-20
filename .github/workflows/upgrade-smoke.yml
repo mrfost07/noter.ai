@@ -1,7 +1,7 @@
 name: Upgrade Smoke
 
-# Verifies that a Memos instance carrying real data upgrades cleanly from the
-# previous stable release to the current build, and that a fresh install still
+# Verifies that an instance carrying real data upgrades cleanly from the retained
+# server schema baseline to the current build, and that a fresh install still
 # starts. These tiers need Docker and take minutes, so they run for relevant
 # pull requests and before releases rather than on every backend change.
 #
@@ -11,6 +11,12 @@ name: Upgrade Smoke
 on:
   workflow_call:
   workflow_dispatch:
+    inputs:
+      previous_image:
+        description: Server image that seeds the upgrade fixture (not a desktop installer)
+        required: true
+        default: neosmemo/memos:0.31.0
+        type: string
   pull_request:
     branches: [main]
     paths:
@@ -37,6 +43,9 @@ concurrency:
   # cancel the parent release workflow.
   group: ${{ github.workflow }}-upgrade-smoke-${{ github.ref }}
   cancel-in-progress: true
+
+permissions:
+  contents: read
 
 env:
   GO_VERSION: "1.27.2"
@@ -102,6 +111,12 @@ jobs:
 
       - name: Run release smoke test
         run: ./scripts/release_smoke_test.sh
+        env:
+          # Desktop tags do not identify published server images, and the fresh
+          # main history has no ancestral server tag. Use the same explicit
+          # upstream schema baseline as the migration fixtures instead of
+          # inventing a neosmemo image name from a Noter.ai calendar tag.
+          MEMOS_SMOKE_PREVIOUS_IMAGE: ${{ inputs.previous_image || 'neosmemo/memos:0.31.0' }}
 
   entrypoint:
     name: Entrypoint secret handling
