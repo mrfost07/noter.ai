@@ -9,6 +9,8 @@ DRIVER=mysql go test -v ./store/test/... # One driver only
 
 `NewTestingStore` and `NewTestingStoreWithDSN` register test cleanup as soon as the store exists. Database connections and cache workers close before the fixture's temporary directories are removed, including on assertion or migration failure. Tests may still explicitly close a store when checking shutdown/reopen behavior; sequential cleanup is safe. Avoid opening extra connections without their own cleanup. The lifecycle regression verifies both helper variants, explicit closes and post-subtest connection/file cleanup.
 
+Local container tests can skip when Docker is unavailable, or explicitly with `SKIP_CONTAINER_TESTS=1`. Under `CI=true`/`CI=1`, either condition fails the fixture instead: the required database matrix must exercise its integrations. The separate workstation workflow deliberately uses `CI=false` for its documented SQLite-only checks. A subprocess regression verifies failure and skip outcomes without requiring a Docker daemon.
+
 ## Upgrade coverage
 
 ```bash

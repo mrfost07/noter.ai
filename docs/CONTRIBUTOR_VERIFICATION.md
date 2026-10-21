@@ -39,7 +39,7 @@ go test -race -p 2 ./server/... ./core/... ./provider/... ./internal/...
 node --test desktop/scripts/build-desktop.test.mjs
 ```
 
-Frontend tests live under `web/tests`, not alongside `web/src`. `pnpm lint` includes both TypeScript checking and Biome. Backend CI exercises SQLite, MySQL and PostgreSQL; the latter two use Docker containers. `SKIP_CONTAINER_TESTS=1` explicitly skips those integrations on a workstation without Docker and must not be treated as a full passing database suite. Race tests require a working CGo toolchain.
+Frontend tests live under `web/tests`, not alongside `web/src`. `pnpm lint` includes both TypeScript checking and Biome. Backend CI exercises SQLite, MySQL and PostgreSQL; the latter two use Docker containers. `SKIP_CONTAINER_TESTS=1` explicitly skips those integrations on a workstation without Docker and must not be treated as a full passing database suite. Under `CI=true`/`CI=1`, container fixtures instead fail if skipping is requested or the provider is unavailable. Race tests require a working CGo toolchain.
 
 For the explicit SQLite-only workstation runner and the categorized configuration inventory, see [Environment settings and local tests](ENVIRONMENT_AND_LOCAL_TESTS.md). CI exercises that runner on Linux and Windows with Docker unreachable; both runs must pass the `SQLite without Docker` gate. This complements the full three-driver store matrix. `node scripts/check-env.mjs` prevents a statically referenced application setting from silently losing its example documentation. OS and build-tool variables are categorized separately.
 
