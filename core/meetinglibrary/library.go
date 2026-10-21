@@ -181,12 +181,18 @@ func SafePath(root, relative string) (string, error) {
 	}
 	// EvalSymlinks also resolves Windows junctions. Check every existing ancestor.
 	for current := path; ; current = filepath.Dir(current) {
-		if _, err := os.Lstat(current); err == nil {
+		if info, err := os.Lstat(current); err == nil {
+			if info.Mode()&os.ModeSymlink != 0 {
+				return "", errors.New("linked library paths are not supported")
+			}
+			abs, e := libraryPathSpelling(current, info)
+			if e != nil {
+				return "", e
+			}
 			resolved, e := filepath.EvalSymlinks(current)
 			if e != nil {
 				return "", e
 			}
-			abs, _ := filepath.Abs(current)
 			if resolved != abs && (runtime.GOOS != "windows" || !strings.EqualFold(resolved, abs)) {
 				return "", errors.New("linked library paths are not supported")
 			}
