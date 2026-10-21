@@ -16,7 +16,7 @@ permissions:
   contents: read
 
 env:
-  GO_VERSION: "1.27.2"
+  GO_VERSION: "1.27.3"
   NODE_VERSION: "24"
   PNPM_VERSION: "11.0.1"
   ARTIFACT_RETENTION_DAYS: 60
@@ -255,7 +255,6 @@ jobs:
           prerelease: ${{ needs.prepare.outputs.is_prerelease == 'true' }}
           make_latest: ${{ needs.prepare.outputs.is_prerelease != 'true' }}
           generate_release_notes: true
-          previous_tag: ${{ needs.prepare.outputs.previous_tag }}
           files: artifacts/*
 
   build-push:

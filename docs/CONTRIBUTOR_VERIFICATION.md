@@ -29,7 +29,7 @@ This is a browser/server environment. Native desktop windows, OS recording integ
 
 ## Native developer checks
 
-Use Go 1.27.2, Node 24 and pnpm 11.0.1. Install frontend dependencies with `pnpm --dir web install --frozen-lockfile`.
+Use Go 1.27.3, Node 24 and pnpm 11.0.1. Install frontend dependencies with `pnpm --dir web install --frozen-lockfile`.
 
 ```sh
 pnpm --dir web lint

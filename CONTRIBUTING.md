@@ -23,7 +23,7 @@ Run checks for the surfaces you change:
 pnpm --dir web lint
 pnpm --dir web test --maxWorkers=2
 pnpm --dir web build
-go mod tidy -go=1.27.2
+go mod tidy -go=1.27.3
 go fix -diff ./...
 golangci-lint run
 go test -race -p 2 ./server/... ./core/... ./provider/... ./cmd/...

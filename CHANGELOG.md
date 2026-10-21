@@ -6,6 +6,7 @@ These source changes are newer than the published `26.10.16-rc.4` installers.
 
 ### Fixed
 
+- Pin Go 1.27.3 across server, desktop and CI builds to address the reachable certificate-verification advisory [GO-2026-6809](https://pkg.go.dev/vuln/GO-2026-6809).
 - Reject transcription model overrides longer than 256 bytes, consistently with saved and meeting model settings.
 - Keep meeting-note truncation on a valid UTF-8 boundary when long notes contain accented characters, CJK text or emoji.
 - Close test-store database handles and cache workers before temporary-directory cleanup, preventing Windows SQLite fixture failures.

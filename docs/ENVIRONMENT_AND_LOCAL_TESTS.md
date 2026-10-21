@@ -30,7 +30,7 @@ This is a scoped static drift guard, not a parser for every programming language
 
 ## SQLite-only workstation checks
 
-Install Go 1.27.2 and Node 24, then run from the repository root:
+Install Go 1.27.3 and Node 24, then run from the repository root:
 
 ```sh
 node scripts/local-test.mjs

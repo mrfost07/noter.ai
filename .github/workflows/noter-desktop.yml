@@ -24,7 +24,7 @@ concurrency:
 env:
   NODE_VERSION: "24"
   PNPM_VERSION: "11.0.1"
-  GO_VERSION: "1.27.2"
+  GO_VERSION: "1.27.3"
   RUST_VERSION: "1.99.0"
   CANDIDATE_VERSION: ${{ inputs.version }}
   CI: "true"

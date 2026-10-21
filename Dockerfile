@@ -10,7 +10,7 @@ RUN --mount=type=cache,id=noter-pnpm,target=/pnpm/store \
 COPY web/ ./
 RUN pnpm release
 
-FROM golang:1.27.2-alpine AS backend
+FROM golang:1.27.3-alpine AS backend
 WORKDIR /src
 RUN apk add --no-cache ca-certificates git
 COPY go.mod go.sum ./
