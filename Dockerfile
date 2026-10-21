@@ -25,7 +25,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
       -ldflags="-s -w -X github.com/usememos/memos/internal/version.Version=${VERSION:-$(date -u +%y.%m)} -X github.com/usememos/memos/internal/version.Commit=${COMMIT}" \
       -o /out/noter ./cmd/memos
 
-FROM alpine:3.21 AS runtime
+FROM alpine:3.24 AS runtime
 RUN apk add --no-cache ca-certificates tzdata && \
     addgroup -g 10001 -S noter && adduser -u 10001 -S -G noter -h /data noter && \
     mkdir -p /data/profile /data/library && chown -R noter:noter /data
