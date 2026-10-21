@@ -30,7 +30,7 @@ This is a scoped static drift guard, not a parser for every programming language
 
 ## SQLite-only workstation checks
 
-Install Go 1.27.2 and Node 24, then run from the repository root:
+Install Go 1.27.3 and Node 24, then run from the repository root:
 
 ```sh
 node scripts/local-test.mjs
@@ -44,4 +44,4 @@ The runner sets `DRIVER=sqlite`, `SKIP_CONTAINER_TESTS=1` and `GOMAXPROCS=2` onl
 
 On Linux/macOS, the default package pattern is `./...`. On Windows, the default explicitly enumerates the maintained Go application packages (`cmd`, `core`, `filter`, `internal`, `markdown`, `provider`, `proto`, `server`, `store`), because `scripts/` includes POSIX shell installation tests that require a working Unix shell/toolchain and are exercised by Linux CI. The runner prints this distinction; it does not label Windows application checks as the entire repository suite. A targeted pattern is an explicit contributor choice and retains its normal platform prerequisites.
 
-Container migration and MySQL/PostgreSQL cases are visibly skipped on this path. A zero exit is evidence only for the tests that ran; it does not replace the three-driver, race-enabled CI matrix or native hardware acceptance. The runner refuses `CI=true`/`CI=1` to prevent it accidentally replacing those integration gates. CI continues to run each driver explicitly without `SKIP_CONTAINER_TESTS`.
+Container migration and MySQL/PostgreSQL cases are visibly skipped on this path. A zero exit is evidence only for the tests that ran; it does not replace the three-driver, race-enabled CI matrix or native hardware acceptance. The runner refuses `CI=true`/`CI=1` to prevent it accidentally replacing those integration gates. CI continues to run each driver explicitly without `SKIP_CONTAINER_TESTS`. Container fixtures fail under `CI=true`/`CI=1` if skipping is requested or Docker is unavailable; the full database gate cannot silently succeed with skipped integrations. The separate Linux/Windows workstation jobs deliberately set `CI=false` to verify the documented reduced mode with Docker unreachable.

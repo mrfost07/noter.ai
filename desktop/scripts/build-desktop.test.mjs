@@ -34,7 +34,7 @@ test("failed subprocesses stop the build", () => {
 });
 
 test("trimpath sidecars identify their exact candidate through VCS metadata without linker flags", () => {
-  const info = `go1.27.2\nbuild\t-trimpath=true\nbuild\tvcs=git\nbuild\tvcs.revision=${commit}\nbuild\tvcs.modified=true`;
+  const info = `go1.27.3\nbuild\t-trimpath=true\nbuild\tvcs=git\nbuild\tvcs.revision=${commit}\nbuild\tvcs.modified=true`;
   assert.doesNotThrow(() => assertCommitIdentity(info, commit));
   assert.throws(() => assertCommitIdentity(info, "c".repeat(40)), /candidate commit/);
   assert.throws(() => assertCommitIdentity(`build\t-ldflags=-X internal/version.Commit=${commit}`, commit), /candidate commit/);

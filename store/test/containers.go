@@ -82,10 +82,33 @@ func requireTestNetwork(ctx context.Context) (*testcontainers.DockerNetwork, err
 
 func skipIfContainerProviderUnavailable(t *testing.T) {
 	t.Helper()
+	ci := os.Getenv("CI") == "true" || os.Getenv("CI") == "1"
 	if os.Getenv("SKIP_CONTAINER_TESTS") == "1" {
+		if ci {
+			t.Fatal("CI requires container integration tests; SKIP_CONTAINER_TESTS=1 is not allowed")
+		}
 		t.Skip("skipping container-based test (SKIP_CONTAINER_TESTS=1)")
 	}
-	testcontainers.SkipIfProviderIsNotHealthy(t)
+	if !ci {
+		testcontainers.SkipIfProviderIsNotHealthy(t)
+		return
+	}
+	// The upstream skip helper also recovers initialization panics. CI must
+	// report those as failures rather than silently accepting skipped drivers.
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			t.Fatalf("CI requires a healthy Docker provider; initialization panicked: %v", recovered)
+		}
+	}()
+	provider, err := testcontainers.ProviderDocker.GetProvider()
+	if err != nil {
+		t.Fatalf("CI requires a healthy Docker provider: %v", err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := provider.Health(ctx); err != nil {
+		t.Fatalf("CI requires a healthy Docker provider: %v", err)
+	}
 }
 
 // GetMySQLDSN starts a MySQL container (if not already running) and creates a fresh database for this test.

@@ -11,7 +11,7 @@ Read the repository's [AGENTS.md](https://github.com/mrfost07/noter.ai/blob/main
 
 ## Desktop development
 
-The current checkout uses Node.js 24, pnpm 11.0.1, Go 1.27.2 and Rust 1.99.0. Install the relevant Tauri platform prerequisites as described in the [desktop build guide](https://github.com/mrfost07/noter.ai/blob/main/desktop/README.md).
+The current checkout uses Node.js 24, pnpm 11.0.1, Go 1.27.3 and Rust 1.99.0. Install the relevant Tauri platform prerequisites as described in the [desktop build guide](https://github.com/mrfost07/noter.ai/blob/main/desktop/README.md).
 
 ```sh
 pnpm --dir web install --frozen-lockfile

@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  GO_VERSION: "1.27.2"
+  GO_VERSION: "1.27.3"
 
 jobs:
   static-checks:
@@ -59,9 +59,17 @@ jobs:
           args: --timeout=3m
 
   workstation-sqlite:
-    name: SQLite without Docker
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
+    name: Workstation SQLite (${{ matrix.os }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: Linux
+            runner: ubuntu-latest
+          - os: Windows
+            runner: windows-2022
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-go@v6
@@ -78,6 +86,16 @@ jobs:
           CI: 'false'
           DOCKER_HOST: tcp://127.0.0.1:1
         run: node scripts/local-test.mjs
+
+  workstation-gate:
+    name: SQLite without Docker
+    needs: workstation-sqlite
+    if: always()
+    runs-on: ubuntu-latest
+    env:
+      WORKSTATION_RESULT: ${{ needs.workstation-sqlite.result }}
+    steps:
+      - run: test "$WORKSTATION_RESULT" = success
 
   tests:
     name: Tests (${{ matrix.test-group }})
