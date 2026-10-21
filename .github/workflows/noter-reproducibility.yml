@@ -23,7 +23,7 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
-      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@v4
       - name: Build frontend and backend inside the container from locked dependencies
         run: |
           export NOTER_BUILD_VERSION="$(date -u +%y.%m)"
