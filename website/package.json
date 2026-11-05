@@ -13,6 +13,6 @@
     "update-release": "node scripts/update-release.mjs"
   },
   "devDependencies": {
-    "marked": "18.1.1"
+    "marked": "18.1.2"
   }
 }
